@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/common/ProtectedRoute";
+import BadgeToastHost from "./components/badges/BadgeToastHost";
 
 import Home from "./pages/Home";
 import Games from "./pages/Games";
@@ -48,6 +49,7 @@ export default function App() {
             }
           />
         </Routes>
+        <BadgeToastHost />
       </AuthProvider>
     </BrowserRouter>
   );

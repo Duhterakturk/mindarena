@@ -1,7 +1,14 @@
 import apiClient from "./client";
 
-export async function fetchMyProgress() {
-  const { data } = await apiClient.get("/progress/me");
+function dateRangeParams({ startDate, endDate } = {}) {
+  const params = {};
+  if (startDate) params.start_date = startDate;
+  if (endDate) params.end_date = endDate;
+  return params;
+}
+
+export async function fetchMyProgress(range) {
+  const { data } = await apiClient.get("/progress/me", { params: dateRangeParams(range) });
   return data;
 }
 
@@ -17,8 +24,11 @@ export async function fetchStudentsOverview(classroomId) {
   return data;
 }
 
-export async function downloadProgressExport() {
-  const response = await apiClient.get("/progress/export", { responseType: "blob" });
+export async function downloadProgressExport(range) {
+  const response = await apiClient.get("/progress/export", {
+    responseType: "blob",
+    params: dateRangeParams(range),
+  });
   const url = window.URL.createObjectURL(new Blob([response.data]));
   const link = document.createElement("a");
   link.href = url;

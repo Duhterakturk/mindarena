@@ -1,4 +1,5 @@
 import io
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -10,8 +11,35 @@ from app.models import Score, Game, User, UserRole, Classroom
 progress_bp = Blueprint("progress", __name__, url_prefix="/api/progress")
 
 
-def _load_scores_and_games(user_id):
-    scores = Score.query.filter_by(user_id=user_id).order_by(Score.created_at).all()
+def _parse_date_range():
+    """Query string'den `start_date`/`end_date` (YYYY-MM-DD) okur. Geçersiz
+    bir tarih sessizce yoksayılır (filtre uygulanmaz)."""
+    start_date = None
+    end_date = None
+    raw_start = request.args.get("start_date")
+    raw_end = request.args.get("end_date")
+    if raw_start:
+        try:
+            start_date = datetime.strptime(raw_start, "%Y-%m-%d")
+        except ValueError:
+            pass
+    if raw_end:
+        try:
+            # Bitiş tarihini gün sonuna kadar kapsayacak şekilde bir sonraki
+            # güne öteleyip "küçüktür" ile karşılaştırıyoruz.
+            end_date = datetime.strptime(raw_end, "%Y-%m-%d") + timedelta(days=1)
+        except ValueError:
+            pass
+    return start_date, end_date
+
+
+def _load_scores_and_games(user_id, start_date=None, end_date=None):
+    query = Score.query.filter_by(user_id=user_id)
+    if start_date:
+        query = query.filter(Score.created_at >= start_date)
+    if end_date:
+        query = query.filter(Score.created_at < end_date)
+    scores = query.order_by(Score.created_at).all()
     games = {g.id: g for g in Game.query.all()}
     return scores, games
 
@@ -84,7 +112,8 @@ def _build_export_workbook(scores, games):
 @jwt_required()
 def my_progress():
     user_id = get_jwt_identity()
-    scores, games = _load_scores_and_games(user_id)
+    start_date, end_date = _parse_date_range()
+    scores, games = _load_scores_and_games(user_id, start_date, end_date)
     return jsonify(_build_summary(scores, games))
 
 
@@ -92,7 +121,8 @@ def my_progress():
 @jwt_required()
 def export_progress():
     user_id = get_jwt_identity()
-    scores, games = _load_scores_and_games(user_id)
+    start_date, end_date = _parse_date_range()
+    scores, games = _load_scores_and_games(user_id, start_date, end_date)
     wb = _build_export_workbook(scores, games)
 
     buffer = io.BytesIO()

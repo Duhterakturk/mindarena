@@ -93,7 +93,7 @@ PostgreSQL'de görünür; veli hesabı bir öğrenciyi e-postayla bağlar ve
 ilerlemesini görür; öğretmen hesabı tüm öğrencilerin özetini görür; ilerleme
 Excel olarak indirilebilir. **19 oyun modülünün tamamı** tarayıcıda tek tek
 doğrulandı (render + rastgele üretim + çözüm kontrolü + skor kaydı).
-`npm run build`, backend `pytest` (29 test) ve frontend `vitest` (13 test)
+`npm run build`, backend `pytest` (39 test) ve frontend `vitest` (13 test)
 hatasız tamamlanıyor.
 
 ## Testleri Çalıştırma
@@ -199,8 +199,11 @@ kısıtlarını koruduğunu doğrular.
     öğrenci hesabını kendine bağlar (`User.parent_id`); `GET
     /api/users/children` ve `GET /api/progress/child/<id>` (sahiplik
     doğrulamalı) ile çocuğun ilerlemesini görür. Frontend: `pages/ParentPanel.jsx`.
-  - Öğretmen: `GET /api/progress/students` tüm öğrencilerin özet istatistiğini
-    döner. Frontend: `pages/TeacherPanel.jsx` (puana göre sıralı tablo).
+  - Öğretmen: `POST /api/classrooms` ile sınıf oluşturur (katılım kodu döner),
+    `GET /api/progress/students` **yalnızca kendi sınıflarındaki**
+    öğrencilerin özet istatistiğini döner (bkz. aşağıdaki "Sınıf Modeli"
+    notu). Frontend: `pages/TeacherPanel.jsx` (sınıf seçici + puana göre
+    sıralı tablo).
   - Rol bazlı erişim hem backend'de (403 kontrolü) hem frontend'de
     (`ProtectedRoute`'un `role` prop'u) uygulanır; her ikisi de test edildi
     (öğrenci hesabıyla `/teacher`'a erişim → "Bu sayfaya erişim yetkiniz yok").
@@ -239,14 +242,6 @@ Bu geçişte yapılanlar:
   `db.session.get(Model, id)`'ye taşındı (SQLAlchemy 2.0 uyumluluğu).
 
 Bilinen sınırlamalar (bir sonraki geçiş için):
-- **Öğretmen paneli sınıf/okul ile sınırlı değil**: herhangi bir `teacher`
-  hesabı platformdaki *tüm* öğrencileri görebilir (Classroom/enrollment
-  modeli yok). Gerçek bir okul dağıtımı için önce sınıf ataması eklenmeli.
-- **npm audit**: `esbuild` (yalnızca `npm run dev` sırasında, üretim
-  build'ini etkilemiyor) ve `react-router-dom` (v6→v7 majör sürüm gerektiren
-  bir açık yönlendirme CVE'si) için düzeltmeler mevcut ama bu geçişte
-  uygulanmadı — v7'ye geçiş, kapsamlı regresyon testi gerektirecek riskli bir
-  majör sürüm atlaması olduğundan bilinçli olarak ertelendi.
 - **Rate limiting depolama**: Flask-Limiter varsayılan bellek-içi (in-memory)
   depolamayı kullanıyor; bu tek işlemli (`gunicorn -w 1`) dağıtımlar için
   yeterlidir ama çok worker'lı üretimde paylaşılan durum için Redis gibi bir
@@ -258,13 +253,74 @@ Bilinen sınırlamalar (bir sonraki geçiş için):
   yapısal olarak her zaman geçerli tek bir örnek üretir (bkz. yukarıdaki
   "Bulmaca üretici" notları); gerçek bir "birden fazla geçerli çözüm garantisi
   + tekillik" çözücüsü değildir.
-- CI/CD boru hattı (GitHub Actions vb.) henüz kurulmadı.
+- **npm audit**: `esbuild`'in geliştirme sunucusuna özgü bir açığı kalıyor
+  (`npm run dev` sırasında, üretim build'ini etkilemiyor); düzeltmesi Vite 8'e
+  majör bir geçiş gerektiriyor. `react-router-dom` CVE'si v7.18.2'ye
+  yükseltilerek zaten çözüldü (bkz. aşağıdaki not).
+- PDF export yok, yalnızca Excel (`.xlsx`); PDF için ek bir kütüphane
+  (ör. `reportlab` veya HTML→PDF) gerekir.
+
+## Sınıf Modeli ve İkinci Sertleştirme Geçişi
+
+İlk teslimattan sonra kullanıcının "eksiksiz devam et" talebiyle şu ek işler
+tamamlandı:
+
+- **Sınıf (Classroom) modeli** (`backend/app/models/classroom.py`):
+  öğretmenler `POST /api/classrooms` ile bir sınıf ve rastgele 6 haneli bir
+  katılım kodu oluşturur; öğrenciler `POST /api/classrooms/join` ile bu kodla
+  katılır. `GET /api/progress/students` artık **yalnızca o öğretmenin
+  sınıflarındaki öğrencileri** döner — önceki geçişte tüm `teacher`
+  hesaplarının platformdaki her öğrenciyi görebilmesi gerçek bir gizlilik
+  açığıydı, bu geçişte kapatıldı. `TeacherPanel.jsx` sınıf oluşturma/seçme
+  arayüzü kazandı, `Dashboard.jsx`'e öğrenciler için "Sınıfa Katıl" bileşeni
+  eklendi (`ClassroomJoin.jsx`).
+  - Geliştirme sırasında `Classroom.students` ilişkisinde SQLAlchemy
+    `AmbiguousForeignKeysError` hatası bulundu ve düzeltildi (`users` ve
+    `classrooms` tabloları arasında iki farklı FK olduğundan
+    `foreign_keys="User.classroom_id"` açıkça belirtilmesi gerekiyordu) — bu
+    hata yeni yazılan `test_classrooms.py` testleri sayesinde hemen
+    yakalandı.
+  - Artık kullanılmayan/gizlilik açısından tutarsız hale gelen
+    `GET /api/users/students` (sınıf kısıtlaması olmadan tüm öğrencileri
+    listeleyen eski uç nokta) tamamen kaldırıldı.
+- **`react-router-dom` v6 → v7.18.2 yükseltmesi**: CVE GHSA-wrjc-x8rr-h8h6
+  (açık yönlendirme) çözüldü. Yükseltme öncesi kod tabanındaki kullanım
+  taranıp yalnızca `BrowserRouter`/`Routes`/`Route`/`Link`/`Navigate`/
+  `useNavigate`/`useParams` (v7'de değişmeyen "declarative mode" API'leri)
+  kullanıldığı doğrulandı; ardından temiz bir git klonunda `pytest` +
+  `vitest` + `npm run build` ve tarayıcıda tüm rotaların (ana sayfa, oyun
+  listesi/detayı, giriş/kayıt, korumalı yönlendirme, çıkış) manuel regresyon
+  testi yapıldı.
+- **CI/CD**: `.github/workflows/ci.yml` her push/PR'da backend `pytest`'i ve
+  frontend `vitest` + `npm run build`'i çalıştırır. Bu depo `git init` ile
+  yerel olarak sürüm kontrolüne alındı ve ilk commit yapıldı; workflow'un
+  fiilen GitHub Actions üzerinde çalışması için depo bir GitHub uzak
+  sunucusuna push edilmelidir (bu geçişte push YAPILMADI — kullanıcı onayı
+  gerektirir).
+- **Rozet toast bildirimi**: `api/games.js`'deki `submitScore()`, backend'in
+  döndürdüğü `new_badges` doluysa bir `window` `CustomEvent`
+  (`mindarena:badges-earned`) yayınlar; `App.jsx`'e tek sefer mount edilen
+  `BadgeToastHost.jsx` bunu dinleyip sağ altta 5 saniyelik bir toast
+  gösterir. Bu tasarım sayesinde **19 oyun bileşeninin hiçbiri
+  değiştirilmeden** rozet bildirimi eklendi — tarayıcıda Numbers oyunuyla
+  uçtan uca doğrulandı (üç rozet aynı anda tetiklendi ve gösterildi).
+- **İlerleme raporunda tarih aralığı filtreleme**: `GET /api/progress/me` ve
+  `GET /api/progress/export`, `start_date`/`end_date` (YYYY-MM-DD) query
+  parametrelerini kabul eder. `ProgressSummary.jsx`'e başlangıç/bitiş tarih
+  seçiciler eklendi.
+  - Bunu geliştirirken tarayıcıda gerçek bir **yarış durumu (race condition)**
+    bulundu: art arda hızlı tarih değişikliklerinde eski bir isteğin geç
+    gelen yanıtı, daha yeni bir isteğin sonucunun üzerine yazabiliyordu.
+    `useEffect`'e bir `cancelled` bayrağıyla temizleme (cleanup) fonksiyonu
+    eklenerek düzeltildi ve tekrar tarayıcıda doğrulandı.
+- Tüm bu değişiklikler sonrası **39 backend testi** (29 → 37 → 39, sınıf ve
+  tarih aralığı testleri eklendi) ve **13 frontend testi** hâlâ hatasız
+  geçiyor.
 
 ## Sırada Ne Var
 
-1. Sınıf/okul modeli ekleyip öğretmen panelini buna göre kısıtlamak.
-2. `react-router-dom` v7'ye kontrollü bir geçiş (regresyon testleriyle).
-3. Rol panellerine gerçek zamanlı bildirim (yeni rozet kazanıldığında
-   oyun içi toast) ve daha zengin raporlama (PDF export, tarih aralığı
-   filtreleme).
-4. CI/CD boru hattı (her push'ta `pytest` + `vitest` + `npm run build`).
+1. Bu depoyu bir GitHub uzak sunucusuna push edip CI/CD workflow'unun
+   fiilen çalıştığını doğrulamak (kullanıcı onayı gerektirir).
+2. `esbuild`/Vite 8 yükseltmesi (yalnızca dev sunucusu açığı, düşük öncelik).
+3. E-posta doğrulama ve şifre sıfırlama akışı.
+4. PDF export (şu an yalnızca Excel).

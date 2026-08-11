@@ -33,24 +33,38 @@ function BarChart({ perGame, lang }) {
  * İlerleme özeti (stat kartları + grafik). `progress` verisi dışarıdan
  * verilmezse kendi kullanıcısının ilerlemesini (`/progress/me`) getirir —
  * böylece hem Panelim sayfasında hem de veli/öğretmen görünümlerinde
- * (dışarıdan `progress` prop'u geçirilerek) yeniden kullanılabilir.
+ * (dışarıdan `progress` prop'u geçirilerek) yeniden kullanılabilir. Tarih
+ * aralığı filtresi yalnızca kendi ilerlemesi görüntülenirken (`showExport`)
+ * gösterilir.
  */
 export default function ProgressSummary({ progress: externalProgress, showExport = true }) {
   const { i18n } = useTranslation();
   const [ownProgress, setOwnProgress] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   useEffect(() => {
     if (externalProgress) return;
-    fetchMyProgress()
-      .then(setOwnProgress)
+    // Yarışan istekleri (ör. tarih alanlarına art arda yazarken) engellemek
+    // için: yalnızca bu efekt hâlâ "güncel" ise (temizlenmediyse) sonucu
+    // uygula — geç gelen eski bir yanıt, daha yeni bir isteğin sonucunun
+    // üzerine yazmasın.
+    let cancelled = false;
+    fetchMyProgress({ startDate, endDate })
+      .then((data) => {
+        if (!cancelled) setOwnProgress(data);
+      })
       .catch(() => {});
-  }, [externalProgress]);
+    return () => {
+      cancelled = true;
+    };
+  }, [externalProgress, startDate, endDate]);
 
   async function handleExport() {
     setExporting(true);
     try {
-      await downloadProgressExport();
+      await downloadProgressExport({ startDate, endDate });
     } catch {
       // Sessizce yoksay; kullanıcı giriş yapmamış olabilir.
     } finally {
@@ -63,6 +77,40 @@ export default function ProgressSummary({ progress: externalProgress, showExport
 
   return (
     <div>
+      {showExport && (
+        <div className="flex flex-wrap items-end gap-3 mb-4 text-sm">
+          <label className="flex flex-col text-xs text-slate-500">
+            Başlangıç
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="border border-slate-200 rounded-lg px-2 py-1 mt-1"
+            />
+          </label>
+          <label className="flex flex-col text-xs text-slate-500">
+            Bitiş
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="border border-slate-200 rounded-lg px-2 py-1 mt-1"
+            />
+          </label>
+          {(startDate || endDate) && (
+            <button
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+              }}
+              className="text-xs text-slate-500 hover:underline pb-2"
+            >
+              Filtreyi temizle
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-brand-50 rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-brand-700">{progress.total_completed}</p>
