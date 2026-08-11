@@ -1,0 +1,84 @@
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
+from app.extensions import db
+from app.models import Classroom, User, UserRole
+
+classrooms_bp = Blueprint("classrooms", __name__, url_prefix="/api/classrooms")
+
+
+@classrooms_bp.post("")
+@jwt_required()
+def create_classroom():
+    teacher = db.session.get(User, get_jwt_identity())
+    if not teacher or teacher.role != UserRole.TEACHER:
+        return jsonify({"error": "Bu uç nokta yalnızca öğretmen rolü içindir"}), 403
+
+    data = request.get_json(force=True) or {}
+    name = (data.get("name") or "").strip()
+    if not name:
+        return jsonify({"error": "name zorunludur"}), 400
+
+    classroom = Classroom(name=name, teacher_id=teacher.id)
+    db.session.add(classroom)
+    db.session.commit()
+    return jsonify(classroom.to_dict(include_join_code=True)), 201
+
+
+@classrooms_bp.get("/mine")
+@jwt_required()
+def my_classrooms():
+    teacher = db.session.get(User, get_jwt_identity())
+    if not teacher or teacher.role != UserRole.TEACHER:
+        return jsonify({"error": "Bu uç nokta yalnızca öğretmen rolü içindir"}), 403
+
+    classrooms = Classroom.query.filter_by(teacher_id=teacher.id).order_by(Classroom.created_at).all()
+    return jsonify([c.to_dict(include_join_code=True) for c in classrooms])
+
+
+@classrooms_bp.get("/<int:classroom_id>/students")
+@jwt_required()
+def classroom_students(classroom_id):
+    teacher = db.session.get(User, get_jwt_identity())
+    if not teacher or teacher.role != UserRole.TEACHER:
+        return jsonify({"error": "Bu uç nokta yalnızca öğretmen rolü içindir"}), 403
+
+    classroom = db.session.get(Classroom, classroom_id)
+    if not classroom or classroom.teacher_id != teacher.id:
+        return jsonify({"error": "Bu sınıf size ait değil"}), 403
+
+    students = classroom.students.order_by(User.full_name).all()
+    return jsonify([s.to_dict() for s in students])
+
+
+@classrooms_bp.post("/join")
+@jwt_required()
+def join_classroom():
+    student = db.session.get(User, get_jwt_identity())
+    if not student or student.role != UserRole.STUDENT:
+        return jsonify({"error": "Bu uç nokta yalnızca öğrenci rolü içindir"}), 403
+
+    data = request.get_json(force=True) or {}
+    join_code = (data.get("join_code") or "").strip().upper()
+    if not join_code:
+        return jsonify({"error": "join_code zorunludur"}), 400
+
+    classroom = Classroom.query.filter_by(join_code=join_code).first()
+    if not classroom:
+        return jsonify({"error": "Geçersiz sınıf kodu"}), 404
+
+    student.classroom_id = classroom.id
+    db.session.commit()
+    return jsonify(student.to_dict())
+
+
+@classrooms_bp.post("/leave")
+@jwt_required()
+def leave_classroom():
+    student = db.session.get(User, get_jwt_identity())
+    if not student or student.role != UserRole.STUDENT:
+        return jsonify({"error": "Bu uç nokta yalnızca öğrenci rolü içindir"}), 403
+
+    student.classroom_id = None
+    db.session.commit()
+    return jsonify(student.to_dict())

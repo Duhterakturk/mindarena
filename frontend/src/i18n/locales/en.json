@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "MindArena"
+  },
+  "nav": {
+    "home": "Home",
+    "games": "Games",
+    "dashboard": "Dashboard",
+    "login": "Log In",
+    "register": "Sign Up",
+    "logout": "Log Out"
+  },
+  "home": {
+    "title": "Prepare for TaZOf with Brain Games",
+    "subtitle": "Build logic skills from 2nd grade onward with fun, professional mind games.",
+    "cta": "Browse Games"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "full_name": "Full Name",
+    "role": "Role",
+    "role_student": "Student",
+    "role_parent": "Parent",
+    "role_teacher": "Teacher",
+    "grade_level": "Grade Level",
+    "login_button": "Log In",
+    "register_button": "Sign Up",
+    "no_account": "Don't have an account?",
+    "have_account": "Already have an account?"
+  },
+  "games": {
+    "title": "Games",
+    "play": "Play",
+    "min_grade": "Min. Grade"
+  }
+}

@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mindarena
+      POSTGRES_PASSWORD: mindarena
+      POSTGRES_DB: mindarena
+    ports:
+      - "5432:5432"
+    volumes:
+      - mindarena_pgdata:/var/lib/postgresql/data
+
+volumes:
+  mindarena_pgdata:

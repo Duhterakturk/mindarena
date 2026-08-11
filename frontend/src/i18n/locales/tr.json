@@ -1,0 +1,37 @@
+{
+  "app": {
+    "name": "MindArena"
+  },
+  "nav": {
+    "home": "Ana Sayfa",
+    "games": "Oyunlar",
+    "dashboard": "Panelim",
+    "login": "Giriş Yap",
+    "register": "Kayıt Ol",
+    "logout": "Çıkış Yap"
+  },
+  "home": {
+    "title": "Akıl Oyunlarıyla TaZOf'a Hazırlan",
+    "subtitle": "2. sınıftan itibaren eğlenceli ve profesyonel akıl oyunlarıyla mantık becerilerini geliştir.",
+    "cta": "Oyunlara Göz At"
+  },
+  "auth": {
+    "email": "E-posta",
+    "password": "Şifre",
+    "full_name": "Ad Soyad",
+    "role": "Rol",
+    "role_student": "Öğrenci",
+    "role_parent": "Veli",
+    "role_teacher": "Öğretmen",
+    "grade_level": "Sınıf Seviyesi",
+    "login_button": "Giriş Yap",
+    "register_button": "Kayıt Ol",
+    "no_account": "Hesabın yok mu?",
+    "have_account": "Zaten hesabın var mı?"
+  },
+  "games": {
+    "title": "Oyunlar",
+    "play": "Oyna",
+    "min_grade": "Min. Sınıf"
+  }
+}
