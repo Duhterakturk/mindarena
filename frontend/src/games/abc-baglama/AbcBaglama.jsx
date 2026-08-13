@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
+import { isConnectionPuzzleSolved } from "../common/pathValidation";
 import { generate } from "./puzzles";
 
 export default function AbcBaglama() {
@@ -20,6 +21,7 @@ export default function AbcBaglama() {
       cols={cols}
       solutionSet={solutionSet}
       fixedCells={fixedCells}
+      validate={isConnectionPuzzleSolved}
       markSymbol="—"
       onRegenerate={() => setGame(generate(difficulty))}
       difficulty={difficulty}

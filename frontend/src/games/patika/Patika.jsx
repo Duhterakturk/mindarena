@@ -1,5 +1,6 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
+import { isSequentialPathSolved } from "../common/pathValidation";
 import { generate } from "./puzzles";
 
 export default function Patika() {
@@ -20,6 +21,7 @@ export default function Patika() {
       cols={cols}
       solutionSet={solutionSet}
       fixedCells={fixedCells}
+      validate={isSequentialPathSolved}
       markSymbol="•"
       onRegenerate={() => setGame(generate(difficulty))}
       difficulty={difficulty}

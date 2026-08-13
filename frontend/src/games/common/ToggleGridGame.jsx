@@ -30,6 +30,7 @@ export default function ToggleGridGame({
   onRegenerate,
   difficulty,
   onDifficultyChange,
+  validate,
 }) {
   const [marked, setMarked] = useState(() => new Set());
   const [status, setStatus] = useState("playing");
@@ -66,15 +67,20 @@ export default function ToggleGridGame({
   }
 
   function checkSolution() {
-    const target = new Set(solutionSet);
-    const cellsToCheck = [];
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        const key = `${r}-${c}`;
-        if (fixedCells[key] === undefined) cellsToCheck.push(key);
+    let isCorrect;
+    if (validate) {
+      isCorrect = validate(marked, fixedCells);
+    } else {
+      const target = new Set(solutionSet);
+      const cellsToCheck = [];
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const key = `${r}-${c}`;
+          if (fixedCells[key] === undefined) cellsToCheck.push(key);
+        }
       }
+      isCorrect = cellsToCheck.every((key) => marked.has(key) === target.has(key));
     }
-    const isCorrect = cellsToCheck.every((key) => marked.has(key) === target.has(key));
     setStatus(isCorrect ? "correct" : "incorrect");
     if (isCorrect) clearInterval(timerRef.current);
   }
