@@ -9,3 +9,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <App />
   </React.StrictMode>
 );
+
+// Service worker'ı yalnızca üretim build'inde kaydet — Vite'ın geliştirme
+// sunucusundaki modül yeniden yükleme/HMR akışıyla çakışmaması için.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}
