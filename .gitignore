@@ -16,3 +16,6 @@ frontend/.env
 .DS_Store
 .vscode/
 .idea/
+
+# Android imzalama anahtarı ve paketi — ASLA commit edilmemeli (özel anahtar + şifre içerir)
+android-package/

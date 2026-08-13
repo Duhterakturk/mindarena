@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.mindarena.app",
+        "sha256_cert_fingerprints": ["E2:00:08:20:13:7C:5E:99:A6:91:E2:77:AD:AB:11:EB:02:F2:F2:27:85:02:8F:54:9C:FB:E3:8F:B8:A3:74:F1"]
+      }
+    }]
