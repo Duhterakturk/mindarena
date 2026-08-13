@@ -145,11 +145,16 @@ kısıtlarını koruduğunu doğrular.
   - `relabelGrid(base, n)` — yalnızca rakam yeniden etiketleme (Bölgesel
     Sudoku'nun düzensiz bölgeleri sabit kaldığından satır/sütun permütasyonu
     güvenli değildir; bölge geçerliliğini koruyan tek dönüşüm budur).
-  - Kakuro, kasıtlı olarak `generateLatinSquare` KULLANMAZ: 1-4 aralığında bir
-    Latin kare her satır/sütunu her zaman 10'a topladığından ipuçları bilgi
-    vermez hale gelirdi. Bunun yerine `kakuro/puzzles.js` içindeki
-    `generateKakuroSolution()` ret örneklemesiyle (rejection sampling) 1-9
-    aralığından ayrık satır/sütun değerleri üretir.
+  - Kakuro, kasıtlı olarak `generateLatinSquare` KULLANMAZ (küçük sabit
+    aralıklı bir Latin kare ipuçlarını bilgisiz hale getirirdi). Bunun yerine
+    `kakuro/puzzles.js` içindeki `generateKakuroSolution(n)`, tam bir 9×9
+    Latin kareden (`generateLatinSquare(9)`) rastgele `n` satır/sütunluk bir
+    alt küme alır — zaten satır/sütun içi ayrık olan bir kareden alt küme
+    almak matematiksel olarak ayrıklığı korur, bu yüzden n büyüdükçe (zorluk
+    arttıkça) ret örneklemesinin (rejection sampling) yaşadığı yüksek
+    başarısızlık oranı sorunu ortadan kalkar (n=6'da ret örneklemesiyle %85,
+    n=8'de %100 başarısızlık gözlemlenmişti; alt küme yaklaşımıyla n=4/6/8/9
+    için 0 başarısızlık).
   - Kalan 11 oyun da (Amiral Battı, Yıldız Savaşları, Çit, Patika, ABC Bağlama,
     Pentominolar, Kare Karalamaca, Sihirli Piramit, Metaforms, Numbers,
     Colours) artık her oynanışta gerçek zamanlı üretiliyor — her biri kendi
@@ -207,6 +212,43 @@ kısıtlarını koruduğunu doğrular.
   - Rol bazlı erişim hem backend'de (403 kontrolü) hem frontend'de
     (`ProtectedRoute`'un `role` prop'u) uygulanır; her ikisi de test edildi
     (öğrenci hesabıyla `/teacher`'a erişim → "Bu sayfaya erişim yetkiniz yok").
+
+## Zorluk Kademesi ve Kilit Sistemi
+
+**19 oyunun tamamı** artık Kolay/Orta/Zor olmak üzere 3 zorluk kademesine
+sahip; her kademe, aynı prosedürel üreticinin farklı parametrelerle (ızgara
+boyutu, verilen ipucu sayısı, tur/şekil sayısı vb.) çağrılmasıyla elde edilir
+— sabit bir soru bankası yerine **sonsuz, kendi kendini yenileyen** bir
+üretim modeli kullanılır.
+
+- **Kilit mekaniği** (`backend/app/services/difficulty.py`,
+  `compute_unlocked_difficulties`): bir sonraki kademe, mevcut kademede en az
+  `UNLOCK_THRESHOLD` (5) tamamlanmış (`Score.completed = True`) bulmaca
+  gerektirir. Yeni bir veritabanı tablosu eklenmedi — ilerleme, mevcut
+  `Score` tablosundan anlık hesaplanır. Uç nokta: `GET
+  /api/progress/unlocked/<game_slug>`.
+- **Frontend:** `components/games/DifficultyPicker.jsx` paylaşılan bileşeni
+  (kilit ikonu + ilerleme tooltip'i ile) tüm 19 oyunda kullanılır
+  (`frontend/src/api/difficulty.js`).
+- **Izgara boyutu değişimi ve render güvenliği:** Zorluk değişince bazı
+  oyunlarda ızgara boyutu da değişir (ör. Kakuro Kolay 4×4 → Zor 8×8). Bu,
+  React'te ciddi bir tuzağa yol açar: `puzzle`/`game` state'i değiştiğinde
+  `board` (veya `hEdges`/`vEdges`) state'ini yalnızca bir `useEffect` ile
+  sıfırlamak yetmez — efekt, commit SONRASI çalıştığından, React önce YENİ
+  (büyük) `puzzle` ile ESKİ (küçük) `board`'u birlikte render eder ve
+  `board[r][c]` erişimi `undefined` döndürüp uygulamayı çökertir. React'in
+  "state'i render sırasında ayarla" deseniyle (`if (puzzle !==
+  renderedPuzzle) { setRenderedPuzzle(puzzle); setBoard(...); }`) bu
+  SONRAKİ render'ı düzeltir, ama MEVCUT render'ın JSX'i hâlâ eski `board`'u
+  kullanmaya çalışıp yine çöker. Kalıcı çözüm: bu render'da kullanılacak
+  güvenli değeri ayrı bir yerel değişkende (`displayBoard`) tutup hem JSX'te
+  hem olay işleyicilerinde (`handleCellChange`, `checkSolution`) `board`
+  yerine onu kullanmak — bkz. `games/kakuro/Kakuro.jsx`,
+  `games/common/GridFillGame.jsx`, `games/carpmaca/Carpmaca.jsx`,
+  `games/sihirli-piramit/SihirliPiramit.jsx`, `games/cit/Cit.jsx`. Bu hata
+  yalnızca canlı tarayıcı testinde (Node seviyesi üretici testleri React'in
+  render döngüsünü tetiklemediğinden) yakalandı ve düzeltmeler tüm zorluk
+  geçişleri (büyüyen ve küçülen yönde) tarayıcıda doğrulandı.
 
 ## Üretim Dağıtımı
 
