@@ -1,5 +1,8 @@
-// Kare Karalamaca: 5x5 rastgele bir nonogram deseni. Her satır/sütun için
-// koşu uzunlukları (ör. [1,2]) ipucu olarak hesaplanır.
+// Kare Karalamaca: rastgele bir nonogram deseni. Her satır/sütun için koşu
+// uzunlukları (ör. [1,2]) ipucu olarak hesaplanır. Zorluk, ızgara boyutuyla
+// ölçeklenir.
+const SIZE_BY_DIFFICULTY = { easy: 5, medium: 7, hard: 9 };
+
 function runLengths(bits) {
   const runs = [];
   let count = 0;
@@ -15,7 +18,10 @@ function runLengths(bits) {
   return runs.length ? runs : [0];
 }
 
-export function generate(rows = 5, cols = 5, density = 0.45) {
+export function generate(difficulty = "easy") {
+  const rows = SIZE_BY_DIFFICULTY[difficulty] || 5;
+  const cols = rows;
+  const density = 0.45;
   let grid;
   do {
     grid = Array.from({ length: rows }, () =>
@@ -33,5 +39,5 @@ export function generate(rows = 5, cols = 5, density = 0.45) {
   const rowClues = grid.map((row) => runLengths(row));
   const colClues = Array.from({ length: cols }, (_, c) => runLengths(grid.map((row) => row[c])));
 
-  return { solutionSet, rowClues, colClues };
+  return { solutionSet, rowClues, colClues, size: rows };
 }

@@ -3,7 +3,13 @@ import ToggleGridGame from "../common/ToggleGridGame";
 import { generate } from "./puzzles";
 
 export default function Patika() {
-  const [{ solutionSet, fixedCells, rows, cols }, setGame] = useState(generate);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ solutionSet, fixedCells, rows, cols }, setGame] = useState(() => generate("easy"));
+
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setGame(generate(newDifficulty));
+  }
 
   return (
     <ToggleGridGame
@@ -15,7 +21,9 @@ export default function Patika() {
       solutionSet={solutionSet}
       fixedCells={fixedCells}
       markSymbol="•"
-      onRegenerate={() => setGame(generate())}
+      onRegenerate={() => setGame(generate(difficulty))}
+      difficulty={difficulty}
+      onDifficultyChange={handleDifficultyChange}
     />
   );
 }

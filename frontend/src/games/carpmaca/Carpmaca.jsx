@@ -9,7 +9,8 @@ function cloneBoard(grid) {
 
 export default function Carpmaca() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ rowHeaders, colHeaders, puzzle, solution }, setGame] = useState(() => generate("easy"));
+  const [game, setGame] = useState(() => generate("easy"));
+  const { rowHeaders, colHeaders, puzzle, solution } = game;
   const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
 
   const [board, setBoard] = useState(() => cloneBoard(puzzle));
@@ -18,6 +19,20 @@ export default function Carpmaca() {
   const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
+  // `game` değiştiğinde (zorlukla ızgara boyutu büyüyünce) `board`'u render
+  // SIRASINDA senkron sıfırla. `setBoard` yalnızca BİR SONRAKİ render'ı
+  // düzeltir — BU render'ın JSX'i hâlâ eski (küçük) `board` ile yeni (büyük)
+  // `rowHeaders`/`colHeaders`'ı kullanmaya çalışıp çökerdi. Bu yüzden bu
+  // render'da kullanılacak güvenli değeri `displayBoard` içinde tutuyoruz.
+  const [renderedGame, setRenderedGame] = useState(game);
+  let displayBoard = board;
+  if (game !== renderedGame) {
+    displayBoard = cloneBoard(puzzle);
+    setRenderedGame(game);
+    setBoard(displayBoard);
+    setStatus("playing");
+  }
+
   useEffect(() => {
     fetchGame("carpmaca")
       .then((g) => setGameId(g.id))
@@ -25,13 +40,11 @@ export default function Carpmaca() {
   }, []);
 
   useEffect(() => {
-    setBoard(cloneBoard(puzzle));
-    setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [puzzle]);
+  }, [game]);
 
   function handleDifficultyChange(newDifficulty) {
     setDifficulty(newDifficulty);
@@ -41,14 +54,14 @@ export default function Carpmaca() {
   function handleCellChange(row, col, value) {
     if (givenMask[row][col] || status === "correct") return;
     const digits = value.replace(/[^0-9]/g, "").slice(0, 3);
-    const next = cloneBoard(board);
+    const next = cloneBoard(displayBoard);
     next[row][col] = digits ? Number(digits) : 0;
     setBoard(next);
     setStatus("playing");
   }
 
   function checkSolution() {
-    const isCorrect = board.every((row, r) => row.every((val, c) => val === solution[r][c]));
+    const isCorrect = displayBoard.every((row, r) => row.every((val, c) => val === solution[r][c]));
     setStatus(isCorrect ? "correct" : "incorrect");
     if (isCorrect) clearInterval(timerRef.current);
   }
@@ -91,7 +104,7 @@ export default function Carpmaca() {
           <div key={`ch-${i}`} className={headerCell}>{v}</div>
         ))}
 
-        {board.map((row, r) => (
+        {displayBoard.map((row, r) => (
           <Fragment key={r}>
             <div key={`rh-${r}`} className={headerCell}>{rowHeaders[r]}</div>
             {row.map((val, c) => (

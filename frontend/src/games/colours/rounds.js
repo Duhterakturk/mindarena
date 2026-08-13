@@ -19,7 +19,10 @@ const WORD_TEXT = {
 
 const COLOR_NAMES = Object.keys(COLORS);
 
-function generateRounds(count = 6) {
+const ROUND_COUNT_BY_DIFFICULTY = { easy: 6, medium: 10, hard: 14 };
+
+function generateRounds(difficulty = "easy") {
+  const count = ROUND_COUNT_BY_DIFFICULTY[difficulty] || ROUND_COUNT_BY_DIFFICULTY.easy;
   const rounds = [];
   for (let i = 0; i < count; i++) {
     const [wordColor, inkColor] = shuffle(COLOR_NAMES).slice(0, 2);

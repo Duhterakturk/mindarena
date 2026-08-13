@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
 import { shuffle } from "../common/latinSquare";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
 
-function generateGrid() {
-  return shuffle(Array.from({ length: 16 }, (_, i) => i + 1));
+const SIZE_BY_DIFFICULTY = { easy: 4, medium: 5, hard: 6 };
+const CELL_SIZE = { 4: "w-14 h-14 text-lg", 5: "w-12 h-12 text-base", 6: "w-10 h-10 text-sm" };
+
+function generateGrid(difficulty) {
+  const n = SIZE_BY_DIFFICULTY[difficulty] || 4;
+  const total = n * n;
+  return { values: shuffle(Array.from({ length: total }, (_, i) => i + 1)), size: n, total };
 }
 
 export default function Numbers() {
-  const [grid, setGrid] = useState(generateGrid);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ values, size, total }, setGrid] = useState(() => generateGrid("easy"));
   const [next, setNext] = useState(1);
   const [wrongCell, setWrongCell] = useState(null);
   const [status, setStatus] = useState("playing"); // playing | correct | submitted
@@ -27,8 +34,10 @@ export default function Numbers() {
     return () => clearInterval(timerRef.current);
   }, [status]);
 
-  function newGame() {
-    setGrid(generateGrid());
+  function newGame(nextDifficulty) {
+    const d = nextDifficulty || difficulty;
+    setDifficulty(d);
+    setGrid(generateGrid(d));
     setNext(1);
     setWrongCell(null);
     setStatus("playing");
@@ -38,7 +47,7 @@ export default function Numbers() {
   function handleClick(value) {
     if (status !== "playing") return;
     if (value === next) {
-      if (next === 16) {
+      if (next === total) {
         setStatus("correct");
         clearInterval(timerRef.current);
       }
@@ -56,7 +65,7 @@ export default function Numbers() {
         game_id: gameId,
         points: Math.max(1000 - seconds, 100),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty,
         completed: true,
       });
       setStatus("submitted");
@@ -65,18 +74,24 @@ export default function Numbers() {
     }
   }
 
+  const cellSize = CELL_SIZE[size] || CELL_SIZE[4];
+
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">Numbers</h1>
+      <DifficultyPicker gameSlug="numbers" value={difficulty} onChange={newGame} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
-        1'den 16'ya kadar sayılara sırayla, olabildiğince hızlı tıkla.
+        1'den {total}'e kadar sayılara sırayla, olabildiğince hızlı tıkla.
       </p>
       <p className="text-slate-500 text-sm mb-4">
         Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")} — Sırada: {status === "playing" ? next : "-"}
       </p>
 
-      <div className="grid grid-cols-4 gap-1">
-        {grid.map((value) => {
+      <div
+        className="inline-grid gap-1 max-w-full"
+        style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+      >
+        {values.map((value) => {
           const done = value < next;
           const isWrong = wrongCell === value;
           return (
@@ -86,7 +101,8 @@ export default function Numbers() {
               onClick={() => handleClick(value)}
               disabled={done || status !== "playing"}
               className={[
-                "w-14 h-14 text-lg font-bold rounded border border-slate-300",
+                cellSize,
+                "font-bold rounded border border-slate-300",
                 done ? "bg-emerald-500 text-white" : "bg-white hover:bg-brand-50",
                 isWrong ? "bg-red-400 text-white" : "",
               ].join(" ")}
@@ -98,7 +114,7 @@ export default function Numbers() {
       </div>
 
       <button
-        onClick={newGame}
+        onClick={() => newGame()}
         className="mt-4 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
       >
         Yeni Bulmaca

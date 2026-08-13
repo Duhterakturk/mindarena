@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
-import { generateSudokuSolution, carvePuzzle, DIFFICULTY_LEVELS } from "../common/latinSquare";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { generateSudokuSolution, carvePuzzle } from "../common/latinSquare";
 
 const GIVENS_BY_DIFFICULTY = { easy: 40, medium: 32, hard: 26 };
 
@@ -84,22 +85,7 @@ export default function Sudoku() {
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">Sudoku</h1>
 
-      <div className="flex gap-2 mb-2">
-        {Object.entries(DIFFICULTY_LEVELS).map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => newPuzzle(key)}
-            className={[
-              "px-3 py-1 rounded-full text-xs font-semibold border",
-              difficulty === key
-                ? "bg-brand-500 text-white border-brand-500"
-                : "bg-white text-slate-600 border-slate-300 hover:bg-brand-50",
-            ].join(" ")}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <DifficultyPicker gameSlug="sudoku" value={difficulty} onChange={newPuzzle} />
 
       <p className="text-slate-500 text-sm mb-4">
         Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}

@@ -1,28 +1,31 @@
 import { describe, it, expect } from "vitest";
 import { generate } from "./puzzles";
 
+const EXPECTED_CELLS = { easy: 7, medium: 11, hard: 16 };
+const EXPECTED_SIZE = { easy: 5, medium: 6, hard: 7 };
+
 describe("Amiral Battı fleet generator", () => {
-  it("places exactly 7 ship cells with no two ships touching, across many trials", () => {
-    for (let i = 0; i < 300; i++) {
-      const { solutionSet, rowClues, colClues } = generate();
-      expect(solutionSet.length).toBe(7);
+  it("places the expected number of ship cells with no two ships touching, for every difficulty", () => {
+    for (const difficulty of ["easy", "medium", "hard"]) {
+      for (let i = 0; i < 100; i++) {
+        const { solutionSet, rowClues, colClues, rows, cols } = generate(difficulty);
+        expect(solutionSet.length).toBe(EXPECTED_CELLS[difficulty]);
+        expect(rows).toBe(EXPECTED_SIZE[difficulty]);
+        expect(cols).toBe(EXPECTED_SIZE[difficulty]);
 
-      const cells = solutionSet.map((key) => key.split("-").map(Number));
-      const cellSet = new Set(solutionSet);
+        const cellSet = new Set(solutionSet);
+        expect(cellSet.size).toBe(EXPECTED_CELLS[difficulty]);
+        expect(rowClues.reduce((a, b) => a + b, 0)).toBe(EXPECTED_CELLS[difficulty]);
+        expect(colClues.reduce((a, b) => a + b, 0)).toBe(EXPECTED_CELLS[difficulty]);
 
-      // Ships that are not the same cell must not be adjacent (incl. diagonally)
-      // unless they belong to a straight run (handled by construction) —
-      // verify no *different* ship touches another by checking clue totals.
-      expect(rowClues.reduce((a, b) => a + b, 0)).toBe(7);
-      expect(colClues.reduce((a, b) => a + b, 0)).toBe(7);
-
-      for (const [r, c] of cells) {
-        expect(r).toBeGreaterThanOrEqual(0);
-        expect(r).toBeLessThan(5);
-        expect(c).toBeGreaterThanOrEqual(0);
-        expect(c).toBeLessThan(5);
+        for (const key of solutionSet) {
+          const [r, c] = key.split("-").map(Number);
+          expect(r).toBeGreaterThanOrEqual(0);
+          expect(r).toBeLessThan(rows);
+          expect(c).toBeGreaterThanOrEqual(0);
+          expect(c).toBeLessThan(cols);
+        }
       }
-      expect(cellSet.size).toBe(7);
     }
   });
 });

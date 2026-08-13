@@ -1,25 +1,20 @@
-// Çit (Slitherlink), 2x2 hücrelik bir döngü bulmacası. Her hücredeki sayı, o
+// Çit (Slitherlink), NxN hücrelik bir döngü bulmacası. Her hücredeki sayı, o
 // hücreyi çevreleyen kaç kenarın çizili (döngünün parçası) olması gerektiğini
 // belirtir. Rastgele bir dikdörtgen alt-bölge seçilip onun sınırı döngü
 // olarak kullanılır — bir dikdörtgenin sınırı her zaman geçerli, basit
 // (kesişmeyen) kapalı bir döngü olduğundan bu yöntem her seferinde geçerli
-// bir bulmaca üretir.
-export function generate() {
-  // Hücre koordinatları 0-1 aralığında (2x2 hücre ızgarası)
-  const r1 = Math.floor(Math.random() * 2);
-  const r2 = r1 + Math.floor(Math.random() * (2 - r1));
-  const c1 = Math.floor(Math.random() * 2);
-  const c2 = c1 + Math.floor(Math.random() * (2 - c1));
+// bir bulmaca üretir. Zorluk, ızgara boyutuyla ölçeklenir.
+const SIZE_BY_DIFFICULTY = { easy: 2, medium: 3, hard: 4 };
 
-  const horizontalSolution = [
-    [false, false],
-    [false, false],
-    [false, false],
-  ];
-  const verticalSolution = [
-    [false, false, false],
-    [false, false, false],
-  ];
+export function generate(difficulty = "easy") {
+  const n = SIZE_BY_DIFFICULTY[difficulty] || 2;
+  const r1 = Math.floor(Math.random() * n);
+  const r2 = r1 + Math.floor(Math.random() * (n - r1));
+  const c1 = Math.floor(Math.random() * n);
+  const c2 = c1 + Math.floor(Math.random() * (n - c1));
+
+  const horizontalSolution = Array.from({ length: n + 1 }, () => Array(n).fill(false));
+  const verticalSolution = Array.from({ length: n }, () => Array(n + 1).fill(false));
 
   for (let c = c1; c <= c2; c++) {
     horizontalSolution[r1][c] = true;
@@ -30,12 +25,9 @@ export function generate() {
     verticalSolution[r][c2 + 1] = true;
   }
 
-  const clues = [
-    [0, 0],
-    [0, 0],
-  ];
-  for (let i = 0; i < 2; i++) {
-    for (let j = 0; j < 2; j++) {
+  const clues = Array.from({ length: n }, () => Array(n).fill(0));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
       let count = 0;
       if (horizontalSolution[i][j]) count++;
       if (horizontalSolution[i + 1][j]) count++;
@@ -45,5 +37,5 @@ export function generate() {
     }
   }
 
-  return { clues, horizontalSolution, verticalSolution };
+  return { clues, horizontalSolution, verticalSolution, size: n };
 }

@@ -15,12 +15,28 @@ function cellSizeClass(size) {
 
 export default function Kakuro() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ grid, fullSolution, size }, setPuzzle] = useState(() => generate("easy"));
+  const [puzzle, setPuzzle] = useState(() => generate("easy"));
+  const { grid, fullSolution, size } = puzzle;
   const [board, setBoard] = useState(() => emptyBoard(size));
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
+
+  // `puzzle` değiştiğinde (zorlukla ızgara boyutu büyüyünce) `board`'u render
+  // SIRASINDA senkron sıfırla. `setBoard` çağrısı yalnızca BİR SONRAKİ render'ı
+  // düzeltir — bu render'ın JSX'i hâlâ eski (küçük) `board` ile yeni (büyük)
+  // `grid`'i birlikte kullanmaya çalışır ve çöker. Bu yüzden bu render'da
+  // kullanılacak güvenli değeri ayrı bir değişkende (`displayBoard`) tutuyoruz
+  // (canlı testte yakalanan çökme buydu).
+  const [renderedPuzzle, setRenderedPuzzle] = useState(puzzle);
+  let displayBoard = board;
+  if (puzzle !== renderedPuzzle) {
+    displayBoard = emptyBoard(size);
+    setRenderedPuzzle(puzzle);
+    setBoard(displayBoard);
+    setStatus("playing");
+  }
 
   useEffect(() => {
     fetchGame("kakuro")
@@ -29,13 +45,11 @@ export default function Kakuro() {
   }, []);
 
   useEffect(() => {
-    setBoard(emptyBoard(size));
-    setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [grid, size]);
+  }, [puzzle]);
 
   function handleDifficultyChange(newDifficulty) {
     setDifficulty(newDifficulty);
@@ -45,7 +59,7 @@ export default function Kakuro() {
   function handleCellChange(row, col, value) {
     if (status === "correct") return;
     const digit = value.replace(/[^1-9]/g, "").slice(-1);
-    const next = board.map((r) => [...r]);
+    const next = displayBoard.map((r) => [...r]);
     next[row][col] = digit ? Number(digit) : 0;
     setBoard(next);
     setStatus("playing");
@@ -53,7 +67,7 @@ export default function Kakuro() {
 
   function checkSolution() {
     const isCorrect = grid.every((row, r) =>
-      row.every((cell, c) => cell.type !== "white" || board[r][c] === fullSolution[r][c])
+      row.every((cell, c) => cell.type !== "white" || displayBoard[r][c] === fullSolution[r][c])
     );
     setStatus(isCorrect ? "correct" : "incorrect");
     if (isCorrect) clearInterval(timerRef.current);
@@ -112,7 +126,7 @@ export default function Kakuro() {
             return (
               <input
                 key={`${r}-${c}`}
-                value={board[r][c] || ""}
+                value={displayBoard[r][c] || ""}
                 onChange={(e) => handleCellChange(r, c, e.target.value)}
                 readOnly={status === "correct"}
                 className={`${cellSize} text-center border border-slate-300 bg-white focus:outline-none focus:bg-brand-100`}

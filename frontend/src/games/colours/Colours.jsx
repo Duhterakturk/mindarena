@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { COLORS, generateRounds } from "./rounds";
 
 export default function Colours() {
-  const [rounds, setRounds] = useState(() => generateRounds());
+  const [difficulty, setDifficulty] = useState("easy");
+  const [rounds, setRounds] = useState(() => generateRounds("easy"));
   const [roundIndex, setRoundIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [feedback, setFeedback] = useState(null); // "right" | "wrong" | null
@@ -24,8 +26,10 @@ export default function Colours() {
     return () => clearInterval(timerRef.current);
   }, [status]);
 
-  function newGame() {
-    setRounds(generateRounds());
+  function newGame(nextDifficulty) {
+    const d = nextDifficulty || difficulty;
+    setDifficulty(d);
+    setRounds(generateRounds(d));
     setRoundIndex(0);
     setCorrectCount(0);
     setFeedback(null);
@@ -58,7 +62,7 @@ export default function Colours() {
         game_id: gameId,
         points: Math.round((correctCount / rounds.length) * 1000),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty,
         completed: true,
       });
       setStatus("submitted");
@@ -72,6 +76,7 @@ export default function Colours() {
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">Colours</h1>
+      <DifficultyPicker gameSlug="colours" value={difficulty} onChange={newGame} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
         Kelimenin anlamına değil, yazıldığı RENGE göre doğru düğmeye bas.
       </p>
@@ -120,7 +125,7 @@ export default function Colours() {
               Skoru Kaydet
             </button>
             <button
-              onClick={newGame}
+              onClick={() => newGame()}
               className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
             >
               Yeni Bulmaca

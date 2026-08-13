@@ -40,16 +40,31 @@ export default function GridFillGame({
   const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
+  // `puzzle` referansı değiştiğinde (ör. zorluk değişimiyle ızgara boyutu
+  // büyüdüğünde) `board`'u render SIRASINDA senkron olarak sıfırlarız (React'ın
+  // "prop değiştiğinde state sıfırlama" deseni). `setBoard` çağrısı yalnızca
+  // BİR SONRAKİ render'ı düzeltir — BU render'ın JSX'i hâlâ eski (küçük)
+  // `board` ile yeni (büyük) `puzzle`'ı birlikte kullanmaya çalışıp çökerdi
+  // (canlı testte yakalandı). Bu yüzden bu render'da kullanılacak güvenli
+  // değeri `displayBoard` içinde tutuyoruz.
+  const [renderedPuzzle, setRenderedPuzzle] = useState(puzzle);
+  let displayBoard = board;
+  if (puzzle !== renderedPuzzle) {
+    displayBoard = cloneBoard(puzzle);
+    setRenderedPuzzle(puzzle);
+    setBoard(displayBoard);
+    setStatus("playing");
+  }
+
   useEffect(() => {
     fetchGame(slug)
       .then((g) => setGameId(g.id))
       .catch(() => {});
   }, [slug]);
 
-  // `puzzle` referansı değiştiğinde (ör. "Yeni Bulmaca") tahtayı ve durumu sıfırla.
+  // Süreyi de `puzzle` değiştiğinde sıfırla (şekil-bağımsız, bu yüzden
+  // gecikmeli bir efekt burada güvenlidir).
   useEffect(() => {
-    setBoard(cloneBoard(puzzle));
-    setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -60,14 +75,14 @@ export default function GridFillGame({
     if (givenMask[row][col] || status === "correct") return;
     const re = new RegExp(`[^1-${maxDigit}]`, "g");
     const digit = value.replace(re, "").slice(-1);
-    const next = cloneBoard(board);
+    const next = cloneBoard(displayBoard);
     next[row][col] = digit ? Number(digit) : 0;
     setBoard(next);
     setStatus("playing");
   }
 
   function checkSolution() {
-    const isCorrect = board.every((row, r) => row.every((val, c) => val === solution[r][c]));
+    const isCorrect = displayBoard.every((row, r) => row.every((val, c) => val === solution[r][c]));
     setStatus(isCorrect ? "correct" : "incorrect");
     if (isCorrect) clearInterval(timerRef.current);
   }
@@ -103,7 +118,7 @@ export default function GridFillGame({
         className="inline-grid border-2 border-slate-700 max-w-full overflow-x-auto"
         style={{ gridTemplateColumns: `repeat(${puzzle[0].length}, minmax(0, 1fr))` }}
       >
-        {board.map((row, r) =>
+        {displayBoard.map((row, r) =>
           row.map((val, c) => (
             <div key={`${r}-${c}`} className="relative">
               <input

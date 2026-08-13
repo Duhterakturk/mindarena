@@ -1,25 +1,28 @@
-// Amiral Battı: 5x5 ızgarada [3,2,1,1] uzunluklarında bir filo, hiçbir gemi
-// birbirine (çapraz dahil) değmeyecek şekilde rastgele yerleştirilir.
-const ROWS = 5;
-const COLS = 5;
-const SHIP_SIZES = [3, 2, 1, 1];
+// Amiral Battı: hiçbir gemi birbirine (çapraz dahil) değmeyecek şekilde
+// rastgele bir filo yerleştirilir. Zorluk; ızgara boyutu ve filo
+// büyüklüğüyle ölçeklenir.
+const CONFIG = {
+  easy: { rows: 5, cols: 5, ships: [3, 2, 1, 1] },
+  medium: { rows: 6, cols: 6, ships: [4, 3, 2, 1, 1] },
+  hard: { rows: 7, cols: 7, ships: [4, 3, 3, 2, 2, 1, 1] },
+};
 
-function placeFleet() {
+function placeFleet(rows, cols, shipSizes) {
   for (let attempt = 0; attempt < 500; attempt++) {
     const occupied = new Set();
     let success = true;
-    for (const size of SHIP_SIZES) {
+    for (const size of shipSizes) {
       let placed = false;
       for (let tries = 0; tries < 300; tries++) {
         const horizontal = Math.random() < 0.5;
-        const r = Math.floor(Math.random() * ROWS);
-        const c = Math.floor(Math.random() * COLS);
+        const r = Math.floor(Math.random() * rows);
+        const c = Math.floor(Math.random() * cols);
         const cells = [];
         let inBounds = true;
         for (let i = 0; i < size; i++) {
           const rr = horizontal ? r : r + i;
           const cc = horizontal ? c + i : c;
-          if (rr >= ROWS || cc >= COLS) {
+          if (rr >= rows || cc >= cols) {
             inBounds = false;
             break;
           }
@@ -55,16 +58,17 @@ function placeFleet() {
   throw new Error("Filo yerleştirilemedi");
 }
 
-export function generate() {
-  const occupied = placeFleet();
+export function generate(difficulty = "easy") {
+  const { rows, cols, ships } = CONFIG[difficulty] || CONFIG.easy;
+  const occupied = placeFleet(rows, cols, ships);
   const solutionSet = [...occupied];
 
-  const rowClues = Array.from({ length: ROWS }, (_, r) =>
+  const rowClues = Array.from({ length: rows }, (_, r) =>
     solutionSet.filter((key) => Number(key.split("-")[0]) === r).length
   );
-  const colClues = Array.from({ length: COLS }, (_, c) =>
+  const colClues = Array.from({ length: cols }, (_, c) =>
     solutionSet.filter((key) => Number(key.split("-")[1]) === c).length
   );
 
-  return { solutionSet, rowClues, colClues };
+  return { solutionSet, rowClues, colClues, rows, cols };
 }
