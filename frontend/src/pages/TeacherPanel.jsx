@@ -117,28 +117,30 @@ export default function TeacherPanel() {
             ) : students.length === 0 ? (
               <p className="text-slate-500 text-sm p-6">Bu sınıfta henüz öğrenci yok.</p>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50 text-slate-500 text-left">
-                  <tr>
-                    <th className="px-4 py-2">Öğrenci</th>
-                    <th className="px-4 py-2">Sınıf Seviyesi</th>
-                    <th className="px-4 py-2 text-right">Tamamlanan</th>
-                    <th className="px-4 py-2 text-right">Farklı Oyun</th>
-                    <th className="px-4 py-2 text-right">Toplam Puan</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((row) => (
-                    <tr key={row.student.id} className="border-t border-slate-100">
-                      <td className="px-4 py-2 font-medium text-slate-700">{row.student.full_name}</td>
-                      <td className="px-4 py-2 text-slate-500">{row.student.grade_level ?? "-"}</td>
-                      <td className="px-4 py-2 text-right">{row.total_completed}</td>
-                      <td className="px-4 py-2 text-right">{row.distinct_games_completed}</td>
-                      <td className="px-4 py-2 text-right font-semibold text-brand-700">{row.total_points}</td>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-slate-50 text-slate-500 text-left">
+                    <tr>
+                      <th className="px-4 py-2 whitespace-nowrap">Öğrenci</th>
+                      <th className="px-4 py-2 whitespace-nowrap">Sınıf Seviyesi</th>
+                      <th className="px-4 py-2 text-right whitespace-nowrap">Tamamlanan</th>
+                      <th className="px-4 py-2 text-right whitespace-nowrap">Farklı Oyun</th>
+                      <th className="px-4 py-2 text-right whitespace-nowrap">Toplam Puan</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {students.map((row) => (
+                      <tr key={row.student.id} className="border-t border-slate-100">
+                        <td className="px-4 py-2 font-medium text-slate-700 whitespace-nowrap">{row.student.full_name}</td>
+                        <td className="px-4 py-2 text-slate-500 whitespace-nowrap">{row.student.grade_level ?? "-"}</td>
+                        <td className="px-4 py-2 text-right whitespace-nowrap">{row.total_completed}</td>
+                        <td className="px-4 py-2 text-right whitespace-nowrap">{row.distinct_games_completed}</td>
+                        <td className="px-4 py-2 text-right font-semibold text-brand-700 whitespace-nowrap">{row.total_points}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </>
