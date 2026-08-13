@@ -7,8 +7,19 @@ from openpyxl import Workbook
 
 from app.extensions import db
 from app.models import Score, Game, User, UserRole, Classroom
+from app.services.difficulty import compute_unlocked_difficulties
 
 progress_bp = Blueprint("progress", __name__, url_prefix="/api/progress")
+
+
+@progress_bp.get("/unlocked/<string:game_slug>")
+@jwt_required()
+def unlocked_difficulties(game_slug):
+    user_id = get_jwt_identity()
+    result = compute_unlocked_difficulties(user_id, game_slug)
+    if result is None:
+        return jsonify({"error": "Oyun bulunamadı"}), 404
+    return jsonify(result)
 
 
 def _parse_date_range():

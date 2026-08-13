@@ -1,5 +1,12 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
+
+function cellSizeClass(gridWidth) {
+  if (gridWidth >= 8) return "w-8 h-8 text-sm";
+  if (gridWidth >= 6) return "w-9 h-9";
+  return "w-10 h-10";
+}
 
 /**
  * Hücre tıklayarak işaretleme mekaniğine sahip oyunlar için paylaşılan iskelet
@@ -21,6 +28,8 @@ export default function ToggleGridGame({
   markSymbol = "●",
   extra,
   onRegenerate,
+  difficulty,
+  onDifficultyChange,
 }) {
   const [marked, setMarked] = useState(() => new Set());
   const [status, setStatus] = useState("playing");
@@ -77,7 +86,7 @@ export default function ToggleGridGame({
         game_id: gameId,
         points: Math.max(1000 - seconds, 100),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty: difficulty || "easy",
         completed: true,
       });
       setStatus("submitted");
@@ -88,7 +97,8 @@ export default function ToggleGridGame({
 
   const hasClues = rowClues || colClues;
   const gridCols = cols + (hasClues ? 1 : 0);
-  const clueCell = "w-10 h-10 flex items-center justify-center text-xs font-bold text-brand-700 text-center leading-tight";
+  const cellSize = cellSizeClass(gridCols);
+  const clueCell = `${cellSize} flex items-center justify-center text-xs font-bold text-brand-700 text-center leading-tight`;
 
   // Bir ipucu tek sayı olabilir (Amiral Battı vb.) ya da nonogram tarzı
   // birden çok koşu uzunluğu dizisi olabilir (Kare Karalamaca).
@@ -100,6 +110,9 @@ export default function ToggleGridGame({
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{title}</h1>
+      {onDifficultyChange && (
+        <DifficultyPicker gameSlug={slug} value={difficulty} onChange={onDifficultyChange} />
+      )}
       {instructions && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{instructions}</p>}
       <p className="text-slate-500 text-sm mb-4">
         Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
@@ -107,7 +120,10 @@ export default function ToggleGridGame({
 
       {extra}
 
-      <div className="inline-grid" style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}>
+      <div
+        className="inline-grid max-w-full overflow-x-auto"
+        style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+      >
         {hasClues && <div className={clueCell} />}
         {hasClues && colClues.map((v, i) => <div key={`cc-${i}`} className={clueCell}>{renderClue(v)}</div>)}
 
@@ -122,7 +138,7 @@ export default function ToggleGridGame({
                 return (
                   <div
                     key={key}
-                    className="w-10 h-10 flex items-center justify-center border border-slate-300 bg-slate-800 text-white font-bold text-sm"
+                    className={`${cellSize} flex items-center justify-center border border-slate-300 bg-slate-800 text-white font-bold text-sm`}
                   >
                     {fixedLabel}
                   </div>
@@ -134,7 +150,8 @@ export default function ToggleGridGame({
                   type="button"
                   onClick={() => toggleCell(r, c)}
                   className={[
-                    "w-10 h-10 flex items-center justify-center border border-slate-300 text-lg",
+                    cellSize,
+                    "flex items-center justify-center border border-slate-300 text-lg",
                     isMarked ? "bg-brand-500 text-white" : "bg-white hover:bg-brand-50",
                   ].join(" ")}
                 >

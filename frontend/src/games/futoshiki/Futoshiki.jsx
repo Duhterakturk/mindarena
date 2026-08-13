@@ -1,24 +1,25 @@
 import { useMemo, useState } from "react";
 import GridFillGame from "../common/GridFillGame";
-import { generateLatinSquare, carvePuzzle } from "../common/latinSquare";
-import { HORIZONTAL_POSITIONS, VERTICAL_POSITIONS, GIVENS_COUNT } from "./puzzles";
-
-function generate() {
-  const solution = generateLatinSquare(4);
-  const puzzle = carvePuzzle(solution, GIVENS_COUNT);
-  return { puzzle, solution };
-}
+import { generate } from "./puzzles";
 
 export default function Futoshiki() {
-  const [{ puzzle, solution }, setGame] = useState(generate);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ puzzle, solution, horizontal: hPositions, vertical: vPositions }, setGame] = useState(() =>
+    generate("easy")
+  );
+
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setGame(generate(newDifficulty));
+  }
 
   const horizontal = useMemo(
-    () => HORIZONTAL_POSITIONS.map(({ r, c }) => ({ r, c, sign: solution[r][c] < solution[r][c + 1] ? "<" : ">" })),
-    [solution]
+    () => hPositions.map(({ r, c }) => ({ r, c, sign: solution[r][c] < solution[r][c + 1] ? "<" : ">" })),
+    [solution, hPositions]
   );
   const vertical = useMemo(
-    () => VERTICAL_POSITIONS.map(({ r, c }) => ({ r, c, sign: solution[r][c] > solution[r + 1][c] ? "v" : "^" })),
-    [solution]
+    () => vPositions.map(({ r, c }) => ({ r, c, sign: solution[r][c] > solution[r + 1][c] ? "v" : "^" })),
+    [solution, vPositions]
   );
 
   function renderOverlay(r, c) {
@@ -44,12 +45,14 @@ export default function Futoshiki() {
     <GridFillGame
       slug="futoshiki"
       title="Futoshiki"
-      instructions="Her satır ve sütun 1-4 rakamlarını birer kez içermeli; < > işaretleri komşu hücreler arasındaki sıralamayı gösterir."
+      instructions={`Her satır ve sütun 1-${puzzle.length} rakamlarını birer kez içermeli; < > işaretleri komşu hücreler arasındaki sıralamayı gösterir.`}
       puzzle={puzzle}
       solution={solution}
-      maxDigit={4}
+      maxDigit={puzzle.length}
       renderOverlay={renderOverlay}
-      onRegenerate={() => setGame(generate())}
+      onRegenerate={() => setGame(generate(difficulty))}
+      difficulty={difficulty}
+      onDifficultyChange={handleDifficultyChange}
     />
   );
 }

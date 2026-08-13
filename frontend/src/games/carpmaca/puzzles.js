@@ -1,14 +1,25 @@
 import { shuffle } from "../common/latinSquare";
 
-// Çarpmaca: küçük bir çarpım tablosu. Satır/sütun başlıkları her oynanışta
-// 2-9 aralığından rastgele 4'er farklı sayı olarak seçilir.
-export function generate() {
-  const pool = [2, 3, 4, 5, 6, 7, 8, 9];
-  const rowHeaders = shuffle(pool).slice(0, 4);
-  const colHeaders = shuffle(pool).slice(0, 4);
+// Çarpmaca: küçük bir çarpım tablosu. Zorluk; ızgara boyutu, sayı aralığı ve
+// verilen (given) hücre sayısıyla ölçeklenir.
+const CONFIG = {
+  easy: { size: 4, min: 2, max: 5, givens: 4 },
+  medium: { size: 4, min: 2, max: 9, givens: 2 },
+  hard: { size: 5, min: 2, max: 12, givens: 0 },
+};
+
+export function generate(difficulty = "easy") {
+  const { size, min, max, givens } = CONFIG[difficulty] || CONFIG.easy;
+  const pool = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+  const rowHeaders = shuffle(pool).slice(0, size);
+  const colHeaders = shuffle(pool).slice(0, size);
 
   const solution = rowHeaders.map((rh) => colHeaders.map((ch) => rh * ch));
-  const puzzle = solution.map((row, r) => row.map((val, c) => ((r === 0 || r === 3) && (c === 0 || c === 3) ? val : 0)));
+
+  const allCells = [];
+  for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) allCells.push([r, c]);
+  const givenCells = new Set(shuffle(allCells).slice(0, givens).map(([r, c]) => `${r}-${c}`));
+  const puzzle = solution.map((row, r) => row.map((val, c) => (givenCells.has(`${r}-${c}`) ? val : 0)));
 
   return { rowHeaders, colHeaders, puzzle, solution };
 }

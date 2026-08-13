@@ -1,26 +1,15 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import GridFillGame from "../common/GridFillGame";
-import { generateLatinSquare, computeCageClue } from "../common/latinSquare";
-import { cageId, cageOp, cageAnchor, cageCells } from "./puzzles";
-
-function generate() {
-  const solution = generateLatinSquare(4);
-  const puzzle = solution.map((row) => row.map(() => 0));
-  return { puzzle, solution };
-}
+import { generate } from "./puzzles";
 
 export default function Kendoku() {
-  const [{ puzzle, solution }, setGame] = useState(generate);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ puzzle, solution, cageId, cageAnchor, cageClues }, setGame] = useState(() => generate("easy"));
 
-  const cageClues = useMemo(() => {
-    const clues = {};
-    for (const id of Object.keys(cageCells)) {
-      const values = cageCells[id].map(([r, c]) => solution[r][c]);
-      const { op, target } = computeCageClue(cageOp[id], values);
-      clues[id] = `${target}${op}`;
-    }
-    return clues;
-  }, [solution]);
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setGame(generate(newDifficulty));
+  }
 
   function cellClassName(r, c) {
     const id = cageId[r][c];
@@ -45,13 +34,15 @@ export default function Kendoku() {
     <GridFillGame
       slug="kendoku"
       title="Kendoku"
-      instructions="Her satır ve sütun 1-4 rakamlarını birer kez içermeli; her kafes toplama, çıkarma veya bölme sonucunu vermelidir."
+      instructions={`Her satır ve sütun 1-${puzzle.length} rakamlarını birer kez içermeli; her kafes toplama, çıkarma, çarpma veya bölme sonucunu vermelidir.`}
       puzzle={puzzle}
       solution={solution}
-      maxDigit={4}
+      maxDigit={puzzle.length}
       cellClassName={cellClassName}
       renderOverlay={renderOverlay}
-      onRegenerate={() => setGame(generate())}
+      onRegenerate={() => setGame(generate(difficulty))}
+      difficulty={difficulty}
+      onDifficultyChange={handleDifficultyChange}
     />
   );
 }

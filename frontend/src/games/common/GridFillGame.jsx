@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
 
 function cloneBoard(grid) {
   return grid.map((row) => [...row]);
+}
+
+function cellSizeClass(gridWidth) {
+  if (gridWidth >= 8) return "w-8 h-8 text-sm";
+  if (gridWidth >= 6) return "w-10 h-10";
+  return "w-12 h-12 text-lg";
 }
 
 /**
@@ -22,8 +29,11 @@ export default function GridFillGame({
   renderOverlay,
   instructions,
   onRegenerate,
+  difficulty,
+  onDifficultyChange,
 }) {
   const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
+  const cellSize = cellSizeClass(puzzle[0].length);
   const [board, setBoard] = useState(() => cloneBoard(puzzle));
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
@@ -69,7 +79,7 @@ export default function GridFillGame({
         game_id: gameId,
         points: Math.max(1000 - seconds, 100),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty: difficulty || "easy",
         completed: true,
       });
       setStatus("submitted");
@@ -81,13 +91,16 @@ export default function GridFillGame({
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{title}</h1>
+      {onDifficultyChange && (
+        <DifficultyPicker gameSlug={slug} value={difficulty} onChange={onDifficultyChange} />
+      )}
       {instructions && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{instructions}</p>}
       <p className="text-slate-500 text-sm mb-4">
         Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
       </p>
 
       <div
-        className="inline-grid border-2 border-slate-700"
+        className="inline-grid border-2 border-slate-700 max-w-full overflow-x-auto"
         style={{ gridTemplateColumns: `repeat(${puzzle[0].length}, minmax(0, 1fr))` }}
       >
         {board.map((row, r) =>
@@ -98,7 +111,8 @@ export default function GridFillGame({
                 onChange={(e) => handleCellChange(r, c, e.target.value)}
                 readOnly={givenMask[r][c] || status === "correct"}
                 className={[
-                  "w-12 h-12 text-center text-lg border border-slate-300 focus:outline-none focus:bg-brand-100",
+                  cellSize,
+                  "text-center border border-slate-300 focus:outline-none focus:bg-brand-100",
                   givenMask[r][c] ? "bg-slate-100 font-bold text-slate-700" : "bg-white",
                   cellClassName ? cellClassName(r, c) : "",
                 ].join(" ")}

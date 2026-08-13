@@ -1,6 +1,6 @@
 // 4x4 Apartman (Skyscrapers). Kenar ipuçları (kaç bina görünür), her oynanışta
 // yeni üretilen Latin kareden hesaplanır (bkz. Apartman.jsx -> computeClues).
-export const GIVENS_COUNT = 8;
+export const GIVENS_BY_DIFFICULTY = { easy: 11, medium: 7, hard: 4 };
 
 function visibleCount(sequence) {
   let count = 0;

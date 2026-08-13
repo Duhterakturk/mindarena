@@ -1,36 +1,22 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
-import { GRID_SHAPE, generateKakuroSolution } from "./puzzles";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { generate } from "./puzzles";
 
-function buildGrid(solution) {
-  const grid = GRID_SHAPE.map((row) => row.map((type) => ({ type })));
-  for (let c = 1; c <= 4; c++) {
-    const colSum = solution.reduce((sum, row) => sum + row[c - 1], 0);
-    grid[0][c].clueDown = colSum;
-  }
-  for (let r = 1; r <= 4; r++) {
-    const rowSum = solution[r - 1].reduce((a, b) => a + b, 0);
-    grid[r][0].clueRight = rowSum;
-  }
-  const fullSolution = grid.map((row, r) =>
-    row.map((cell, c) => (cell.type === "white" ? solution[r - 1][c - 1] : null))
-  );
-  return { grid, fullSolution };
+function emptyBoard(size) {
+  return Array.from({ length: size + 1 }, () => Array(size + 1).fill(0));
 }
 
-function emptyBoard() {
-  return GRID_SHAPE.map((row) => row.map(() => 0));
-}
-
-function generate() {
-  const solution = generateKakuroSolution();
-  const { grid, fullSolution } = buildGrid(solution);
-  return { grid, fullSolution };
+function cellSizeClass(size) {
+  if (size >= 8) return "w-9 h-9 text-sm";
+  if (size >= 6) return "w-11 h-11";
+  return "w-14 h-14 text-lg";
 }
 
 export default function Kakuro() {
-  const [{ grid, fullSolution }, setPuzzle] = useState(generate);
-  const [board, setBoard] = useState(emptyBoard);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ grid, fullSolution, size }, setPuzzle] = useState(() => generate("easy"));
+  const [board, setBoard] = useState(() => emptyBoard(size));
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const [gameId, setGameId] = useState(null);
@@ -43,13 +29,18 @@ export default function Kakuro() {
   }, []);
 
   useEffect(() => {
-    setBoard(emptyBoard());
+    setBoard(emptyBoard(size));
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [grid]);
+  }, [grid, size]);
+
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setPuzzle(generate(newDifficulty));
+  }
 
   function handleCellChange(row, col, value) {
     if (status === "correct") return;
@@ -75,7 +66,7 @@ export default function Kakuro() {
         game_id: gameId,
         points: Math.max(1000 - seconds, 100),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty,
         completed: true,
       });
       setStatus("submitted");
@@ -84,24 +75,30 @@ export default function Kakuro() {
     }
   }
 
+  const cellSize = cellSizeClass(size);
+
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">Kakuro</h1>
+      <DifficultyPicker gameSlug="kakuro" value={difficulty} onChange={handleDifficultyChange} />
       <p className="text-slate-500 text-sm mb-4">
         Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
       </p>
 
-      <div className="inline-grid grid-cols-5 border-2 border-slate-700">
+      <div
+        className="inline-grid border-2 border-slate-700 max-w-full overflow-x-auto"
+        style={{ gridTemplateColumns: `repeat(${size + 1}, minmax(0, 1fr))` }}
+      >
         {grid.map((row, r) =>
           row.map((cell, c) => {
             if (cell.type === "corner") {
-              return <div key={`${r}-${c}`} className="w-14 h-14 bg-slate-800" />;
+              return <div key={`${r}-${c}`} className={`${cellSize} bg-slate-800`} />;
             }
             if (cell.type === "block") {
               return (
                 <div
                   key={`${r}-${c}`}
-                  className="w-14 h-14 bg-slate-800 relative text-[10px] font-semibold text-white border border-slate-600"
+                  className={`${cellSize} bg-slate-800 relative text-[9px] font-semibold text-white border border-slate-600`}
                 >
                   {cell.clueDown != null && (
                     <span className="absolute bottom-0.5 left-1">{cell.clueDown}</span>
@@ -118,7 +115,7 @@ export default function Kakuro() {
                 value={board[r][c] || ""}
                 onChange={(e) => handleCellChange(r, c, e.target.value)}
                 readOnly={status === "correct"}
-                className="w-14 h-14 text-center text-lg border border-slate-300 bg-white focus:outline-none focus:bg-brand-100"
+                className={`${cellSize} text-center border border-slate-300 bg-white focus:outline-none focus:bg-brand-100`}
               />
             );
           })
@@ -133,7 +130,7 @@ export default function Kakuro() {
           Kontrol Et
         </button>
         <button
-          onClick={() => setPuzzle(generate())}
+          onClick={() => setPuzzle(generate(difficulty))}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
           Yeni Bulmaca

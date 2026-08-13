@@ -1,7 +1,7 @@
 import { useState } from "react";
 import GridFillGame from "../common/GridFillGame";
 import { relabelGrid, carvePuzzle } from "../common/latinSquare";
-import { BASE_SOLUTION, REGIONS, GIVENS_COUNT } from "./puzzles";
+import { BASE_SOLUTION, REGIONS, GIVENS_BY_DIFFICULTY } from "./puzzles";
 
 const REGION_BG = {
   A: "bg-brand-50",
@@ -10,14 +10,20 @@ const REGION_BG = {
   D: "bg-rose-50",
 };
 
-function generate() {
+function generate(difficulty) {
   const solution = relabelGrid(BASE_SOLUTION, 4);
-  const puzzle = carvePuzzle(solution, GIVENS_COUNT);
+  const puzzle = carvePuzzle(solution, GIVENS_BY_DIFFICULTY[difficulty] || GIVENS_BY_DIFFICULTY.easy);
   return { puzzle, solution };
 }
 
 export default function BolgeselSudoku() {
-  const [{ puzzle, solution }, setGame] = useState(generate);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ puzzle, solution }, setGame] = useState(() => generate("easy"));
+
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setGame(generate(newDifficulty));
+  }
 
   function cellClassName(r, c) {
     const region = REGIONS[r][c];
@@ -36,7 +42,9 @@ export default function BolgeselSudoku() {
       solution={solution}
       maxDigit={4}
       cellClassName={cellClassName}
-      onRegenerate={() => setGame(generate())}
+      onRegenerate={() => setGame(generate(difficulty))}
+      difficulty={difficulty}
+      onDifficultyChange={handleDifficultyChange}
     />
   );
 }

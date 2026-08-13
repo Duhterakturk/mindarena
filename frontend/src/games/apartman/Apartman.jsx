@@ -1,20 +1,22 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { generateLatinSquare, carvePuzzle } from "../common/latinSquare";
-import { computeClues, GIVENS_COUNT } from "./puzzles";
+import { computeClues, GIVENS_BY_DIFFICULTY } from "./puzzles";
 
 function cloneBoard(grid) {
   return grid.map((row) => [...row]);
 }
 
-function generate() {
+function generate(difficulty) {
   const solution = generateLatinSquare(4);
-  const puzzle = carvePuzzle(solution, GIVENS_COUNT);
+  const puzzle = carvePuzzle(solution, GIVENS_BY_DIFFICULTY[difficulty] || GIVENS_BY_DIFFICULTY.easy);
   return { puzzle, solution };
 }
 
 export default function Apartman() {
-  const [{ puzzle, solution }, setGame] = useState(generate);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ puzzle, solution }, setGame] = useState(() => generate("easy"));
   const clues = useMemo(() => computeClues(solution), [solution]);
   const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
   const size = puzzle.length;
@@ -40,6 +42,11 @@ export default function Apartman() {
     return () => clearInterval(timerRef.current);
   }, [puzzle]);
 
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setGame(generate(newDifficulty));
+  }
+
   function handleCellChange(row, col, value) {
     if (givenMask[row][col] || status === "correct") return;
     const digit = value.replace(/[^1-4]/g, "").slice(-1);
@@ -62,7 +69,7 @@ export default function Apartman() {
         game_id: gameId,
         points: Math.max(1000 - seconds, 100),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty,
         completed: true,
       });
       setStatus("submitted");
@@ -76,6 +83,7 @@ export default function Apartman() {
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">Apartman</h1>
+      <DifficultyPicker gameSlug="apartman" value={difficulty} onChange={handleDifficultyChange} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
         Her satır ve sütun 1-4 bina yüksekliğini birer kez içermeli; kenar ipuçları o
         yönden kaç binanın görünür olduğunu gösterir.
@@ -85,7 +93,7 @@ export default function Apartman() {
       </p>
 
       <div
-        className="inline-grid"
+        className="inline-grid max-w-full overflow-x-auto"
         style={{ gridTemplateColumns: `repeat(${size + 2}, minmax(0, 1fr))` }}
       >
         <div className={clueCell} />
@@ -128,7 +136,7 @@ export default function Apartman() {
           Kontrol Et
         </button>
         <button
-          onClick={() => setGame(generate())}
+          onClick={() => setGame(generate(difficulty))}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
           Yeni Bulmaca

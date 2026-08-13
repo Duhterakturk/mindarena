@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { fetchGame, submitScore } from "../../api/games";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { generate } from "./puzzles";
 
 function cloneBoard(grid) {
@@ -7,7 +8,8 @@ function cloneBoard(grid) {
 }
 
 export default function Carpmaca() {
-  const [{ rowHeaders, colHeaders, puzzle, solution }, setGame] = useState(generate);
+  const [difficulty, setDifficulty] = useState("easy");
+  const [{ rowHeaders, colHeaders, puzzle, solution }, setGame] = useState(() => generate("easy"));
   const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
 
   const [board, setBoard] = useState(() => cloneBoard(puzzle));
@@ -31,9 +33,14 @@ export default function Carpmaca() {
     return () => clearInterval(timerRef.current);
   }, [puzzle]);
 
+  function handleDifficultyChange(newDifficulty) {
+    setDifficulty(newDifficulty);
+    setGame(generate(newDifficulty));
+  }
+
   function handleCellChange(row, col, value) {
     if (givenMask[row][col] || status === "correct") return;
-    const digits = value.replace(/[^0-9]/g, "").slice(0, 2);
+    const digits = value.replace(/[^0-9]/g, "").slice(0, 3);
     const next = cloneBoard(board);
     next[row][col] = digits ? Number(digits) : 0;
     setBoard(next);
@@ -53,7 +60,7 @@ export default function Carpmaca() {
         game_id: gameId,
         points: Math.max(1000 - seconds, 100),
         duration_seconds: seconds,
-        difficulty: "easy",
+        difficulty,
         completed: true,
       });
       setStatus("submitted");
@@ -67,6 +74,7 @@ export default function Carpmaca() {
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">Çarpmaca</h1>
+      <DifficultyPicker gameSlug="carpmaca" value={difficulty} onChange={handleDifficultyChange} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
         Her hücreye, bulunduğu satır ve sütun başlığının çarpımını yaz.
       </p>
@@ -75,7 +83,7 @@ export default function Carpmaca() {
       </p>
 
       <div
-        className="inline-grid"
+        className="inline-grid max-w-full overflow-x-auto"
         style={{ gridTemplateColumns: `repeat(${colHeaders.length + 1}, minmax(0, 1fr))` }}
       >
         <div className={headerCell}>×</div>
@@ -110,7 +118,7 @@ export default function Carpmaca() {
           Kontrol Et
         </button>
         <button
-          onClick={() => setGame(generate())}
+          onClick={() => setGame(generate(difficulty))}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
           Yeni Bulmaca

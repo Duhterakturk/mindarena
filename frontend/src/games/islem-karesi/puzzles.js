@@ -1,42 +1,16 @@
-// 4x4 İşlem Karesi (Calcudoku/KenKen). Kafes (cage) geometrisi ve işlem türü
-// sabittir; sayısal hedefler her oynanışta yeni üretilen çözümden hesaplanır.
-export const cageId = [
-  [1, 1, 2, 2],
-  [3, 4, 4, 5],
-  [3, 6, 6, 5],
-  [7, 7, 8, 8],
-];
+import { generateLatinSquare } from "../common/latinSquare";
+import { buildCageData } from "../common/cages";
 
-export const cageOp = {
-  1: "+",
-  2: "+",
-  3: "+",
-  4: "×",
-  5: "+",
-  6: "+",
-  7: "+",
-  8: "+",
-};
+// İşlem Karesi (Calcudoku/KenKen), yalnızca toplama/çarpma kafesleriyle
+// (her zaman geçerli hedef üretir). Zorluk, ızgara boyutuyla ölçeklenir.
+const GRID_SIZE_BY_DIFFICULTY = { easy: 4, medium: 6, hard: 8 };
+const ALLOWED_OPS = ["+", "×"];
 
-// Her kafesin ilk hücresi (r,c) — ipucu metni burada gösterilir
-export const cageAnchor = {
-  1: [0, 0],
-  2: [0, 2],
-  3: [1, 0],
-  4: [1, 1],
-  5: [1, 3],
-  6: [2, 1],
-  7: [3, 0],
-  8: [3, 2],
-};
+export function generate(difficulty = "easy") {
+  const n = GRID_SIZE_BY_DIFFICULTY[difficulty] || 4;
+  const solution = generateLatinSquare(n);
+  const puzzle = solution.map((row) => row.map(() => 0));
+  const { cageId, cageAnchor, cageCells, cageClues } = buildCageData(n, solution, ALLOWED_OPS);
 
-export const cageCells = {
-  1: [[0, 0], [0, 1]],
-  2: [[0, 2], [0, 3]],
-  3: [[1, 0], [2, 0]],
-  4: [[1, 1], [1, 2]],
-  5: [[1, 3], [2, 3]],
-  6: [[2, 1], [2, 2]],
-  7: [[3, 0], [3, 1]],
-  8: [[3, 2], [3, 3]],
-};
+  return { puzzle, solution, cageId, cageAnchor, cageCells, cageClues };
+}

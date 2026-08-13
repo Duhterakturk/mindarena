@@ -16,4 +16,4 @@ export const REGIONS = [
   ["C", "D", "D", "D"],
 ];
 
-export const GIVENS_COUNT = 8;
+export const GIVENS_BY_DIFFICULTY = { easy: 11, medium: 8, hard: 5 };
