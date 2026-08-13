@@ -1,15 +1,17 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import BrainIcon from "../components/common/BrainIcon";
 import { getGameVisual } from "../components/games/gameVisuals";
 
+// Gerçek 🧠 emojisi, her birinde farklı bir renk tonuna kaydırılmış (CSS
+// hue-rotate filtresiyle) — emojinin kendi şekli/dokusu korunur, sadece
+// rengi değişir. Böylece "gerçek emoji ama renk renk" isteği karşılanır.
 const BRAINS = [
-  { className: "text-brand-400", style: { top: "6%", left: "4%", width: "90px", transform: "rotate(-12deg)" } },
-  { className: "text-pink-400", style: { top: "12%", right: "6%", width: "70px", transform: "rotate(18deg)" } },
-  { className: "text-amber-400", style: { bottom: "10%", left: "9%", width: "60px", transform: "rotate(8deg)" } },
-  { className: "text-emerald-400", style: { bottom: "18%", right: "10%", width: "100px", transform: "rotate(-6deg)" } },
-  { className: "text-violet-400", style: { top: "44%", left: "1%", width: "50px", transform: "rotate(-20deg)" } },
-  { className: "text-sky-400", style: { top: "50%", right: "2%", width: "56px", transform: "rotate(14deg)" } },
+  { hue: 0, style: { top: "6%", left: "4%", width: "56px", transform: "rotate(-10deg)" } },
+  { hue: 200, style: { top: "10%", right: "6%", width: "44px", transform: "rotate(14deg)" } },
+  { hue: 60, style: { bottom: "12%", left: "9%", width: "40px", transform: "rotate(8deg)" } },
+  { hue: 140, style: { bottom: "20%", right: "9%", width: "60px", transform: "rotate(-6deg)" } },
+  { hue: 280, style: { top: "42%", left: "1%", width: "34px", transform: "rotate(-18deg)" } },
+  { hue: 320, style: { top: "48%", right: "2%", width: "36px", transform: "rotate(12deg)" } },
 ];
 
 const HIGHLIGHT_SLUGS = [
@@ -35,12 +37,19 @@ export default function Home() {
     <div className="overflow-hidden">
       <section className="relative overflow-hidden bg-gradient-to-br from-brand-100 via-violet-50 to-pink-50">
         {BRAINS.map((b, i) => (
-          <BrainIcon key={i} className={`absolute pointer-events-none opacity-[0.14] ${b.className}`} style={b.style} />
+          <span
+            key={i}
+            aria-hidden="true"
+            className="absolute pointer-events-none select-none opacity-20 leading-none"
+            style={{ ...b.style, fontSize: b.style.width, filter: `hue-rotate(${b.hue}deg) saturate(1.6)` }}
+          >
+            🧠
+          </span>
         ))}
 
         <div className="relative max-w-4xl mx-auto px-4 py-20 text-center">
           <span className="inline-flex items-center gap-1.5 bg-white/80 text-brand-700 text-xs font-bold tracking-wide px-3 py-1.5 rounded-full shadow-sm mb-5">
-            🧠 2. sınıftan itibaren eğlenceli zeka oyunları
+            Her yaştan oyuncu için
           </span>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-slate-800 mb-4 text-balance">
             {t("home.title")}
