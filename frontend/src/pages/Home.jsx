@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import BrainIcon from "../components/common/BrainIcon";
+import { getGameVisual } from "../components/games/gameVisuals";
 
 const BRAINS = [
   { className: "text-brand-400", style: { top: "6%", left: "4%", width: "90px", transform: "rotate(-12deg)" } },
@@ -11,14 +12,15 @@ const BRAINS = [
   { className: "text-sky-400", style: { top: "50%", right: "2%", width: "56px", transform: "rotate(14deg)" } },
 ];
 
-const HIGHLIGHTS = [
-  { slug: "sudoku", emoji: "🔢", name: "Sudoku", color: "bg-blue-100 text-blue-700" },
-  { slug: "amiral-batti", emoji: "🚢", name: "Amiral Battı", color: "bg-rose-100 text-rose-700" },
-  { slug: "pentominolar", emoji: "🧩", name: "Pentominolar", color: "bg-amber-100 text-amber-700" },
-  { slug: "yildiz-savaslari", emoji: "⭐", name: "Yıldız Savaşları", color: "bg-violet-100 text-violet-700" },
-  { slug: "kakuro", emoji: "➕", name: "Kakuro", color: "bg-emerald-100 text-emerald-700" },
-  { slug: "colours", emoji: "🎨", name: "Colours", color: "bg-sky-100 text-sky-700" },
+const HIGHLIGHT_SLUGS = [
+  ["sudoku", "Sudoku"],
+  ["amiral-batti", "Amiral Battı"],
+  ["pentominolar", "Pentominolar"],
+  ["yildiz-savaslari", "Yıldız Savaşları"],
+  ["kakuro", "Kakuro"],
+  ["colours", "Colours"],
 ];
+const HIGHLIGHTS = HIGHLIGHT_SLUGS.map(([slug, name]) => ({ slug, name, ...getGameVisual(slug) }));
 
 const STATS = [
   { value: "19", label: "Farklı Oyun", color: "text-brand-600" },
