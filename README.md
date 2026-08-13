@@ -262,8 +262,39 @@ FLASK_ENV=production gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
 ```
 
 Frontend için `npm run build` ile `frontend/dist/` altında statik dosyalar
-üretilir; bunlar herhangi bir statik dosya sunucusu (nginx, Caddy, vb.)
-arkasından, backend'e `/api` proxy'siyle birlikte servis edilmelidir.
+üretilir. Build zamanında `VITE_API_URL` ortam değişkeni backend'in tam API
+adresine (ör. `https://mindarena-backend.onrender.com/api`) ayarlanmalıdır —
+ayarlanmazsa `frontend/src/api/client.js` yerel geliştirmedeki gibi göreli
+`/api`'ye düşer ki bu yalnızca Vite'ın dev-sunucu proxy'siyle çalışır,
+statik bir üretim dağıtımında backend'e ulaşamaz.
+
+### Render ile tek tık, tamamen ücretsiz dağıtım
+
+Repo kökündeki `render.yaml`, Render'ın "Blueprint" özelliğiyle üç servisi
+(backend, statik frontend, PostgreSQL) tek seferde ve tamamen ücretsiz
+katmanda kurar — kredi kartı gerekmez:
+
+1. [render.com](https://render.com) → GitHub ile giriş yap.
+2. Dashboard → **New** → **Blueprint** → bu repo'yu seç.
+3. Render `render.yaml`'ı okuyup `mindarena-backend` (Flask API),
+   `mindarena-frontend` (statik React build'i) ve `mindarena-db`
+   (PostgreSQL) servislerini otomatik oluşturur; `SECRET_KEY` ve
+   `JWT_SECRET_KEY` rastgele üretilir, `DATABASE_URL` veritabanından
+   otomatik bağlanır.
+4. İlk deploy'da backend, başlamadan önce `flask db upgrade` ve
+   `python seed.py`'yi otomatik çalıştırır (bkz. `render.yaml`
+   `startCommand`) — oyun/rozet kataloğu hazır gelir.
+
+**Önemli:** `mindarena-backend`/`mindarena-frontend` adları Render'da
+global olarak benzersiz olmalı; biri alınmışsa Render sana farklı bir ad
+önerir ve bu durumda `render.yaml` içindeki `CORS_ORIGINS` ile
+`VITE_API_URL` değerlerini de yeni adla elle güncellemen gerekir (ikisi de
+birbirinin URL'sine sabit referans veriyor, servisler arası otomatik
+şablonlama kullanılmadı çünkü Render Blueprint sürümleri arasında bu
+davranış tutarlı değil).
+
+Ücretsiz katmanın bilinen sınırlaması: backend 15 dakika işlemsiz kalırsa
+uyur, bir sonraki istek birkaç saniye "soğuk başlangıç" gecikmesi yaşar.
 
 ## Güvenlik Sertleştirmesi ve Bilinen Sınırlamalar
 

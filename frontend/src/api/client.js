@@ -1,7 +1,10 @@
 import axios from "axios";
 
 const apiClient = axios.create({
-  baseURL: "/api",
+  // Yerel geliştirmede Vite proxy'si `/api`'yi backend'e yönlendirir. Üretim
+  // static build'inde proxy yok, bu yüzden build zamanında `VITE_API_URL`
+  // (ör. https://mindarena-backend.onrender.com/api) ayarlanmalı.
+  baseURL: import.meta.env.VITE_API_URL || "/api",
 });
 
 apiClient.interceptors.request.use((config) => {

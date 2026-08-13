@@ -1,0 +1,58 @@
+# Render Blueprint — tek tıkla, tamamen ücretsiz katmanda MindArena dağıtımı.
+#
+# Kullanım: Render Dashboard → "New" → "Blueprint" → bu GitHub repo'sunu seç.
+# Render bu dosyayı okuyup aşağıdaki 3 servisi otomatik oluşturur: backend
+# (Flask API), frontend (statik React build'i) ve veritabanı (PostgreSQL).
+#
+# ÖNEMLİ: `mindarena-backend` / `mindarena-frontend` adları Render'da
+# GLOBAL olarak benzersiz olmalı (URL'ler bu adlardan türetiliyor:
+# https://mindarena-backend.onrender.com). Biri alınmışsa Render sana farklı
+# bir ad önerir — o durumda bu dosyadaki CORS_ORIGINS ve VITE_API_URL
+# değerlerini de yeni adla güncellemen gerekir.
+
+databases:
+  - name: mindarena-db
+    databaseName: mindarena
+    user: mindarena
+    plan: free
+
+services:
+  - type: web
+    name: mindarena-backend
+    env: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: flask --app wsgi db upgrade && python seed.py && gunicorn -w 2 -b 0.0.0.0:$PORT wsgi:app
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mindarena-db
+          property: connectionString
+      - key: CORS_ORIGINS
+        value: https://mindarena-frontend.onrender.com
+
+  - type: web
+    name: mindarena-frontend
+    env: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://mindarena-backend.onrender.com/api
+    routes:
+      # React Router (client-side routing) — her yol index.html'e düşmeli,
+      # aksi halde /games/kakuro gibi bir sayfada F5 yapınca 404 alınır.
+      - type: rewrite
+        source: /*
+        destination: /index.html
