@@ -4,6 +4,7 @@ from app.models.score import Score
 from app.models.attempt import PuzzleAttempt
 from app.models.badge import Badge, UserBadge, BADGE_CATALOG
 from app.models.classroom import Classroom
+from app.models.assignment import Assignment
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "UserBadge",
     "BADGE_CATALOG",
     "Classroom",
+    "Assignment",
 ]

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchMyClassrooms, createClassroom } from "../api/classrooms";
+import { ClassHomework } from "../components/classroom/ClassHomework";
 import { fetchStudentsOverview } from "../api/progress";
 
 export default function TeacherPanel() {
@@ -100,6 +101,10 @@ export default function TeacherPanel() {
               </button>
             ))}
           </div>
+
+          {selectedClassroom && (
+            <ClassHomework classroomId={selectedClassroom.id} classroomName={selectedClassroom.name} />
+          )}
 
           {selectedClassroom && (
             <p className="text-sm text-slate-600 mb-4">

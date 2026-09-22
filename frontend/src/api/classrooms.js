@@ -19,3 +19,18 @@ export async function leaveClassroom() {
   const { data } = await apiClient.post("/classrooms/leave");
   return data;
 }
+
+export async function createAssignment(classroomId, payload) {
+  const { data } = await apiClient.post(`/classrooms/${classroomId}/assignment`, payload);
+  return data;
+}
+
+export async function fetchAssignment(classroomId) {
+  const { data } = await apiClient.get(`/classrooms/${classroomId}/assignment`);
+  return data;
+}
+
+export async function fetchMyAssignment() {
+  const { data } = await apiClient.get("/assignments/mine");
+  return data.assignment;
+}

@@ -3,6 +3,7 @@ import { useAuth } from "../context/AuthContext";
 import BadgeGrid from "../components/badges/BadgeGrid";
 import ProgressSummary from "../components/progress/ProgressSummary";
 import ClassroomJoin from "../components/classroom/ClassroomJoin";
+import { StudentHomework } from "../components/classroom/ClassHomework";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -14,6 +15,8 @@ export default function Dashboard() {
       <p className="text-slate-600 mb-8">
         {user?.full_name} — {t(`auth.role_${user?.role}`)}
       </p>
+
+      {user?.role === "student" && <StudentHomework />}
 
       {user?.role === "student" && (
         <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 mb-6">
