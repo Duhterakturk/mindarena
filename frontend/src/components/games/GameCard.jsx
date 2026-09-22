@@ -14,7 +14,7 @@ export default function GameCard({ game, index = 0 }) {
       style={{ animationDelay: `${Math.min(index, 12) * 35}ms` }}
     >
       <div className={`h-20 rounded-2xl flex items-center justify-center text-4xl mb-3 ${color}`}>
-        <span aria-hidden="true">{emoji}</span>
+        <span className="toy-icon" aria-hidden="true">{emoji}</span>
       </div>
       <h3 className="font-bold">{name}</h3>
       <p className="text-xs text-stone-500 mt-1">

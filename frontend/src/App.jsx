@@ -12,6 +12,7 @@ import Register from "./pages/Register";
 import Forgot from "./pages/Forgot";
 import Reset from "./pages/Reset";
 import Dashboard from "./pages/Dashboard";
+import Exam from "./pages/Exam";
 import TeacherPanel from "./pages/TeacherPanel";
 
 function Shell() {
@@ -28,6 +29,14 @@ function Shell() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />
           <Route path="/reset" element={<Reset />} />
+          <Route
+            path="/exam"
+            element={
+              <ProtectedRoute>
+                <Exam />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={

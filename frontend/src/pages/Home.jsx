@@ -27,6 +27,21 @@ export default function Home() {
           {t("home.cta")}
         </Link>
 
+        <div className="mt-10 flex justify-center gap-3" aria-hidden="true">
+          {HIGHLIGHT_SLUGS.map((slug, index) => {
+            const visual = getGameVisual(slug);
+            return (
+              <span
+                key={slug}
+                className={`toy w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm border border-line ${visual.color}`}
+                style={{ animationDelay: `${index * 180}ms` }}
+              >
+                {visual.emoji}
+              </span>
+            );
+          })}
+        </div>
+
         <dl className="mt-14 grid grid-cols-3 border-y border-line">
           {STATS.map((item) => (
             <div key={item.label} className="py-5">
@@ -49,7 +64,7 @@ export default function Home() {
                 className="board-card card-rise flex flex-col items-center justify-center gap-3 px-4 py-7 font-bold text-ink"
                 style={{ animationDelay: `${index * 45}ms` }}
               >
-                <span className={`text-3xl w-14 h-14 rounded-2xl flex items-center justify-center ${visual.color}`} aria-hidden="true">{visual.emoji}</span>
+                <span className={`toy-icon text-3xl w-14 h-14 rounded-2xl flex items-center justify-center ${visual.color}`} aria-hidden="true">{visual.emoji}</span>
                 <span className="text-sm text-center">{t(`gameTitle.${slug}`)}</span>
               </Link>
             );

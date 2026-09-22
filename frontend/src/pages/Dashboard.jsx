@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../context/AuthContext";
 import BadgeGrid from "../components/badges/BadgeGrid";
@@ -16,6 +17,11 @@ export default function Dashboard() {
       <p className="text-slate-600 mb-8">
         {user?.full_name} — {t(`auth.role_${user?.role}`)}
       </p>
+
+      <Link to="/exam" className="board-card mb-6 block p-5">
+        <span className="font-display text-2xl">Karışık deneme</span>
+        <span className="block text-sm text-stone-600 mt-1">Üç oyun, 15 dakika.</span>
+      </Link>
 
       {user?.role === "student" && <StudentHomework />}
 

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { getGameComponent } from "../games/registry";
+import HintBar from "../components/games/HintBar";
 
 export default function GamePage() {
   const { slug } = useParams();
@@ -16,6 +17,7 @@ export default function GamePage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
+      <HintBar slug={slug} />
       <Suspense fallback={<p>Yükleniyor...</p>}>
         <GameComponent />
       </Suspense>

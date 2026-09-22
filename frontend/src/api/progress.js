@@ -24,6 +24,21 @@ export async function fetchStudentsOverview(classroomId) {
   return data;
 }
 
+export async function downloadProgressPdf(range) {
+  const response = await apiClient.get("/progress/export.pdf", {
+    responseType: "blob",
+    params: dateRangeParams(range),
+  });
+  const url = window.URL.createObjectURL(new Blob([response.data], { type: "application/pdf" }));
+  const link = document.createElement("a");
+  link.href = url;
+  link.setAttribute("download", "mindarena-ilerleme.pdf");
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 export async function downloadProgressExport(range) {
   const response = await apiClient.get("/progress/export", {
     responseType: "blob",

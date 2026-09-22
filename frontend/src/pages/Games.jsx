@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { fetchGames } from "../api/games";
 import GameCard from "../components/games/GameCard";
@@ -23,7 +24,12 @@ export default function Games() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="font-display text-4xl font-semibold mb-6">{t("games.title")}</h1>
+      <div className="flex items-end justify-between gap-4 mb-6">
+        <h1 className="font-display text-4xl font-semibold">{t("games.title")}</h1>
+        <Link to="/exam" className="press-btn text-sm" style={{ padding: "0.55rem 1rem" }}>
+          Karışık deneme
+        </Link>
+      </div>
 
       {error && <p className="text-red-500">{error}</p>}
 

@@ -1,7 +1,9 @@
 import io
+import os
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request, send_file
+from fpdf import FPDF
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from openpyxl import Workbook
 
@@ -145,6 +147,60 @@ def export_progress():
         as_attachment=True,
         download_name="mindarena-ilerleme.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+def _font_path():
+    candidates = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        r"C:\Windows\Fonts\arial.ttf",
+    ]
+    for path in candidates:
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+def _build_pdf(user, scores, games):
+    font = _font_path()
+    if not font:
+        return None
+    pdf = FPDF()
+    pdf.add_font("Body", "", font)
+    pdf.set_font("Body", size=16)
+    pdf.add_page()
+    pdf.cell(0, 10, f"MindArena — {user.full_name}", new_x="LMARGIN", new_y="NEXT")
+    pdf.set_font("Body", size=11)
+    pdf.cell(0, 8, "İlerleme raporu", new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(2)
+    if not scores:
+        pdf.cell(0, 8, "Henüz skor yok.", new_x="LMARGIN", new_y="NEXT")
+    for score in scores:
+        game = games.get(score.game_id)
+        name = game.name_tr if game else "-"
+        when = score.created_at.strftime("%Y-%m-%d %H:%M") if score.created_at else "-"
+        state = "bitti" if score.completed else "yarım"
+        line = f"{when}  {name}  {score.points} puan  {score.difficulty or '-'}  {state}"
+        pdf.multi_cell(0, 7, line)
+    return pdf.output()
+
+
+@progress_bp.get("/export.pdf")
+@jwt_required()
+def export_progress_pdf():
+    user = db.session.get(User, get_jwt_identity())
+    if not user:
+        return jsonify({"error": "Kullanıcı bulunamadı"}), 404
+    start_date, end_date = _parse_date_range()
+    scores, games = _load_scores_and_games(user.id, start_date, end_date)
+    payload = _build_pdf(user, scores, games)
+    if payload is None:
+        return jsonify({"error": "PDF yazı tipi bulunamadı"}), 503
+    return send_file(
+        io.BytesIO(payload),
+        as_attachment=True,
+        download_name="mindarena-ilerleme.pdf",
+        mimetype="application/pdf",
     )
 
 

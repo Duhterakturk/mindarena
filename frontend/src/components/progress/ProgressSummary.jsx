@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { fetchMyProgress, downloadProgressExport } from "../../api/progress";
+import { fetchMyProgress, downloadProgressExport, downloadProgressPdf } from "../../api/progress";
 
 function BarChart({ perGame, lang }) {
   if (perGame.length === 0) {
@@ -41,6 +41,7 @@ export default function ProgressSummary({ progress: externalProgress, showExport
   const { i18n } = useTranslation();
   const [ownProgress, setOwnProgress] = useState(null);
   const [exporting, setExporting] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -60,6 +61,17 @@ export default function ProgressSummary({ progress: externalProgress, showExport
       cancelled = true;
     };
   }, [externalProgress, startDate, endDate]);
+
+  async function handlePdf() {
+    setExportingPdf(true);
+    try {
+      await downloadProgressPdf({ startDate, endDate });
+    } catch {
+      // Sessizce yoksay; kullanıcı giriş yapmamış olabilir.
+    } finally {
+      setExportingPdf(false);
+    }
+  }
 
   async function handleExport() {
     setExporting(true);
@@ -130,13 +142,22 @@ export default function ProgressSummary({ progress: externalProgress, showExport
       <BarChart perGame={progress.per_game} lang={i18n.language} />
 
       {showExport && (
-        <button
-          onClick={handleExport}
-          disabled={exporting}
-          className="mt-6 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 disabled:opacity-50"
-        >
-          {exporting ? "İndiriliyor..." : "Excel Olarak İndir"}
-        </button>
+        <div className="mt-6 flex flex-wrap gap-2">
+          <button
+            onClick={handlePdf}
+            disabled={exportingPdf}
+            className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600 disabled:opacity-50"
+          >
+            {exportingPdf ? "İndiriliyor..." : "PDF indir"}
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300 disabled:opacity-50"
+          >
+            {exporting ? "İndiriliyor..." : "Excel olarak indir"}
+          </button>
+        </div>
       )}
     </div>
   );
