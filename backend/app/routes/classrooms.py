@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
-from app.extensions import db
+from app.extensions import db, limiter
 from app.models import Classroom, User, UserRole
 
 classrooms_bp = Blueprint("classrooms", __name__, url_prefix="/api/classrooms")
@@ -49,6 +49,32 @@ def classroom_students(classroom_id):
 
     students = classroom.students.order_by(User.full_name).all()
     return jsonify([s.to_dict() for s in students])
+
+
+@classrooms_bp.post("/<int:classroom_id>/students/<string:student_id>/password")
+@jwt_required()
+@limiter.limit("20 per minute")
+def set_student_password(classroom_id, student_id):
+    teacher = db.session.get(User, get_jwt_identity())
+    if not teacher or teacher.role != UserRole.TEACHER:
+        return jsonify({"error": "Bu uç nokta yalnızca öğretmen rolü içindir"}), 403
+
+    classroom = db.session.get(Classroom, classroom_id)
+    if not classroom or classroom.teacher_id != teacher.id:
+        return jsonify({"error": "Bu sınıf size ait değil"}), 403
+
+    student = db.session.get(User, student_id)
+    if not student or student.role != UserRole.STUDENT or student.classroom_id != classroom.id:
+        return jsonify({"error": "Bu öğrenci bu sınıfta değil"}), 404
+
+    data = request.get_json(force=True) or {}
+    password = data.get("password") or ""
+    if len(password) < 8:
+        return jsonify({"error": "Şifre en az 8 karakter olmalıdır"}), 400
+
+    student.set_password(password)
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @classrooms_bp.post("/join")

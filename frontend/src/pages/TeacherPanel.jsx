@@ -1,7 +1,102 @@
 import { useEffect, useState } from "react";
-import { fetchMyClassrooms, createClassroom } from "../api/classrooms";
+import { fetchMyClassrooms, createClassroom, setStudentPassword } from "../api/classrooms";
 import { ClassHomework } from "../components/classroom/ClassHomework";
 import { fetchStudentsOverview } from "../api/progress";
+
+function StudentPassword({ classroomId, student }) {
+  const [open, setOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [shown, setShown] = useState(null);
+  const [error, setError] = useState(null);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+
+  async function handleSave(e) {
+    e.preventDefault();
+    setError(null);
+    const chosen = password;
+    try {
+      await setStudentPassword(classroomId, student.id, chosen);
+      setPassword("");
+      setOpen(false);
+      setShown(chosen);
+      setCopiedPassword(false);
+    } catch (err) {
+      setError(err.response?.data?.error || "Şifre kaydedilemedi");
+    }
+  }
+
+  async function copyPassword() {
+    try {
+      await navigator.clipboard.writeText(shown);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = shown;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+    }
+    setCopiedPassword(true);
+  }
+
+  if (shown) {
+    return (
+      <div className="text-left">
+        <p className="text-slate-700">
+          Yeni şifre: <span className="font-mono font-bold">{shown}</span>
+        </p>
+        <div className="flex gap-2 mt-1">
+          <button type="button" onClick={copyPassword} className="text-brand-600 font-semibold">
+            {copiedPassword ? "Kopyalandı" : "Kopyala"}
+          </button>
+          <button type="button" onClick={() => setShown(null)} className="text-slate-500">
+            Kapattım
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)} className="text-brand-600 font-semibold">
+        Şifre ver
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSave} className="flex flex-col gap-1 items-end">
+      <input
+        type="text"
+        required
+        minLength={8}
+        autoComplete="off"
+        placeholder="En az 8 karakter"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        className="border border-slate-200 rounded-lg px-2 py-1 text-sm w-36"
+      />
+      <div className="flex gap-2">
+        <button type="submit" className="text-brand-600 font-semibold">
+          Kaydet
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            setPassword("");
+            setError(null);
+          }}
+          className="text-slate-500"
+        >
+          Vazgeç
+        </button>
+      </div>
+      {error && <p className="text-red-500 text-xs">{error}</p>}
+    </form>
+  );
+}
 
 export default function TeacherPanel() {
   const [classrooms, setClassrooms] = useState([]);
@@ -164,6 +259,7 @@ export default function TeacherPanel() {
                       <th className="px-4 py-2 text-right whitespace-nowrap">Tamamlanan</th>
                       <th className="px-4 py-2 text-right whitespace-nowrap">Farklı Oyun</th>
                       <th className="px-4 py-2 text-right whitespace-nowrap">Toplam Puan</th>
+                      <th className="px-4 py-2 text-right whitespace-nowrap">Şifre</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -174,6 +270,9 @@ export default function TeacherPanel() {
                         <td className="px-4 py-2 text-right whitespace-nowrap">{row.total_completed}</td>
                         <td className="px-4 py-2 text-right whitespace-nowrap">{row.distinct_games_completed}</td>
                         <td className="px-4 py-2 text-right font-semibold text-brand-700 whitespace-nowrap">{row.total_points}</td>
+                        <td className="px-4 py-2 text-right whitespace-nowrap">
+                          <StudentPassword classroomId={selectedId} student={row.student} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>

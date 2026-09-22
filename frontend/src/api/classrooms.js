@@ -30,6 +30,14 @@ export async function fetchAssignment(classroomId) {
   return data;
 }
 
+export async function setStudentPassword(classroomId, studentId, password) {
+  const { data } = await apiClient.post(
+    `/classrooms/${classroomId}/students/${studentId}/password`,
+    { password }
+  );
+  return data;
+}
+
 export async function fetchMyAssignment() {
   const { data } = await apiClient.get("/assignments/mine");
   return data.assignment;
