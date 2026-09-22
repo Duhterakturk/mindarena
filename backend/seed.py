@@ -6,10 +6,15 @@ from app.models import Game, GAME_CATALOG, Badge, BADGE_CATALOG
 
 def seed_games():
     for entry in GAME_CATALOG:
-        if not Game.query.filter_by(slug=entry["slug"]).first():
+        game = Game.query.filter_by(slug=entry["slug"]).first()
+        if not game:
             db.session.add(Game(**entry))
+            continue
+        game.name_tr = entry["name_tr"]
+        game.name_en = entry["name_en"]
+        game.min_grade_level = entry.get("min_grade_level", game.min_grade_level)
     db.session.commit()
-    print(f"{len(GAME_CATALOG)} oyun kontrol edildi/eklendi.")
+    print(f"{len(GAME_CATALOG)} oyun kontrol edildi/güncellendi.")
 
 
 def seed_badges():

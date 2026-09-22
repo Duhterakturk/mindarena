@@ -1,7 +1,7 @@
 import { useState } from "react";
 import GridFillGame from "../common/GridFillGame";
-import { relabelGrid, carvePuzzle } from "../common/latinSquare";
-import { BASE_SOLUTION, REGIONS, GIVENS_BY_DIFFICULTY } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { REGIONS } from "./puzzles";
 
 const REGION_BG = {
   A: "bg-brand-50",
@@ -10,20 +10,11 @@ const REGION_BG = {
   D: "bg-rose-50",
 };
 
-function generate(difficulty) {
-  const solution = relabelGrid(BASE_SOLUTION, 4);
-  const puzzle = carvePuzzle(solution, GIVENS_BY_DIFFICULTY[difficulty] || GIVENS_BY_DIFFICULTY.easy);
-  return { puzzle, solution };
-}
-
 export default function BolgeselSudoku() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ puzzle, solution }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("bolgesel-sudoku", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const puzzle = issue.puzzle.givens;
 
   function cellClassName(r, c) {
     const region = REGIONS[r][c];
@@ -36,15 +27,13 @@ export default function BolgeselSudoku() {
   return (
     <GridFillGame
       slug="bolgesel-sudoku"
-      title="Bölgesel Sudoku"
-      instructions="Her satır, sütun ve renkli bölge 1-4 rakamlarını birer kez içermelidir."
+      attemptId={issue.id}
       puzzle={puzzle}
-      solution={solution}
       maxDigit={4}
       cellClassName={cellClassName}
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

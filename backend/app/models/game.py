@@ -1,26 +1,27 @@
 from app.extensions import db
 
-# Kayıtlı 18 akıl oyunu modülü. `slug` frontend'deki games/registry.js ile eşleşir.
+# 19 akıl oyunu. `slug` frontend registry ile eşleşir ve skorların anahtarıdır;
+# görünen adlar marka adlarından kaçınır, mekaniği tarif eder.
 GAME_CATALOG = [
-    {"slug": "kakuro", "name_tr": "Kakuro", "name_en": "Kakuro"},
-    {"slug": "sudoku", "name_tr": "Sudoku", "name_en": "Sudoku"},
-    {"slug": "bolgesel-sudoku", "name_tr": "Bölgesel Sudoku", "name_en": "Jigsaw Sudoku"},
-    {"slug": "apartman", "name_tr": "Apartman", "name_en": "Skyscrapers"},
-    {"slug": "cit", "name_tr": "Çit", "name_en": "Slitherlink"},
-    {"slug": "amiral-batti", "name_tr": "Amiral Battı", "name_en": "Battleships"},
-    {"slug": "sihirli-piramit", "name_tr": "Sihirli Piramit", "name_en": "Magic Pyramid"},
-    {"slug": "patika", "name_tr": "Patika", "name_en": "Pathfinder"},
-    {"slug": "abc-baglama", "name_tr": "ABC Bağlama", "name_en": "ABC Connect"},
-    {"slug": "islem-karesi", "name_tr": "İşlem Karesi", "name_en": "Calcudoku Grid"},
-    {"slug": "kendoku", "name_tr": "Kendoku", "name_en": "Kendoku"},
-    {"slug": "yildiz-savaslari", "name_tr": "Yıldız Savaşları", "name_en": "Star Battle"},
-    {"slug": "kare-karalamaca", "name_tr": "Kare Karalamaca", "name_en": "Square Scribble"},
-    {"slug": "carpmaca", "name_tr": "Çarpmaca", "name_en": "Multiplico"},
-    {"slug": "futoshiki", "name_tr": "Futoshiki", "name_en": "Futoshiki"},
-    {"slug": "pentominolar", "name_tr": "Pentominolar", "name_en": "Pentominoes"},
-    {"slug": "metaforms", "name_tr": "Metaforms", "name_en": "Metaforms"},
-    {"slug": "numbers", "name_tr": "Numbers", "name_en": "Numbers"},
-    {"slug": "colours", "name_tr": "Colours", "name_en": "Colours"},
+    {"slug": "kakuro", "name_tr": "Çapraz Toplam", "name_en": "Cross Sums", "min_grade_level": 4},
+    {"slug": "sudoku", "name_tr": "Rakam Karesi", "name_en": "Number Place", "min_grade_level": 3},
+    {"slug": "bolgesel-sudoku", "name_tr": "Bölge Karesi", "name_en": "Region Grid", "min_grade_level": 4},
+    {"slug": "apartman", "name_tr": "Apartman", "name_en": "Building Heights", "min_grade_level": 3},
+    {"slug": "cit", "name_tr": "Çit", "name_en": "Fence Loop", "min_grade_level": 4},
+    {"slug": "amiral-batti", "name_tr": "Gizli Filo", "name_en": "Fleet Clues", "min_grade_level": 3},
+    {"slug": "sihirli-piramit", "name_tr": "Sihirli Piramit", "name_en": "Number Pyramid", "min_grade_level": 2},
+    {"slug": "patika", "name_tr": "Patika", "name_en": "Number Trail", "min_grade_level": 2},
+    {"slug": "abc-baglama", "name_tr": "Harf Yolu", "name_en": "Letter Paths", "min_grade_level": 2},
+    {"slug": "islem-karesi", "name_tr": "İşlem Karesi", "name_en": "Sum-Product Grid", "min_grade_level": 4},
+    {"slug": "kendoku", "name_tr": "Dört İşlem", "name_en": "Mixed Cages", "min_grade_level": 4},
+    {"slug": "yildiz-savaslari", "name_tr": "Yıldız Dizilimi", "name_en": "Star Placement", "min_grade_level": 3},
+    {"slug": "kare-karalamaca", "name_tr": "Kare Karalamaca", "name_en": "Shade Grid", "min_grade_level": 3},
+    {"slug": "carpmaca", "name_tr": "Çarpmaca", "name_en": "Times Table", "min_grade_level": 2},
+    {"slug": "futoshiki", "name_tr": "Büyük Küçük", "name_en": "Inequality Grid", "min_grade_level": 3},
+    {"slug": "pentominolar", "name_tr": "Beşli Şekil", "name_en": "Five-Square", "min_grade_level": 3},
+    {"slug": "metaforms", "name_tr": "Aykırı Şekil", "name_en": "Odd Shape", "min_grade_level": 2},
+    {"slug": "numbers", "name_tr": "Sırayla Say", "name_en": "Count Up", "min_grade_level": 2},
+    {"slug": "colours", "name_tr": "Yazı Rengi", "name_en": "Ink Color", "min_grade_level": 2},
 ]
 
 

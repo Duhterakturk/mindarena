@@ -1,6 +1,7 @@
 from app.models.user import User, UserRole
 from app.models.game import Game, GAME_CATALOG
 from app.models.score import Score
+from app.models.attempt import PuzzleAttempt
 from app.models.badge import Badge, UserBadge, BADGE_CATALOG
 from app.models.classroom import Classroom
 
@@ -10,6 +11,7 @@ __all__ = [
     "Game",
     "GAME_CATALOG",
     "Score",
+    "PuzzleAttempt",
     "Badge",
     "UserBadge",
     "BADGE_CATALOG",

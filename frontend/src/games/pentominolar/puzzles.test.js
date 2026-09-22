@@ -1,32 +1,27 @@
 import { describe, it, expect } from "vitest";
+import { PENTOMINOES } from "./shapes";
 import { generate } from "./puzzles";
 
-const EXPECTED = {
-  easy: { gridSize: 5, count: 1 },
-  medium: { gridSize: 6, count: 2 },
-  hard: { gridSize: 7, count: 3 },
-};
+const COUNT = { easy: 2, medium: 3, hard: 4 };
 
-describe("Pentominolar generator", () => {
-  it("places the expected number of non-overlapping pentominoes, for every difficulty", () => {
+describe("Beşli Şekil generator", () => {
+  it("builds a gap-free region tiled by distinct five-square pieces", () => {
     for (const difficulty of ["easy", "medium", "hard"]) {
-      const { count, gridSize: expectedSize } = EXPECTED[difficulty];
-      for (let i = 0; i < 50; i++) {
-        const { shapes, solutionSet, gridSize } = generate(difficulty);
-        expect(gridSize).toBe(expectedSize);
-        expect(shapes.length).toBe(count);
-        expect(solutionSet.length).toBe(count * 5);
-
-        const uniqueCells = new Set(solutionSet);
-        expect(uniqueCells.size).toBe(count * 5); // no overlap
-
-        for (const key of solutionSet) {
+      const count = COUNT[difficulty];
+      for (let i = 0; i < 20; i++) {
+        const { pieces, region, rows, cols } = generate(difficulty);
+        expect(pieces).toHaveLength(count);
+        expect(new Set(pieces).size).toBe(count);
+        expect(region).toHaveLength(count * 5);
+        expect(new Set(region).size).toBe(count * 5);
+        for (const key of region) {
           const [r, c] = key.split("-").map(Number);
           expect(r).toBeGreaterThanOrEqual(0);
-          expect(r).toBeLessThan(gridSize);
+          expect(r).toBeLessThan(rows);
           expect(c).toBeGreaterThanOrEqual(0);
-          expect(c).toBeLessThan(gridSize);
+          expect(c).toBeLessThan(cols);
         }
+        for (const name of pieces) expect(PENTOMINOES[name]).toHaveLength(5);
       }
     }
   });

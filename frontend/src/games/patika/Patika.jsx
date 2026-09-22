@@ -1,31 +1,26 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
 import { isSequentialPathSolved } from "../common/pathValidation";
-import { generate } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 export default function Patika() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ solutionSet, fixedCells, rows, cols }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("patika", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const { fixedCells, rows, cols } = issue.puzzle;
 
   return (
     <ToggleGridGame
       slug="patika"
-      title="Patika"
-      instructions="1'den 4'e kadar numaralı noktaları, yatay/dikey adımlarla kesintisiz bir yol oluşturacak şekilde birleştir."
+      attemptId={issue.id}
       rows={rows}
       cols={cols}
-      solutionSet={solutionSet}
       fixedCells={fixedCells}
       validate={isSequentialPathSolved}
       markSymbol="•"
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

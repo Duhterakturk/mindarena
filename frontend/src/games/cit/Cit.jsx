@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
-import { generate } from "./puzzles";
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 const DOT = 6;
 
@@ -10,28 +12,26 @@ function emptyGrid(rows, cols, value) {
 }
 
 export default function Cit() {
+  const copy = useGameText("cit");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [puzzle, setPuzzle] = useState(() => generate("easy"));
-  const { clues, horizontalSolution, verticalSolution, size: n } = puzzle;
-  const spacing = n >= 4 ? 48 : 56;
+  const { issue, phase, reload } = useIssuedPuzzle("cit", difficulty);
+  const puzzle = issue?.puzzle || null;
+  const clues = puzzle?.clues;
+  const n = puzzle?.size || 5;
+  const attemptId = issue?.id;
+  const spacing = n >= 7 ? 40 : 48;
 
-  const [hEdges, setHEdges] = useState(() => emptyGrid(n + 1, n, false));
-  const [vEdges, setVEdges] = useState(() => emptyGrid(n, n + 1, false));
+  const [hEdges, setHEdges] = useState(null);
+  const [vEdges, setVEdges] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
-  // `puzzle` değiştiğinde (zorlukla ızgara boyutu `n` büyüyünce) kenar
-  // dizilerini render SIRASINDA senkron sıfırla. `setHEdges`/`setVEdges`
-  // yalnızca BİR SONRAKİ render'ı düzeltir; bu render'da `checkSolution`
-  // gibi yerlerde eski (küçük) kenar dizilerinin yeni (büyük) çözümle
-  // karışmaması için güvenli değerleri `displayHEdges`/`displayVEdges`
-  // içinde tutuyoruz (bkz. GridFillGame.jsx'teki not).
-  const [renderedPuzzle, setRenderedPuzzle] = useState(puzzle);
+  const [renderedPuzzle, setRenderedPuzzle] = useState(null);
   let displayHEdges = hEdges;
   let displayVEdges = vEdges;
-  if (puzzle !== renderedPuzzle) {
+  if (puzzle && puzzle !== renderedPuzzle) {
     displayHEdges = emptyGrid(n + 1, n, false);
     displayVEdges = emptyGrid(n, n + 1, false);
     setRenderedPuzzle(puzzle);
@@ -41,21 +41,16 @@ export default function Cit() {
   }
 
   useEffect(() => {
-    fetchGame("cit")
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setSeconds(0);
     clearInterval(timerRef.current);
+    if (!attemptId) return undefined;
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [puzzle]);
+  }, [attemptId]);
 
   function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setPuzzle(generate(newDifficulty));
+    if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
+    else reload();
   }
 
   function toggleH(r, c) {
@@ -70,43 +65,41 @@ export default function Cit() {
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const hOk = displayHEdges.every((row, r) => row.every((v, c) => v === horizontalSolution[r][c]));
-    const vOk = displayVEdges.every((row, r) => row.every((v, c) => v === verticalSolution[r][c]));
-    const isCorrect = hOk && vOk;
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
+  function answerEdges() {
+    return { horizontal: displayHEdges, vertical: displayVEdges };
+  }
+
+  async function checkSolution() {
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, answerEdges());
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
-    if (!gameId) return;
+    if (!attemptId) return;
     try {
-      await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty,
-        completed: true,
-      });
+      await submitScore({ attempt_id: attemptId, answer: answerEdges() });
       setStatus("submitted");
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
+
+  if (phase !== "ready" || !displayHEdges || !clues) return <PuzzlePending phase={phase} />;
 
   const pixelSize = spacing * n;
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">Çit</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="cit" value={difficulty} onChange={handleDifficultyChange} />
-      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
-        Hücrelerdeki sayı, o hücreyi çevreleyen kaç kenarın çizili olması gerektiğini
-        gösterir. Tek bir kapalı döngü oluşacak şekilde kenarlara tıkla.
-      </p>
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
         className="relative bg-white max-w-full overflow-x-auto"
@@ -120,7 +113,7 @@ export default function Cit() {
               className="absolute flex items-center justify-center text-sm font-bold text-slate-700"
               style={{ left: c * spacing + 12 + spacing / 2 - 8, top: r * spacing + 12 + spacing / 2 - 8, width: 16, height: 16 }}
             >
-              {clue}
+              {clue ?? ""}
             </div>
           ))
         )}
@@ -168,27 +161,28 @@ export default function Cit() {
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         <button
-          onClick={() => setPuzzle(generate(difficulty))}
+          onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
-          Yeni Bulmaca
+          {play.newPuzzle}
         </button>
         {status === "correct" && (
           <button
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Henüz doğru değil, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

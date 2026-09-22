@@ -1,31 +1,31 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
-import { generate } from "./puzzles";
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 function cloneRows(rows) {
   return rows.map((row) => [...row]);
 }
 
 export default function SihirliPiramit() {
+  const copy = useGameText("sihirli-piramit");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ puzzle, solution }, setGame] = useState(() => generate("easy"));
-  const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
+  const { issue, phase, reload } = useIssuedPuzzle("sihirli-piramit", difficulty);
+  const puzzle = issue?.puzzle?.rows || null;
+  const attemptId = issue?.id;
+  const givenMask = puzzle ? puzzle.map((row) => row.map((v) => v !== 0)) : [];
 
-  const [board, setBoard] = useState(() => cloneRows(puzzle));
+  const [board, setBoard] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
-  // `puzzle` değiştiğinde (zorlukla piramit boyutu büyüyünce) `board`'u
-  // render SIRASINDA senkron sıfırla. `setBoard` yalnızca BİR SONRAKİ
-  // render'ı düzeltir — BU render'ın JSX'i hâlâ eski (küçük) `board` ile
-  // yeni (büyük) `givenMask`'ı kullanmaya çalışıp çökerdi. Bu yüzden bu
-  // render'da kullanılacak güvenli değeri `displayBoard` içinde tutuyoruz.
-  const [renderedPuzzle, setRenderedPuzzle] = useState(puzzle);
+  const [renderedPuzzle, setRenderedPuzzle] = useState(null);
   let displayBoard = board;
-  if (puzzle !== renderedPuzzle) {
+  if (puzzle && puzzle !== renderedPuzzle) {
     displayBoard = cloneRows(puzzle);
     setRenderedPuzzle(puzzle);
     setBoard(displayBoard);
@@ -33,21 +33,16 @@ export default function SihirliPiramit() {
   }
 
   useEffect(() => {
-    fetchGame("sihirli-piramit")
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setSeconds(0);
     clearInterval(timerRef.current);
+    if (!attemptId) return undefined;
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [puzzle]);
+  }, [attemptId]);
 
   function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
+    if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
+    else reload();
   }
 
   function handleCellChange(row, col, value) {
@@ -59,39 +54,35 @@ export default function SihirliPiramit() {
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const isCorrect = displayBoard.every((row, r) => row.every((val, c) => val === solution[r][c]));
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
-  }
-
-  async function handleSubmitScore() {
-    if (!gameId) return;
+  async function checkSolution() {
+    if (!attemptId) return;
     try {
-      await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty,
-        completed: true,
-      });
-      setStatus("submitted");
+      const correct = await checkPuzzle(attemptId, displayBoard);
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
 
+  async function handleSubmitScore() {
+    if (!attemptId) return;
+    try {
+      await submitScore({ attempt_id: attemptId, answer: displayBoard });
+      setStatus("submitted");
+    } catch {
+      setStatus("rejected");
+    }
+  }
+
+  if (phase !== "ready" || !displayBoard) return <PuzzlePending phase={phase} />;
+
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">Sihirli Piramit</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="sihirli-piramit" value={difficulty} onChange={handleDifficultyChange} />
-      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
-        Her hücre, kendi altındaki iki komşu hücrenin toplamı olmalıdır. Taban
-        verilmiştir; üst kısmı tamamla.
-      </p>
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div className="flex flex-col items-center gap-1 max-w-full overflow-x-auto">
         {displayBoard.map((row, r) => (
@@ -117,27 +108,28 @@ export default function SihirliPiramit() {
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         <button
-          onClick={() => setGame(generate(difficulty))}
+          onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
-          Yeni Bulmaca
+          {play.newPuzzle}
         </button>
         {status === "correct" && (
           <button
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Bazı hücreler yanlış, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

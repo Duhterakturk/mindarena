@@ -1,6 +1,7 @@
-// 4x4 Bölgesel (Jigsaw) Sudoku. Bölge şekli sabittir (düzensiz bölgeler için
-// rastgele satır/sütun permütasyonu kısıtı bozar); her oynanışta yalnızca
-// rakamlar yeniden etiketlenir (bkz. common/latinSquare.js -> relabelGrid).
+import { relabelGrid, carvePuzzle } from "../common/latinSquare";
+import { countRegionLatin } from "../common/solvers";
+
+// 4x4 Bölge Karesi. Bölge şekli sabittir; yalnız tek çözümlü bulmacalar döner.
 export const BASE_SOLUTION = [
   [1, 2, 3, 4],
   [2, 4, 1, 3],
@@ -16,4 +17,14 @@ export const REGIONS = [
   ["C", "D", "D", "D"],
 ];
 
-export const GIVENS_BY_DIFFICULTY = { easy: 11, medium: 8, hard: 5 };
+export const GIVENS_BY_DIFFICULTY = { easy: 8, medium: 6, hard: 4 };
+
+export function generate(difficulty = "easy") {
+  const givens = GIVENS_BY_DIFFICULTY[difficulty] || GIVENS_BY_DIFFICULTY.easy;
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const solution = relabelGrid(BASE_SOLUTION, 4);
+    const puzzle = carvePuzzle(solution, givens);
+    if (countRegionLatin(puzzle, REGIONS) === 1) return { puzzle, solution };
+  }
+  throw new Error("Tek çözüm Bölge Karesi üretilemedi");
+}

@@ -1,4 +1,5 @@
 from tests.helpers import auth_headers
+from tests.payloads import post_score
 
 
 def test_link_child_by_email(client, student, parent):
@@ -45,17 +46,13 @@ def test_parent_cannot_view_unlinked_child_progress(client, student, parent):
     assert resp.status_code == 403
 
 
-def test_parent_can_view_linked_child_progress(client, student, parent):
+def test_parent_can_view_linked_child_progress(client, student, parent, app):
     client.post(
         "/api/users/children/link",
         json={"email": "student@example.com"},
         headers=auth_headers(parent["token"]),
     )
-    client.post(
-        "/api/scores",
-        json={"game_id": 1, "points": 250, "completed": True},
-        headers=auth_headers(student["token"]),
-    )
+    post_score(client, auth_headers(student["token"]), 1, app, duration=750)
     resp = client.get(
         f"/api/progress/child/{student['user']['id']}",
         headers=auth_headers(parent["token"]),

@@ -1,7 +1,5 @@
 {
-  "app": {
-    "name": "MindArena"
-  },
+  "app": { "name": "MindArena" },
   "nav": {
     "home": "Home",
     "games": "Games",
@@ -32,6 +30,89 @@
   "games": {
     "title": "Games",
     "play": "Play",
-    "min_grade": "Min. Grade"
+    "min_grade": "Min. Grade",
+    "loadError": "Games could not be loaded. Is the backend running?",
+    "waking": "Loading games — if the server has been idle, waking it can take a few seconds…"
+  },
+  "difficulty": {
+    "easy": "Easy",
+    "medium": "Medium",
+    "hard": "Hard",
+    "lock": "Finish {{threshold}} {{level}} puzzles to unlock ({{done}}/{{threshold}})"
+  },
+  "play": {
+    "time": "Time: {{clock}}",
+    "check": "Check",
+    "new": "New Puzzle",
+    "save": "Save Score",
+    "correct": "Correct — you solved it!",
+    "incorrect": "Not yet. Try again.",
+    "incorrectCells": "Some cells are wrong. Try again.",
+    "saved": "Score saved.",
+    "rejected": "The score was not saved. The solution could not be verified.",
+    "loading": "Preparing a puzzle…",
+    "unavailable": "The puzzle could not be opened. Try again in a moment.",
+    "right": "Right!",
+    "wrong": "Wrong.",
+    "round": "Round {{current}}/{{total}}",
+    "result": "Result: {{correct}} / {{total}} correct",
+    "next": "Next: {{value}}",
+    "numbersDone": "You tapped them all in order!",
+    "noFit": "That piece does not fit. Rotate it or try another cell.",
+    "rotate": "Rotate",
+    "flip": "Flip",
+    "pieces": "Pieces",
+    "anchor": "The dark square lands on the cell you click. Click a filled cell to lift that piece.",
+    "leaderboard": "Best scores",
+    "noScores": "No saved scores for this game yet.",
+    "points": "points"
+  },
+  "colors": {
+    "red": "Red",
+    "blue": "Blue",
+    "green": "Green",
+    "yellow": "Yellow"
+  },
+  "gameTitle": {
+    "kakuro": "Cross Sums",
+    "sudoku": "Number Place",
+    "bolgesel-sudoku": "Region Grid",
+    "apartman": "Building Heights",
+    "cit": "Fence Loop",
+    "amiral-batti": "Fleet Clues",
+    "sihirli-piramit": "Number Pyramid",
+    "patika": "Number Trail",
+    "abc-baglama": "Letter Paths",
+    "islem-karesi": "Sum-Product Grid",
+    "kendoku": "Mixed Cages",
+    "yildiz-savaslari": "Star Placement",
+    "kare-karalamaca": "Shade Grid",
+    "carpmaca": "Times Table",
+    "futoshiki": "Inequality Grid",
+    "pentominolar": "Five-Square",
+    "metaforms": "Odd Shape",
+    "numbers": "Count Up",
+    "colours": "Ink Color"
+  },
+  "gameRules": {
+    "kakuro": "Digits in each white run are different and add up to the clue above or to the left.",
+    "sudoku": "Each row, column, and bold box contains the digits 1–9 once.",
+    "bolgesel-sudoku": "Each row, column, and colored region contains the digits 1–4 once.",
+    "apartman": "Each row and column contains heights 1–4 once. An edge number is how many buildings you can see from that side.",
+    "cit": "A number says how many of that cell's edges belong to the line. The line is one closed loop. An empty cell has no number.",
+    "amiral-batti": "A row or column number is how many ship cells sit on that line. Ships do not touch.",
+    "sihirli-piramit": "Each stone is the sum of the two stones directly below it. Finish the pyramid from the given stones.",
+    "patika": "Join the numbered dots with a continuous path of horizontal and vertical steps.",
+    "abc-baglama": "Join matching letters with horizontal and vertical lines that do not cross.",
+    "islem-karesi": "Each row and column contains 1–{{n}} once. Every cage is a sum or a product.",
+    "kendoku": "Each row and column contains 1–{{n}} once. Cages use addition, subtraction, multiplication, or division.",
+    "yildiz-savaslari": "Place one star in each row, column, and colored region. Stars cannot touch, even diagonally.",
+    "kare-karalamaca": "Row and column numbers are the lengths of consecutive shaded groups.",
+    "carpmaca": "Write the product of the row header and the column header in each cell.",
+    "futoshiki": "Each row and column contains 1–{{n}} once. The < and > signs order neighboring cells.",
+    "pentominolar": "Tile the outlined area with the given five-square pieces, with no gaps or overlaps. Select a piece, rotate it, then place it.",
+    "metaforms": "Find the shape that is different from the others.",
+    "numbers": "Tap the numbers from 1 to {{total}} in order, as fast as you can.",
+    "colours": "Ignore the word. Press the button for the ink color."
   }
 }

@@ -6,6 +6,7 @@ backend/*.pyc
 backend/.env
 backend/instance/
 backend/.pytest_cache/
+backend/puzzle-runner.mjs
 
 # Node
 frontend/node_modules/

@@ -1,33 +1,27 @@
-# Render Blueprint — tek tıkla, tamamen ücretsiz katmanda MindArena dağıtımı.
+# Render Blueprint — ücretsiz katman.
 #
-# Kullanım: Render Dashboard → "New" → "Blueprint" → bu GitHub repo'sunu seç.
-# Render bu dosyayı okuyup aşağıdaki 3 servisi otomatik oluşturur: backend
-# (Flask API), frontend (statik React build'i) ve veritabanı (PostgreSQL).
+# Veritabanı Render'da değil. Render'ın ücretsiz Postgres'i 30 gün sonra
+# kapanır ve skorlar silinir. Skorlar Neon'da durur (ücretsiz, silinmez).
 #
-# ÖNEMLİ: `mindarena-backend` / `mindarena-frontend` adları Render'da
-# GLOBAL olarak benzersiz olmalı (URL'ler bu adlardan türetiliyor:
-# https://mindarena-backend.onrender.com). Biri alınmışsa Render sana farklı
-# bir ad önerir — o durumda bu dosyadaki CORS_ORIGINS ve VITE_API_URL
-# değerlerini de yeni adla güncellemen gerekir.
-
-databases:
-  - name: mindarena-db
-    databaseName: mindarena
-    user: mindarena
-    plan: free
+# Kurulum:
+# 1. neon.tech → ücretsiz proje, bölge Europe (Frankfurt).
+# 2. Connection string'i kopyala. İçinde sslmode=require olsun.
+# 3. Render → New → Blueprint → bu repo. DATABASE_URL sorulunca Neon
+#    dizesini yapıştır.
+#
+# Servis adları Render'da globaldir. Biri doluysa Render yeni ad önerir;
+# o zaman aşağıdaki CORS_ORIGINS ve VITE_API_URL değerlerini de yeni
+# adreslerle değiştir.
 
 services:
   - type: web
-    name: mindarena-backend
-    env: python
+    name: duhterakturk-mindarena-api
+    runtime: docker
     plan: free
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: flask --app wsgi db upgrade && python seed.py && gunicorn -w 2 -b 0.0.0.0:$PORT wsgi:app
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.7
       - key: FLASK_ENV
         value: production
       - key: SECRET_KEY
@@ -35,24 +29,20 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
-        fromDatabase:
-          name: mindarena-db
-          property: connectionString
+        sync: false
       - key: CORS_ORIGINS
-        value: https://mindarena-frontend.onrender.com
+        value: https://duhterakturk-mindarena.onrender.com
 
   - type: web
-    name: mindarena-frontend
-    env: static
+    name: duhterakturk-mindarena
+    runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://mindarena-backend.onrender.com/api
+        value: https://duhterakturk-mindarena-api.onrender.com/api
     routes:
-      # React Router (client-side routing) — her yol index.html'e düşmeli,
-      # aksi halde /games/kakuro gibi bir sayfada F5 yapınca 404 alınır.
       - type: rewrite
         source: /*
         destination: /index.html

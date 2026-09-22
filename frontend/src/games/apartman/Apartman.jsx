@@ -1,50 +1,43 @@
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
-import { generateLatinSquare, carvePuzzle } from "../common/latinSquare";
-import { computeClues, GIVENS_BY_DIFFICULTY } from "./puzzles";
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 function cloneBoard(grid) {
   return grid.map((row) => [...row]);
 }
 
-function generate(difficulty) {
-  const solution = generateLatinSquare(4);
-  const puzzle = carvePuzzle(solution, GIVENS_BY_DIFFICULTY[difficulty] || GIVENS_BY_DIFFICULTY.easy);
-  return { puzzle, solution };
-}
-
 export default function Apartman() {
+  const copy = useGameText("apartman");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ puzzle, solution }, setGame] = useState(() => generate("easy"));
-  const clues = useMemo(() => computeClues(solution), [solution]);
-  const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
-  const size = puzzle.length;
+  const { issue, phase, reload } = useIssuedPuzzle("apartman", difficulty);
+  const puzzle = issue?.puzzle?.givens || null;
+  const clues = issue?.puzzle?.clues;
+  const attemptId = issue?.id;
+  const givenMask = puzzle ? puzzle.map((row) => row.map((v) => v !== 0)) : [];
+  const size = puzzle ? puzzle.length : 4;
 
-  const [board, setBoard] = useState(() => cloneBoard(puzzle));
+  const [board, setBoard] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
   useEffect(() => {
-    fetchGame("apartman")
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
+    if (!puzzle) return;
     setBoard(cloneBoard(puzzle));
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [puzzle]);
+  }, [attemptId]);
 
   function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
+    if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
+    else reload();
   }
 
   function handleCellChange(row, col, value) {
@@ -56,41 +49,37 @@ export default function Apartman() {
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const isCorrect = board.every((row, r) => row.every((val, c) => val === solution[r][c]));
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
+  async function checkSolution() {
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, board);
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
-    if (!gameId) return;
+    if (!attemptId) return;
     try {
-      await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty,
-        completed: true,
-      });
+      await submitScore({ attempt_id: attemptId, answer: board });
       setStatus("submitted");
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
 
   const clueCell = "w-12 h-12 flex items-center justify-center text-sm font-bold text-brand-700";
 
+  if (phase !== "ready" || !board || !clues) return <PuzzlePending phase={phase} />;
+
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">Apartman</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="apartman" value={difficulty} onChange={handleDifficultyChange} />
-      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
-        Her satır ve sütun 1-4 bina yüksekliğini birer kez içermeli; kenar ipuçları o
-        yönden kaç binanın görünür olduğunu gösterir.
-      </p>
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
         className="inline-grid max-w-full overflow-x-auto"
@@ -133,27 +122,28 @@ export default function Apartman() {
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         <button
-          onClick={() => setGame(generate(difficulty))}
+          onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
-          Yeni Bulmaca
+          {play.newPuzzle}
         </button>
         {status === "correct" && (
           <button
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Bazı hücreler yanlış, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function Games() {
         setLoading(false);
       })
       .catch(() => {
-        setError("Oyunlar yüklenemedi. Backend çalışıyor mu?");
+        setError(t("games.loadError"));
         setLoading(false);
       });
   }, []);
@@ -30,7 +30,7 @@ export default function Games() {
       {loading && (
         <>
           <p className="text-slate-500 text-sm mb-4">
-            Oyunlar yükleniyor — sunucu bir süredir kullanılmadıysa uyanması birkaç saniye sürebilir…
+            {t("games.waking")}
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" aria-hidden="true">
             {Array.from({ length: 8 }).map((_, i) => (

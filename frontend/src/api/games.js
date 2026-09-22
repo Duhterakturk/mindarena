@@ -12,11 +12,22 @@ export async function fetchGame(slug) {
 
 export const BADGES_EARNED_EVENT = "mindarena:badges-earned";
 
+export async function openPuzzle(slug, difficulty = "easy") {
+  const { data } = await apiClient.post("/puzzles", { slug, difficulty });
+  return data;
+}
+
+export async function checkPuzzle(attemptId, answer) {
+  const { data } = await apiClient.post(`/puzzles/${attemptId}/check`, { answer });
+  return data.correct;
+}
+
 export async function submitScore(payload) {
   const { data } = await apiClient.post("/scores", payload);
   if (data.new_badges && data.new_badges.length > 0) {
     window.dispatchEvent(new CustomEvent(BADGES_EARNED_EVENT, { detail: data.new_badges }));
   }
+  window.dispatchEvent(new CustomEvent("mindarena:score-saved"));
   return data;
 }
 

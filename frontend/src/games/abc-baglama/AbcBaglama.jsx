@@ -1,31 +1,26 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
 import { isConnectionPuzzleSolved } from "../common/pathValidation";
-import { generate } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 export default function AbcBaglama() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ solutionSet, fixedCells, rows, cols }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("abc-baglama", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const { fixedCells, rows, cols } = issue.puzzle;
 
   return (
     <ToggleGridGame
       slug="abc-baglama"
-      title="ABC Bağlama"
-      instructions="Aynı harfe sahip hücreleri, birbirini kesmeyen yatay/dikey bir çizgiyle birleştir."
+      attemptId={issue.id}
       rows={rows}
       cols={cols}
-      solutionSet={solutionSet}
       fixedCells={fixedCells}
       validate={isConnectionPuzzleSolved}
       markSymbol="—"
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

@@ -14,6 +14,16 @@ def test_get_game_by_slug(client):
     assert resp.get_json()["slug"] == "sudoku"
 
 
+def test_display_names_describe_the_puzzle_without_branded_titles(client):
+    stars = client.get("/api/games/yildiz-savaslari").get_json()
+    assert stars["name_tr"] == "Yıldız Dizilimi"
+    assert stars["name_en"] == "Star Placement"
+    fleet = client.get("/api/games/amiral-batti").get_json()
+    assert fleet["name_tr"] == "Gizli Filo"
+    cages = client.get("/api/games/kendoku").get_json()
+    assert cages["name_tr"] == "Dört İşlem"
+
+
 def test_get_unknown_game_returns_404(client):
     resp = client.get("/api/games/does-not-exist")
     assert resp.status_code == 404

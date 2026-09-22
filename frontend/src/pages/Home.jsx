@@ -14,15 +14,7 @@ const BRAINS = [
   { hue: 320, style: { top: "48%", right: "2%", width: "36px", transform: "rotate(12deg)" } },
 ];
 
-const HIGHLIGHT_SLUGS = [
-  ["sudoku", "Sudoku"],
-  ["amiral-batti", "Amiral Battı"],
-  ["pentominolar", "Pentominolar"],
-  ["yildiz-savaslari", "Yıldız Savaşları"],
-  ["kakuro", "Kakuro"],
-  ["colours", "Colours"],
-];
-const HIGHLIGHTS = HIGHLIGHT_SLUGS.map(([slug, name]) => ({ slug, name, ...getGameVisual(slug) }));
+const HIGHLIGHT_SLUGS = ["sudoku", "amiral-batti", "pentominolar", "yildiz-savaslari", "kakuro", "colours"];
 
 const STATS = [
   { value: "19", label: "Farklı Oyun", color: "text-brand-600" },
@@ -76,16 +68,19 @@ export default function Home() {
       <section className="max-w-5xl mx-auto px-4 py-14">
         <h2 className="text-center text-slate-700 font-semibold mb-8">Bazı oyunlarımızla tanış</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {HIGHLIGHTS.map((g) => (
-            <Link
-              key={g.slug}
-              to={`/games/${g.slug}`}
-              className={`flex flex-col items-center justify-center gap-2 rounded-2xl p-6 font-semibold hover:scale-105 hover:shadow-md transition-all ${g.color}`}
-            >
-              <span className="text-3xl">{g.emoji}</span>
-              <span className="text-sm text-center">{g.name}</span>
-            </Link>
-          ))}
+          {HIGHLIGHT_SLUGS.map((slug) => {
+            const visual = getGameVisual(slug);
+            return (
+              <Link
+                key={slug}
+                to={`/games/${slug}`}
+                className={`flex flex-col items-center justify-center gap-2 rounded-2xl p-6 font-semibold hover:scale-105 hover:shadow-md transition-all ${visual.color}`}
+              >
+                <span className="text-3xl">{visual.emoji}</span>
+                <span className="text-sm text-center">{t(`gameTitle.${slug}`)}</span>
+              </Link>
+            );
+          })}
         </div>
       </section>
     </div>

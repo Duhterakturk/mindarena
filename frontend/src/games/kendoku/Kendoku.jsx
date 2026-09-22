@@ -1,15 +1,12 @@
 import { useState } from "react";
 import GridFillGame from "../common/GridFillGame";
-import { generate } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 export default function Kendoku() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ puzzle, solution, cageId, cageAnchor, cageClues }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("kendoku", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const { givens: puzzle, cageId, cageAnchor, cageClues } = issue.puzzle;
 
   function cellClassName(r, c) {
     const id = cageId[r][c];
@@ -33,16 +30,14 @@ export default function Kendoku() {
   return (
     <GridFillGame
       slug="kendoku"
-      title="Kendoku"
-      instructions={`Her satır ve sütun 1-${puzzle.length} rakamlarını birer kez içermeli; her kafes toplama, çıkarma, çarpma veya bölme sonucunu vermelidir.`}
+      attemptId={issue.id}
       puzzle={puzzle}
-      solution={solution}
       maxDigit={puzzle.length}
       cellClassName={cellClassName}
       renderOverlay={renderOverlay}
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

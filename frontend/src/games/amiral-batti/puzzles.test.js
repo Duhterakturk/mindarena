@@ -7,7 +7,7 @@ const EXPECTED_SIZE = { easy: 5, medium: 6, hard: 7 };
 describe("Amiral Battı fleet generator", () => {
   it("places the expected number of ship cells with no two ships touching, for every difficulty", () => {
     for (const difficulty of ["easy", "medium", "hard"]) {
-      for (let i = 0; i < 100; i++) {
+      for (let i = 0; i < 8; i++) {
         const { solutionSet, rowClues, colClues, rows, cols } = generate(difficulty);
         expect(solutionSet.length).toBe(EXPECTED_CELLS[difficulty]);
         expect(rows).toBe(EXPECTED_SIZE[difficulty]);

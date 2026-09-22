@@ -1,0 +1,10 @@
+.git
+backend/venv
+backend/.env
+backend/instance
+backend/puzzle-runner.mjs
+backend/**/__pycache__
+frontend/node_modules
+frontend/dist
+android-package
+*.zip

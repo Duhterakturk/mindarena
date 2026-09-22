@@ -28,10 +28,13 @@ function reflect(cells) {
   return normalize(cells.map(([r, c]) => [r, -c]));
 }
 
-export function randomTransform(cells) {
+export function orient(cells, turns, flipped) {
   let shape = cells;
-  if (Math.random() < 0.5) shape = reflect(shape);
-  const rotations = Math.floor(Math.random() * 4);
-  for (let i = 0; i < rotations; i++) shape = rotate90(shape);
+  if (flipped) shape = reflect(shape);
+  for (let i = 0; i < ((turns % 4) + 4) % 4; i++) shape = rotate90(shape);
   return shape;
+}
+
+export function randomTransform(cells) {
+  return orient(cells, Math.floor(Math.random() * 4), Math.random() < 0.5);
 }

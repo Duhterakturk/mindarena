@@ -1,4 +1,5 @@
 from tests.helpers import auth_headers
+from tests.payloads import post_score
 
 
 def test_easy_always_unlocked(client, student):
@@ -11,24 +12,16 @@ def test_easy_always_unlocked(client, student):
     assert data["progress"]["easy"] == 0
 
 
-def test_medium_unlocks_after_threshold_easy_completions(client, student):
+def test_medium_unlocks_after_threshold_easy_completions(client, student, app):
     auth = auth_headers(student["token"])
     sudoku_id = client.get("/api/games/sudoku").get_json()["id"]
 
     for _ in range(4):
-        client.post(
-            "/api/scores",
-            json={"game_id": sudoku_id, "points": 100, "difficulty": "easy", "completed": True},
-            headers=auth,
-        )
+        post_score(client, auth, sudoku_id, app, duration=900)
     resp = client.get("/api/progress/unlocked/sudoku", headers=auth)
     assert resp.get_json()["unlocked"]["medium"] is False
 
-    client.post(
-        "/api/scores",
-        json={"game_id": sudoku_id, "points": 100, "difficulty": "easy", "completed": True},
-        headers=auth,
-    )
+    post_score(client, auth, sudoku_id, app, duration=900)
     resp2 = client.get("/api/progress/unlocked/sudoku", headers=auth)
     data = resp2.get_json()
     assert data["progress"]["easy"] == 5
@@ -36,15 +29,11 @@ def test_medium_unlocks_after_threshold_easy_completions(client, student):
     assert data["unlocked"]["hard"] is False
 
 
-def test_incomplete_scores_do_not_count(client, student):
+def test_incomplete_scores_do_not_count(client, student, app):
     auth = auth_headers(student["token"])
     sudoku_id = client.get("/api/games/sudoku").get_json()["id"]
     for _ in range(5):
-        client.post(
-            "/api/scores",
-            json={"game_id": sudoku_id, "points": 100, "difficulty": "easy", "completed": False},
-            headers=auth,
-        )
+        post_score(client, auth, sudoku_id, app, answer=None)
     resp = client.get("/api/progress/unlocked/sudoku", headers=auth)
     data = resp.get_json()
     assert data["progress"]["easy"] == 0
@@ -59,3 +48,10 @@ def test_unknown_game_returns_404(client, student):
 def test_unlocked_endpoint_requires_auth(client):
     resp = client.get("/api/progress/unlocked/sudoku")
     assert resp.status_code == 401
+
+
+def test_locked_difficulty_is_not_issued(client, student):
+    auth = auth_headers(student["token"])
+    sudoku_id = client.get("/api/games/sudoku").get_json()["id"]
+    resp = client.post("/api/puzzles", json={"game_id": sudoku_id, "difficulty": "hard"}, headers=auth)
+    assert resp.status_code == 403

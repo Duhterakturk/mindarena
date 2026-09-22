@@ -1,30 +1,25 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
-import { generate } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 export default function KareKaralamaca() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ solutionSet, rowClues, colClues, size }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("kare-karalamaca", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const { rowClues, colClues, size } = issue.puzzle;
 
   return (
     <ToggleGridGame
       slug="kare-karalamaca"
-      title="Kare Karalamaca"
-      instructions="Satır ve sütun ipuçlarına göre hücreleri karala; gizli deseni ortaya çıkar."
+      attemptId={issue.id}
       rows={size}
       cols={size}
-      solutionSet={solutionSet}
       rowClues={rowClues}
       colClues={colClues}
       markSymbol="■"
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

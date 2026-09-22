@@ -1,11 +1,19 @@
+from datetime import datetime
+
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
-from app.models import Score, Game
+from app.models import Score, Game, PuzzleAttempt
 from app.services.badges import check_and_award_badges
+from app.services.grading import GradeError, grade
 
 scores_bp = Blueprint("scores", __name__, url_prefix="/api/scores")
+
+
+def _elapsed(started_at):
+    seconds = int((datetime.utcnow() - started_at).total_seconds())
+    return max(0, min(seconds, 3 * 60 * 60))
 
 
 @scores_bp.post("")
@@ -14,18 +22,37 @@ def submit_score():
     user_id = get_jwt_identity()
     data = request.get_json(force=True) or {}
 
-    game = db.session.get(Game, data.get("game_id"))
-    if not game:
-        return jsonify({"error": "Oyun bulunamadı"}), 404
+    attempt = db.session.get(PuzzleAttempt, data.get("attempt_id"))
+    if attempt is None or attempt.user_id != user_id:
+        return jsonify({"error": "Bulmaca bulunamadı"}), 404
+    if attempt.consumed_at is not None:
+        return jsonify({"error": "Bu bulmacanın skoru zaten yazıldı"}), 409
 
-    score = Score(
-        user_id=user_id,
-        game_id=game.id,
-        points=int(data.get("points", 0)),
-        duration_seconds=data.get("duration_seconds"),
-        difficulty=data.get("difficulty"),
-        completed=bool(data.get("completed", False)),
-    )
+    game = attempt.game
+    duration = _elapsed(attempt.started_at)
+    if data.get("answer") is None:
+        score = Score(
+            user_id=user_id,
+            game_id=game.id,
+            points=0,
+            duration_seconds=duration,
+            difficulty=attempt.difficulty,
+            completed=False,
+        )
+    else:
+        try:
+            points, duration = grade(game.slug, attempt.difficulty, attempt.proof_puzzle, data.get("answer"), duration)
+        except GradeError as exc:
+            return jsonify({"error": str(exc)}), 400
+        score = Score(
+            user_id=user_id,
+            game_id=game.id,
+            points=points,
+            duration_seconds=duration,
+            difficulty=attempt.difficulty,
+            completed=True,
+        )
+    attempt.consumed_at = datetime.utcnow()
     db.session.add(score)
     db.session.commit()
 
@@ -63,7 +90,14 @@ def leaderboard(game_slug):
     top_scores = (
         Score.query.filter_by(game_id=game.id, completed=True)
         .order_by(Score.points.desc())
-        .limit(20)
+        .limit(10)
         .all()
     )
-    return jsonify([s.to_dict() for s in top_scores])
+    rows = []
+    for score in top_scores:
+        payload = score.to_dict()
+        payload.pop("user_id", None)
+        full_name = score.user.full_name.strip() if score.user and score.user.full_name else ""
+        payload["display_name"] = full_name.split()[0] if full_name else "Oyuncu"
+        rows.append(payload)
+    return jsonify(rows)

@@ -1,53 +1,43 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
-import { generateSudokuSolution, carvePuzzle } from "../common/latinSquare";
-
-const GIVENS_BY_DIFFICULTY = { easy: 40, medium: 32, hard: 26 };
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 function cloneBoard(board) {
   return board.map((row) => [...row]);
 }
 
-function makePuzzle(difficulty) {
-  const solution = generateSudokuSolution();
-  const puzzle = carvePuzzle(solution, GIVENS_BY_DIFFICULTY[difficulty]);
-  return { puzzle, solution };
-}
-
 export default function Sudoku() {
+  const copy = useGameText("sudoku");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ puzzle, solution }, setGame] = useState(() => makePuzzle("easy"));
-  const givenMask = useMemo(() => puzzle.map((row) => row.map((v) => v !== 0)), [puzzle]);
+  const { issue, phase, reload } = useIssuedPuzzle("sudoku", difficulty);
+  const puzzle = issue?.puzzle?.givens || null;
+  const attemptId = issue?.id;
+  const givenMask = useMemo(() => (puzzle ? puzzle.map((row) => row.map((v) => v !== 0)) : []), [puzzle]);
 
-  const [board, setBoard] = useState(() => cloneBoard(puzzle));
+  const [board, setBoard] = useState(null);
   const [selected, setSelected] = useState(null);
-  const [status, setStatus] = useState("playing"); // playing | correct | incorrect | submitted
+  const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
   useEffect(() => {
-    fetchGame("sudoku")
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
+    if (!puzzle) return;
+    setBoard(cloneBoard(puzzle));
+    setStatus("playing");
+    setSelected(null);
     clearInterval(timerRef.current);
     setSeconds(0);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [puzzle]);
+  }, [attemptId]);
 
   function newPuzzle(nextDifficulty) {
-    const d = nextDifficulty || difficulty;
-    setDifficulty(d);
-    const generated = makePuzzle(d);
-    setGame(generated);
-    setBoard(cloneBoard(generated.puzzle));
-    setStatus("playing");
-    setSelected(null);
+    if (nextDifficulty && nextDifficulty !== difficulty) setDifficulty(nextDifficulty);
+    else reload();
   }
 
   function handleCellChange(row, col, value) {
@@ -59,37 +49,36 @@ export default function Sudoku() {
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const isCorrect = board.every((row, r) => row.every((val, c) => val === solution[r][c]));
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
-  }
-
-  async function handleSubmitScore() {
-    if (!gameId) return;
+  async function checkSolution() {
+    if (!attemptId) return;
     try {
-      await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty,
-        completed: true,
-      });
-      setStatus("submitted");
+      const correct = await checkPuzzle(attemptId, board);
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
 
+  async function handleSubmitScore() {
+    if (!attemptId) return;
+    try {
+      await submitScore({ attempt_id: attemptId, answer: board });
+      setStatus("submitted");
+    } catch {
+      setStatus("rejected");
+    }
+  }
+
+  if (phase !== "ready" || !board) return <PuzzlePending phase={phase} />;
+
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">Sudoku</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
 
       <DifficultyPicker gameSlug="sudoku" value={difficulty} onChange={newPuzzle} />
-
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div className="grid grid-cols-9 border-2 border-slate-700">
         {board.map((row, r) =>
@@ -117,27 +106,28 @@ export default function Sudoku() {
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         <button
           onClick={() => newPuzzle()}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
-          Yeni Bulmaca
+          {play.newPuzzle}
         </button>
         {status === "correct" && (
           <button
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Bazı hücreler yanlış, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

@@ -268,33 +268,28 @@ ayarlanmazsa `frontend/src/api/client.js` yerel geliştirmedeki gibi göreli
 `/api`'ye düşer ki bu yalnızca Vite'ın dev-sunucu proxy'siyle çalışır,
 statik bir üretim dağıtımında backend'e ulaşamaz.
 
-### Render ile tek tık, tamamen ücretsiz dağıtım
+### Öğretmen ve velinin kendi bilgisayarından açması
 
-Repo kökündeki `render.yaml`, Render'ın "Blueprint" özelliğiyle üç servisi
-(backend, statik frontend, PostgreSQL) tek seferde ve tamamen ücretsiz
-katmanda kurar — kredi kartı gerekmez:
+Site Render'da, skorlar Neon'da durur. İkisi de ücretsizdir ve kart
+istemez. Render'ın kendi ücretsiz Postgres'i kullanılmaz: 30 gün sonra
+kapanır ve skorlar silinir.
 
-1. [render.com](https://render.com) → GitHub ile giriş yap.
-2. Dashboard → **New** → **Blueprint** → bu repo'yu seç.
-3. Render `render.yaml`'ı okuyup `mindarena-backend` (Flask API),
-   `mindarena-frontend` (statik React build'i) ve `mindarena-db`
-   (PostgreSQL) servislerini otomatik oluşturur; `SECRET_KEY` ve
-   `JWT_SECRET_KEY` rastgele üretilir, `DATABASE_URL` veritabanından
-   otomatik bağlanır.
-4. İlk deploy'da backend, başlamadan önce `flask db upgrade` ve
-   `python seed.py`'yi otomatik çalıştırır (bkz. `render.yaml`
-   `startCommand`) — oyun/rozet kataloğu hazır gelir.
+1. [neon.tech](https://neon.tech) üzerinde ücretsiz bir proje aç (bölge:
+   Europe / Frankfurt). Bağlantı dizesini kopyala; `sslmode=require`
+   içersin.
+2. Bu depoyu GitHub'a push et.
+3. [render.com](https://render.com) → **New** → **Blueprint** → bu repo.
+   `DATABASE_URL` sorulunca Neon dizesini yapıştır.
+4. Blueprint `duhterakturk-mindarena-api` (Flask + bulmaca üretici) ve
+   `duhterakturk-mindarena` (site) servislerini kurar. İlk açılışta
+   tablolar ve oyun kataloğu otomatik yüklenir.
 
-**Önemli:** `mindarena-backend`/`mindarena-frontend` adları Render'da
-global olarak benzersiz olmalı; biri alınmışsa Render sana farklı bir ad
-önerir ve bu durumda `render.yaml` içindeki `CORS_ORIGINS` ile
-`VITE_API_URL` değerlerini de yeni adla elle güncellemen gerekir (ikisi de
-birbirinin URL'sine sabit referans veriyor, servisler arası otomatik
-şablonlama kullanılmadı çünkü Render Blueprint sürümleri arasında bu
-davranış tutarlı değil).
+Öğretmen ve veli şu adresi açar: `https://duhterakturk-mindarena.onrender.com`
 
-Ücretsiz katmanın bilinen sınırlaması: backend 15 dakika işlemsiz kalırsa
-uyur, bir sonraki istek birkaç saniye "soğuk başlangıç" gecikmesi yaşar.
+Ücretsiz API 15 dakika boş kalınca uyur. Sonraki giriş yaklaşık bir
+dakika sürer. Aynı anda çok kişi yeni bulmaca açarsa ücretsiz makine
+sıraya koyar. Adlar Render'da doluysa `render.yaml` içindeki
+`CORS_ORIGINS` ve `VITE_API_URL` yeni adreslerle güncellenir.
 
 ## Güvenlik Sertleştirmesi ve Bilinen Sınırlamalar
 

@@ -1,4 +1,7 @@
-// Amiral Battı: hiçbir gemi birbirine (çapraz dahil) değmeyecek şekilde
+import { countFleets, identicalShipFactor } from "../common/solvers";
+
+// Gizli Filo: gemiler birbirine değmez. Satır ve sütun sayıları tek bir
+// dizilimi tarif edene kadar yeniden denenir.
 // rastgele bir filo yerleştirilir. Zorluk; ızgara boyutu ve filo
 // büyüklüğüyle ölçeklenir.
 const CONFIG = {
@@ -60,15 +63,18 @@ function placeFleet(rows, cols, shipSizes) {
 
 export function generate(difficulty = "easy") {
   const { rows, cols, ships } = CONFIG[difficulty] || CONFIG.easy;
-  const occupied = placeFleet(rows, cols, ships);
-  const solutionSet = [...occupied];
-
-  const rowClues = Array.from({ length: rows }, (_, r) =>
-    solutionSet.filter((key) => Number(key.split("-")[0]) === r).length
-  );
-  const colClues = Array.from({ length: cols }, (_, c) =>
-    solutionSet.filter((key) => Number(key.split("-")[1]) === c).length
-  );
-
-  return { solutionSet, rowClues, colClues, rows, cols };
+  const factor = identicalShipFactor(ships);
+  for (let attempt = 0; attempt < 25; attempt++) {
+    const occupied = placeFleet(rows, cols, ships);
+    const solutionSet = [...occupied];
+    const rowClues = Array.from({ length: rows }, (_, r) =>
+      solutionSet.filter((key) => Number(key.split("-")[0]) === r).length
+    );
+    const colClues = Array.from({ length: cols }, (_, c) =>
+      solutionSet.filter((key) => Number(key.split("-")[1]) === c).length
+    );
+    if (countFleets(rowClues, colClues, ships, factor + 1) !== factor) continue;
+    return { solutionSet, rowClues, colClues, rows, cols };
+  }
+  throw new Error("Tek çözüm Gizli Filo üretilemedi");
 }

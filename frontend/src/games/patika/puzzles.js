@@ -7,26 +7,40 @@ const CONFIG = {
 };
 const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
 
+function inducedStep(rr, cc, path, visited) {
+  const [er, ec] = path[path.length - 1];
+  return DIRS.every(([dr, dc]) => {
+    const key = `${rr + dr}-${cc + dc}`;
+    if (rr + dr === er && cc + dc === ec) return true;
+    return !visited.has(key);
+  });
+}
+
 function randomPath(rows, cols, targetLength) {
-  let best = [];
-  for (let attempt = 0; attempt < 300; attempt++) {
+  for (let attempt = 0; attempt < 80; attempt++) {
     const start = [Math.floor(Math.random() * rows), Math.floor(Math.random() * cols)];
     const visited = new Set([`${start[0]}-${start[1]}`]);
     const path = [start];
-    while (path.length < targetLength) {
+    let steps = 0;
+    function search() {
+      if (path.length >= targetLength) return true;
+      if (steps++ > 4000) return false;
       const [r, c] = path[path.length - 1];
       const candidates = shuffle(DIRS)
         .map(([dr, dc]) => [r + dr, c + dc])
-        .filter(([rr, cc]) => rr >= 0 && rr < rows && cc >= 0 && cc < cols && !visited.has(`${rr}-${cc}`));
-      if (candidates.length === 0) break;
-      const [nr, nc] = candidates[0];
-      path.push([nr, nc]);
-      visited.add(`${nr}-${nc}`);
+        .filter(([rr, cc]) => rr >= 0 && rr < rows && cc >= 0 && cc < cols && !visited.has(`${rr}-${cc}`) && inducedStep(rr, cc, path, visited));
+      for (const [nr, nc] of candidates) {
+        path.push([nr, nc]);
+        visited.add(`${nr}-${nc}`);
+        if (search()) return true;
+        path.pop();
+        visited.delete(`${nr}-${nc}`);
+      }
+      return false;
     }
-    if (path.length > best.length) best = path;
-    if (best.length >= targetLength) break;
+    if (search()) return path;
   }
-  return best;
+  throw new Error("Tek parça Patika üretilemedi");
 }
 
 // Patika: rastgele öz-kaçınan bir yol (self-avoiding walk) üretilir; yol

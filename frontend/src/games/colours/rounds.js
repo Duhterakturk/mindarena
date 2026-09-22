@@ -1,34 +1,23 @@
 import { shuffle } from "../common/latinSquare";
 
-// Stroop tipi tur listesi: kelime farklı bir mürekkep renginde gösterilir,
-// öğrenci kelimenin anlamını değil, YAZI RENGİNİ seçmelidir.
-const COLORS = {
-  Kırmızı: "#dc2626",
-  Mavi: "#2563eb",
-  Yeşil: "#16a34a",
-  Sarı: "#ca8a04",
-};
+// Yazı Rengi: kelime başka bir renkte yazılır. Doğru cevap mürekkep rengidir.
+export const COLOR_IDS = ["red", "blue", "green", "yellow"];
 
-// Türkçe büyük harfe çevirme (İ/I, ı/I) yerel ayardan bağımsız olsun diye sabit eşleme.
-const WORD_TEXT = {
-  Kırmızı: "KIRMIZI",
-  Mavi: "MAVİ",
-  Yeşil: "YEŞİL",
-  Sarı: "SARI",
+export const COLOR_HEX = {
+  red: "#dc2626",
+  blue: "#2563eb",
+  green: "#16a34a",
+  yellow: "#ca8a04",
 };
-
-const COLOR_NAMES = Object.keys(COLORS);
 
 const ROUND_COUNT_BY_DIFFICULTY = { easy: 6, medium: 10, hard: 14 };
 
-function generateRounds(difficulty = "easy") {
+export function generateRounds(difficulty = "easy") {
   const count = ROUND_COUNT_BY_DIFFICULTY[difficulty] || ROUND_COUNT_BY_DIFFICULTY.easy;
   const rounds = [];
   for (let i = 0; i < count; i++) {
-    const [wordColor, inkColor] = shuffle(COLOR_NAMES).slice(0, 2);
-    rounds.push({ word: WORD_TEXT[wordColor], ink: inkColor });
+    const [wordId, inkId] = shuffle([...COLOR_IDS]).slice(0, 2);
+    rounds.push({ wordId, inkId });
   }
   return rounds;
 }
-
-export { COLORS, generateRounds };

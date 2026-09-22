@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchUnlockedDifficulties } from "../../api/difficulty";
-import { DIFFICULTY_LEVELS } from "../../games/common/latinSquare";
 
 const DEFAULT_STATE = {
   unlocked: { easy: true, medium: false, hard: false },
@@ -15,6 +15,7 @@ const DEFAULT_STATE = {
  * yapılmamışsa yalnızca "Kolay" kullanılabilir (ilerleme takip edilemez).
  */
 export default function DifficultyPicker({ gameSlug, value, onChange }) {
+  const { t } = useTranslation();
   const [state, setState] = useState(DEFAULT_STATE);
 
   useEffect(() => {
@@ -33,7 +34,11 @@ export default function DifficultyPicker({ gameSlug, value, onChange }) {
         const prevLevel = order[order.indexOf(level) - 1];
         const lockHint =
           !isUnlocked && prevLevel
-            ? `Açmak için ${prevLevel === "easy" ? "Kolay" : "Orta"} zorlukta ${state.threshold} tamamlama gerekir (${state.progress[prevLevel]}/${state.threshold})`
+            ? t("difficulty.lock", {
+                level: t(`difficulty.${prevLevel}`),
+                threshold: state.threshold,
+                done: state.progress[prevLevel],
+              })
             : undefined;
 
         return (
@@ -53,7 +58,7 @@ export default function DifficultyPicker({ gameSlug, value, onChange }) {
             ].join(" ")}
           >
             {!isUnlocked && <span aria-hidden="true">🔒</span>}
-            {DIFFICULTY_LEVELS[level]}
+            {t(`difficulty.${level}`)}
           </button>
         );
       })}

@@ -1,30 +1,26 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
-import { generate } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 export default function YildizSavaslari() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ solutionSet, rowClues, colClues, size }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("yildiz-savaslari", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const { rowClues, colClues, regionGrid, size } = issue.puzzle;
 
   return (
     <ToggleGridGame
       slug="yildiz-savaslari"
-      title="Yıldız Savaşları"
-      instructions="Her satıra ve her sütuna tam olarak bir yıldız yerleştir. İki yıldız, yatay/dikey/çapraz komşu olamaz."
+      attemptId={issue.id}
       rows={size}
       cols={size}
-      solutionSet={solutionSet}
       rowClues={rowClues}
       colClues={colClues}
+      regionGrid={regionGrid}
       markSymbol="★"
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

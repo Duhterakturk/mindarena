@@ -1,32 +1,34 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
-import { generate } from "./puzzles";
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 function cloneBoard(grid) {
   return grid.map((row) => [...row]);
 }
 
 export default function Carpmaca() {
+  const copy = useGameText("carpmaca");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [game, setGame] = useState(() => generate("easy"));
-  const { rowHeaders, colHeaders, puzzle, solution } = game;
-  const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
+  const { issue, phase, reload } = useIssuedPuzzle("carpmaca", difficulty);
+  const game = issue?.puzzle || null;
+  const rowHeaders = game?.rowHeaders;
+  const colHeaders = game?.colHeaders;
+  const puzzle = game?.givens;
+  const attemptId = issue?.id;
+  const givenMask = puzzle ? puzzle.map((row) => row.map((v) => v !== 0)) : [];
 
-  const [board, setBoard] = useState(() => cloneBoard(puzzle));
+  const [board, setBoard] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
-  // `game` değiştiğinde (zorlukla ızgara boyutu büyüyünce) `board`'u render
-  // SIRASINDA senkron sıfırla. `setBoard` yalnızca BİR SONRAKİ render'ı
-  // düzeltir — BU render'ın JSX'i hâlâ eski (küçük) `board` ile yeni (büyük)
-  // `rowHeaders`/`colHeaders`'ı kullanmaya çalışıp çökerdi. Bu yüzden bu
-  // render'da kullanılacak güvenli değeri `displayBoard` içinde tutuyoruz.
-  const [renderedGame, setRenderedGame] = useState(game);
+  const [renderedGame, setRenderedGame] = useState(null);
   let displayBoard = board;
-  if (game !== renderedGame) {
+  if (game && game !== renderedGame) {
     displayBoard = cloneBoard(puzzle);
     setRenderedGame(game);
     setBoard(displayBoard);
@@ -34,21 +36,16 @@ export default function Carpmaca() {
   }
 
   useEffect(() => {
-    fetchGame("carpmaca")
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setSeconds(0);
     clearInterval(timerRef.current);
+    if (!attemptId) return undefined;
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [game]);
+  }, [attemptId]);
 
   function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
+    if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
+    else reload();
   }
 
   function handleCellChange(row, col, value) {
@@ -60,40 +57,37 @@ export default function Carpmaca() {
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const isCorrect = displayBoard.every((row, r) => row.every((val, c) => val === solution[r][c]));
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
+  async function checkSolution() {
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, displayBoard);
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
-    if (!gameId) return;
+    if (!attemptId) return;
     try {
-      await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty,
-        completed: true,
-      });
+      await submitScore({ attempt_id: attemptId, answer: displayBoard });
       setStatus("submitted");
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
+
+  if (phase !== "ready" || !displayBoard || !rowHeaders) return <PuzzlePending phase={phase} />;
 
   const headerCell = "w-12 h-12 flex items-center justify-center text-sm font-bold bg-slate-800 text-white";
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">Çarpmaca</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="carpmaca" value={difficulty} onChange={handleDifficultyChange} />
-      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">
-        Her hücreye, bulunduğu satır ve sütun başlığının çarpımını yaz.
-      </p>
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
         className="inline-grid max-w-full overflow-x-auto"
@@ -128,27 +122,28 @@ export default function Carpmaca() {
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         <button
-          onClick={() => setGame(generate(difficulty))}
+          onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
-          Yeni Bulmaca
+          {play.newPuzzle}
         </button>
         {status === "correct" && (
           <button
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Bazı hücreler yanlış, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

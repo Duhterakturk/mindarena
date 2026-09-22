@@ -1,13 +1,14 @@
 from datetime import datetime
 
 from tests.helpers import auth_headers
+from tests.payloads import post_score
 
 
-def test_progress_me_aggregates_completed_scores(client, student):
+def test_progress_me_aggregates_completed_scores(client, student, app):
     auth = auth_headers(student["token"])
-    client.post("/api/scores", json={"game_id": 1, "points": 500, "completed": True}, headers=auth)
-    client.post("/api/scores", json={"game_id": 2, "points": 700, "completed": True}, headers=auth)
-    client.post("/api/scores", json={"game_id": 1, "points": 999, "completed": False}, headers=auth)
+    post_score(client, auth, 1, app, duration=500)
+    post_score(client, auth, 2, app, duration=300)
+    post_score(client, auth, 1, app, answer=None)
 
     resp = client.get("/api/progress/me", headers=auth)
     assert resp.status_code == 200
@@ -18,9 +19,9 @@ def test_progress_me_aggregates_completed_scores(client, student):
     assert data["distinct_games_completed"] == 2
 
 
-def test_progress_export_returns_xlsx(client, student):
+def test_progress_export_returns_xlsx(client, student, app):
     auth = auth_headers(student["token"])
-    client.post("/api/scores", json={"game_id": 1, "points": 500, "completed": True}, headers=auth)
+    post_score(client, auth, 1, app, duration=500)
 
     resp = client.get("/api/progress/export", headers=auth)
     assert resp.status_code == 200
@@ -35,8 +36,8 @@ def test_progress_me_filters_by_date_range(client, student, app):
     from app.models import Score
 
     auth = auth_headers(student["token"])
-    client.post("/api/scores", json={"game_id": 1, "points": 500, "completed": True}, headers=auth)
-    client.post("/api/scores", json={"game_id": 2, "points": 700, "completed": True}, headers=auth)
+    post_score(client, auth, 1, app, duration=500)
+    post_score(client, auth, 2, app, duration=300)
 
     with app.app_context():
         scores = Score.query.order_by(Score.id).all()
@@ -69,7 +70,7 @@ def test_progress_export_respects_date_range(client, student, app):
     from app.models import Score
 
     auth = auth_headers(student["token"])
-    client.post("/api/scores", json={"game_id": 1, "points": 500, "completed": True}, headers=auth)
+    post_score(client, auth, 1, app, duration=500)
 
     with app.app_context():
         score = Score.query.first()

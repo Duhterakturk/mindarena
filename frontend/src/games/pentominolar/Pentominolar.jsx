@@ -1,64 +1,236 @@
-import { useState } from "react";
-import ToggleGridGame from "../common/ToggleGridGame";
-import { generate } from "./puzzles";
+import { useEffect, useRef, useState } from "react";
+import { submitScore } from "../../api/games";
+import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { PENTOMINOES, orient } from "./shapes";
 
-function ShapePreview({ shape }) {
+const PIECE_COLOR = ["bg-brand-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
+
+function ShapePreview({ name, turns, flipped, anchor }) {
+  const shape = orient(PENTOMINOES[name], turns, flipped);
   const maxR = Math.max(...shape.map(([r]) => r)) + 1;
   const maxC = Math.max(...shape.map(([, c]) => c)) + 1;
-  const cells = new Set(shape.map(([r, c]) => `${r}-${c}`));
+  const anchorKey = `${shape[0][0]}-${shape[0][1]}`;
 
   return (
-    <div
-      className="inline-grid gap-0.5 bg-slate-100 p-1 rounded"
-      style={{ gridTemplateColumns: `repeat(${maxC}, minmax(0, 1fr))` }}
-    >
-      {Array.from({ length: maxR }).map((_, r) =>
-        Array.from({ length: maxC }).map((_, c) => (
+    <div className="inline-grid gap-0.5" style={{ gridTemplateColumns: `repeat(${maxC}, 14px)` }}>
+      {Array.from({ length: maxR * maxC }, (_, i) => {
+        const r = Math.floor(i / maxC);
+        const c = i % maxC;
+        const filled = shape.some(([sr, sc]) => sr === r && sc === c);
+        const isAnchor = anchor && `${r}-${c}` === anchorKey;
+        return (
           <div
             key={`${r}-${c}`}
-            className={`w-6 h-6 ${cells.has(`${r}-${c}`) ? "bg-brand-500" : "bg-transparent"}`}
+            className={`w-3.5 h-3.5 ${filled ? (isAnchor ? "bg-slate-800" : "bg-brand-500") : "bg-transparent"}`}
           />
-        ))
-      )}
+        );
+      })}
     </div>
   );
 }
 
 export default function Pentominolar() {
+  const copy = useGameText("pentominolar");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ shapes, solutionSet, gridSize }, setGame] = useState(() => generate("easy"));
+  const { issue, phase, reload } = useIssuedPuzzle("pentominolar", difficulty);
+  const puzzle = issue?.puzzle || null;
+  const pieces = puzzle?.pieces || [];
+  const region = puzzle?.region || [];
+  const rows = puzzle?.rows || 0;
+  const cols = puzzle?.cols || 0;
+  const attemptId = issue?.id;
+  const [selected, setSelected] = useState(0);
+  const [turns, setTurns] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [placements, setPlacements] = useState([]);
+  const [notice, setNotice] = useState(null);
+  const [status, setStatus] = useState("playing");
+  const [seconds, setSeconds] = useState(0);
+  const timerRef = useRef(null);
 
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
+  const regionSet = new Set(region);
+
+  useEffect(() => {
+    if (!attemptId) return undefined;
+    setSelected(0);
+    setTurns(0);
+    setFlipped(false);
+    setPlacements([]);
+    setNotice(null);
+    setStatus("playing");
+    setSeconds(0);
+    clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    return () => clearInterval(timerRef.current);
+  }, [attemptId]);
+
+  function cellPiece(r, c) {
+    return placements.find((piece) => piece.cells.some(([pr, pc]) => pr === r && pc === c));
   }
 
+  function place(r, c) {
+    if (status === "correct") return;
+    const existing = cellPiece(r, c);
+    if (existing) {
+      setPlacements((prev) => prev.filter((piece) => piece.name !== existing.name));
+      setStatus("playing");
+      setNotice(null);
+      return;
+    }
+    const name = pieces[selected];
+    if (!name || placements.some((piece) => piece.name === name)) return;
+    const shape = orient(PENTOMINOES[name], turns, flipped);
+    const [sr, sc] = shape[0];
+    const cells = shape.map(([rr, cc]) => [rr - sr + r, cc - sc + c]);
+    const occupied = new Set(placements.flatMap((piece) => piece.cells.map(([rr, cc]) => `${rr}-${cc}`)));
+    const fits = cells.every(([rr, cc]) => regionSet.has(`${rr}-${cc}`) && !occupied.has(`${rr}-${cc}`));
+    if (!fits) {
+      setNotice(play.noFit);
+      return;
+    }
+    setPlacements((prev) => [...prev, { name, cells }]);
+    setNotice(null);
+    setStatus("playing");
+    const next = pieces.findIndex((piece, index) => index !== selected && !placements.some((p) => p.name === piece) && piece !== name);
+    if (next >= 0) setSelected(next);
+  }
+
+  function checkSolution() {
+    const covered = new Set(placements.flatMap((piece) => piece.cells.map(([r, c]) => `${r}-${c}`)));
+    const solved = placements.length === pieces.length && region.every((key) => covered.has(key)) && covered.size === region.length;
+    setStatus(solved ? "correct" : "incorrect");
+    if (solved) clearInterval(timerRef.current);
+  }
+
+  async function handleSubmitScore() {
+    if (!attemptId) return;
+    try {
+      await submitScore({
+        attempt_id: attemptId,
+        answer: {
+          placements: placements.map((piece) => ({
+            name: piece.name,
+            cells: piece.cells.map(([r, c]) => `${r}-${c}`),
+          })),
+        },
+      });
+      setStatus("submitted");
+    } catch {
+      setStatus("rejected");
+    }
+  }
+
+  if (phase !== "ready" || !puzzle) return <PuzzlePending phase={phase} />;
+
   return (
-    <ToggleGridGame
-      slug="pentominolar"
-      title="Pentominolar"
-      instructions={
-        shapes.length === 1
-          ? "Aşağıdaki şekli oluşturan 5 hücreyi tıklayarak seç."
-          : `Aşağıdaki ${shapes.length} şeklin her birini oluşturan hücreleri tıklayarak seç.`
-      }
-      rows={gridSize}
-      cols={gridSize}
-      solutionSet={solutionSet}
-      markSymbol="■"
-      extra={
-        <div className="mb-4">
-          <p className="text-xs text-slate-500 mb-1 text-center">Hedef şekiller:</p>
-          <div className="flex gap-3 flex-wrap justify-center">
-            {shapes.map((shape, i) => (
-              <ShapePreview key={i} shape={shape} />
-            ))}
-          </div>
+    <div className="flex flex-col items-center">
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
+      <DifficultyPicker
+        gameSlug="pentominolar"
+        value={difficulty}
+        onChange={setDifficulty}
+      />
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-1 text-center max-w-md">{play.anchor}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
+
+      <div className="mb-4 w-full max-w-md">
+        <p className="text-xs text-slate-500 mb-2 text-center">{play.pieces}</p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {pieces.map((name, index) => {
+            const used = placements.some((piece) => piece.name === name);
+            const active = index === selected;
+            return (
+              <button
+                key={name}
+                type="button"
+                onClick={() => {
+                  setSelected(index);
+                  setTurns(0);
+                  setFlipped(false);
+                }}
+                className={[
+                  "px-2 py-2 rounded-lg border flex flex-col items-center gap-1 min-w-16",
+                  used ? "opacity-40" : "",
+                  active ? "border-brand-500 bg-brand-50" : "border-slate-200 bg-white",
+                ].join(" ")}
+              >
+                <ShapePreview name={name} turns={active ? turns : 0} flipped={active ? flipped : false} anchor={active} />
+                <span className="text-[10px] font-semibold text-slate-500">{name}</span>
+              </button>
+            );
+          })}
         </div>
-      }
-      onRegenerate={() => setGame(generate(difficulty))}
-      difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
-    />
+        <div className="flex justify-center gap-2 mt-3">
+          <button
+            type="button"
+            onClick={() => setTurns((value) => (value + 1) % 4)}
+            className="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold"
+          >
+            {play.rotate}
+          </button>
+          <button
+            type="button"
+            onClick={() => setFlipped((value) => !value)}
+            className="bg-slate-200 text-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold"
+          >
+            {play.flip}
+          </button>
+        </div>
+      </div>
+
+      <div className="inline-grid gap-1" style={{ gridTemplateColumns: `repeat(${cols}, 2.5rem)` }}>
+        {Array.from({ length: rows * cols }, (_, i) => {
+          const r = Math.floor(i / cols);
+          const c = i % cols;
+          const inRegion = regionSet.has(`${r}-${c}`);
+          if (!inRegion) return <div key={`${r}-${c}`} className="w-10 h-10" />;
+          const piece = cellPiece(r, c);
+          const color = piece ? PIECE_COLOR[pieces.indexOf(piece.name) % PIECE_COLOR.length] : "bg-white";
+          return (
+            <button
+              key={`${r}-${c}`}
+              type="button"
+              onClick={() => place(r, c)}
+              className={`w-10 h-10 border border-slate-400 ${color}`}
+            />
+          );
+        })}
+      </div>
+
+      {notice && status === "playing" && <p className="text-amber-600 text-sm mt-3 text-center max-w-md">{notice}</p>}
+
+      <div className="flex gap-3 mt-6">
+        <button
+          onClick={checkSolution}
+          className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
+        >
+          {play.check}
+        </button>
+        <button
+          onClick={reload}
+          className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
+        >
+          {play.newPuzzle}
+        </button>
+        {status === "correct" && (
+          <button
+            onClick={handleSubmitScore}
+            className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
+          >
+            {play.save}
+          </button>
+        )}
+      </div>
+
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
+    </div>
   );
 }

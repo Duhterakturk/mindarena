@@ -1,7 +1,5 @@
 {
-  "app": {
-    "name": "MindArena"
-  },
+  "app": { "name": "MindArena" },
   "nav": {
     "home": "Ana Sayfa",
     "games": "Oyunlar",
@@ -32,6 +30,89 @@
   "games": {
     "title": "Oyunlar",
     "play": "Oyna",
-    "min_grade": "Min. Sınıf"
+    "min_grade": "Min. Sınıf",
+    "loadError": "Oyunlar yüklenemedi. Backend çalışıyor mu?",
+    "waking": "Oyunlar yükleniyor — sunucu bir süredir kullanılmadıysa uyanması birkaç saniye sürebilir…"
+  },
+  "difficulty": {
+    "easy": "Kolay",
+    "medium": "Orta",
+    "hard": "Zor",
+    "lock": "Açmak için {{level}} zorlukta {{threshold}} tamamlama gerekir ({{done}}/{{threshold}})"
+  },
+  "play": {
+    "time": "Süre: {{clock}}",
+    "check": "Kontrol Et",
+    "new": "Yeni Bulmaca",
+    "save": "Skoru Kaydet",
+    "correct": "Tebrikler, doğru çözdün!",
+    "incorrect": "Henüz doğru değil, tekrar dene.",
+    "incorrectCells": "Bazı hücreler yanlış, tekrar dene.",
+    "saved": "Skor kaydedildi.",
+    "rejected": "Skor kaydedilemedi. Çözüm doğrulanamadı.",
+    "loading": "Bulmaca hazırlanıyor…",
+    "unavailable": "Bulmaca şu an açılamadı. Biraz sonra yeniden dene.",
+    "right": "Doğru!",
+    "wrong": "Yanlış.",
+    "round": "Tur {{current}}/{{total}}",
+    "result": "Sonuç: {{correct}} / {{total}} doğru",
+    "next": "Sırada: {{value}}",
+    "numbersDone": "Tebrikler, hepsini sırayla buldun!",
+    "noFit": "Bu şekilde sığmıyor. Döndür veya başka bir kare dene.",
+    "rotate": "Döndür",
+    "flip": "Çevir",
+    "pieces": "Parçalar",
+    "anchor": "Koyu kare, tıkladığın hücreye oturur. Dolu bir kareye basınca parça kalkar.",
+    "leaderboard": "En iyi skorlar",
+    "noScores": "Bu oyunda henüz kayıtlı skor yok.",
+    "points": "puan"
+  },
+  "colors": {
+    "red": "Kırmızı",
+    "blue": "Mavi",
+    "green": "Yeşil",
+    "yellow": "Sarı"
+  },
+  "gameTitle": {
+    "kakuro": "Çapraz Toplam",
+    "sudoku": "Rakam Karesi",
+    "bolgesel-sudoku": "Bölge Karesi",
+    "apartman": "Apartman",
+    "cit": "Çit",
+    "amiral-batti": "Gizli Filo",
+    "sihirli-piramit": "Sihirli Piramit",
+    "patika": "Patika",
+    "abc-baglama": "Harf Yolu",
+    "islem-karesi": "İşlem Karesi",
+    "kendoku": "Dört İşlem",
+    "yildiz-savaslari": "Yıldız Dizilimi",
+    "kare-karalamaca": "Kare Karalamaca",
+    "carpmaca": "Çarpmaca",
+    "futoshiki": "Büyük Küçük",
+    "pentominolar": "Beşli Şekil",
+    "metaforms": "Aykırı Şekil",
+    "numbers": "Sırayla Say",
+    "colours": "Yazı Rengi"
+  },
+  "gameRules": {
+    "kakuro": "Her beyaz koşudaki rakamlar birbirinden farklıdır ve üstteki veya soldaki toplama eşittir.",
+    "sudoku": "Her satır, her sütun ve her kalın kutu 1-9 rakamlarını birer kez içerir.",
+    "bolgesel-sudoku": "Her satır, sütun ve renkli bölge 1-4 rakamlarını birer kez içerir.",
+    "apartman": "Her satır ve sütun 1-4 yüksekliklerini birer kez içerir. Kenar sayısı, o yönden görünen bina adedidir.",
+    "cit": "Sayı, o hücrenin kaç kenarının çizgide olduğunu söyler. Çizgi tek bir kapalı halka olmalı. Boş hücrede sayı yoktur.",
+    "amiral-batti": "Satır ve sütun sayıları, o çizgideki gemi karelerinin adedidir. Gemiler birbirine değmez.",
+    "sihirli-piramit": "Her taş, hemen altındaki iki taşın toplamıdır. Verilen taşlardan piramidi tamamla.",
+    "patika": "Numaralı noktaları, yatay ve dikey adımlarla kesintisiz bir yol olacak şekilde birleştir.",
+    "abc-baglama": "Aynı harfleri, birbirini kesmeyen yatay ve dikey bir çizgiyle birleştir.",
+    "islem-karesi": "Her satır ve sütun 1-{{n}} rakamlarını birer kez içerir. Her kafes yalnızca toplama veya çarpma sonucunu verir.",
+    "kendoku": "Her satır ve sütun 1-{{n}} rakamlarını birer kez içerir. Kafesler toplama, çıkarma, çarpma veya bölme ister.",
+    "yildiz-savaslari": "Her satıra, her sütuna ve her renkli bölgeye bir yıldız koy. İki yıldız yatay, dikey veya çapraz komşu olamaz.",
+    "kare-karalamaca": "Satır ve sütun sayıları, boyalı karelerin art arda gelen gruplarını gösterir.",
+    "carpmaca": "Her hücreye, satır başlığı ile sütun başlığının çarpımını yaz.",
+    "futoshiki": "Her satır ve sütun 1-{{n}} rakamlarını birer kez içerir. < ve > işaretleri komşu hücrelerin sırasını gösterir.",
+    "pentominolar": "Verilen beş karelik parçalarla çerçeveli alanı boşluksuz ve taşmadan döşe. Parçayı seç, döndür, sonra ızgaraya yerleştir.",
+    "metaforms": "Diğerlerinden farklı olan şekli bul.",
+    "numbers": "1'den {{total}}'e kadar sayılara sırayla, olabildiğince hızlı tıkla.",
+    "colours": "Kelimenin anlamına değil, yazıldığı renge göre düğmeye bas."
   }
 }

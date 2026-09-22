@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { useGameText } from "./gameText";
+import { usePlayCopy } from "./playCopy";
 
 function cloneBoard(grid) {
   return grid.map((row) => [...row]);
@@ -21,9 +23,8 @@ function cellSizeClass(gridWidth) {
  */
 export default function GridFillGame({
   slug,
-  title,
   puzzle,
-  solution,
+  attemptId,
   maxDigit = 9,
   cellClassName,
   renderOverlay,
@@ -32,12 +33,14 @@ export default function GridFillGame({
   difficulty,
   onDifficultyChange,
 }) {
+  const copy = useGameText(slug, { n: puzzle.length });
+  const play = usePlayCopy();
+  const blurb = instructions || copy.rules;
   const givenMask = puzzle.map((row) => row.map((v) => v !== 0));
   const cellSize = cellSizeClass(puzzle[0].length);
   const [board, setBoard] = useState(() => cloneBoard(puzzle));
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
   // `puzzle` referansı değiştiğinde (ör. zorluk değişimiyle ızgara boyutu
@@ -55,12 +58,6 @@ export default function GridFillGame({
     setBoard(displayBoard);
     setStatus("playing");
   }
-
-  useEffect(() => {
-    fetchGame(slug)
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, [slug]);
 
   // Süreyi de `puzzle` değiştiğinde sıfırla (şekil-bağımsız, bu yüzden
   // gecikmeli bir efekt burada güvenlidir).
@@ -81,38 +78,38 @@ export default function GridFillGame({
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const isCorrect = displayBoard.every((row, r) => row.every((val, c) => val === solution[r][c]));
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
+  async function checkSolution() {
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, displayBoard);
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
-    if (!gameId) return;
+    if (!attemptId) return;
     try {
       await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty: difficulty || "easy",
-        completed: true,
+        attempt_id: attemptId,
+        answer: displayBoard,
       });
       setStatus("submitted");
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">{title}</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       {onDifficultyChange && (
         <DifficultyPicker gameSlug={slug} value={difficulty} onChange={onDifficultyChange} />
       )}
-      {instructions && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{instructions}</p>}
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      {blurb && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{blurb}</p>}
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
         className="inline-grid border-2 border-slate-700 max-w-full overflow-x-auto"
@@ -143,14 +140,14 @@ export default function GridFillGame({
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         {onRegenerate && (
           <button
             onClick={onRegenerate}
             className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
           >
-            Yeni Bulmaca
+            {play.newPuzzle}
           </button>
         )}
         {status === "correct" && (
@@ -158,14 +155,15 @@ export default function GridFillGame({
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Bazı hücreler yanlış, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

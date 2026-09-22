@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
-import { generate } from "./puzzles";
+import { useGameText } from "../common/gameText";
+import { usePlayCopy } from "../common/playCopy";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
-function emptyBoard(size) {
-  return Array.from({ length: size + 1 }, () => Array(size + 1).fill(0));
+function emptyBoard(grid) {
+  return grid.map((row) => row.map((cell) => (cell.type === "white" && cell.given ? cell.given : 0)));
 }
 
 function cellSizeClass(size) {
@@ -14,50 +16,43 @@ function cellSizeClass(size) {
 }
 
 export default function Kakuro() {
+  const copy = useGameText("kakuro");
+  const play = usePlayCopy();
   const [difficulty, setDifficulty] = useState("easy");
-  const [puzzle, setPuzzle] = useState(() => generate("easy"));
-  const { grid, fullSolution, size } = puzzle;
-  const [board, setBoard] = useState(() => emptyBoard(size));
+  const { issue, phase, reload } = useIssuedPuzzle("kakuro", difficulty);
+  const puzzle = issue?.puzzle || null;
+  const grid = puzzle?.grid;
+  const size = puzzle?.size;
+  const attemptId = issue?.id;
+  const [board, setBoard] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
-  // `puzzle` değiştiğinde (zorlukla ızgara boyutu büyüyünce) `board`'u render
-  // SIRASINDA senkron sıfırla. `setBoard` çağrısı yalnızca BİR SONRAKİ render'ı
-  // düzeltir — bu render'ın JSX'i hâlâ eski (küçük) `board` ile yeni (büyük)
-  // `grid`'i birlikte kullanmaya çalışır ve çöker. Bu yüzden bu render'da
-  // kullanılacak güvenli değeri ayrı bir değişkende (`displayBoard`) tutuyoruz
-  // (canlı testte yakalanan çökme buydu).
-  const [renderedPuzzle, setRenderedPuzzle] = useState(puzzle);
+  const [renderedPuzzle, setRenderedPuzzle] = useState(null);
   let displayBoard = board;
-  if (puzzle !== renderedPuzzle) {
-    displayBoard = emptyBoard(size);
+  if (puzzle && puzzle !== renderedPuzzle) {
+    displayBoard = emptyBoard(grid);
     setRenderedPuzzle(puzzle);
     setBoard(displayBoard);
     setStatus("playing");
   }
 
   useEffect(() => {
-    fetchGame("kakuro")
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, []);
-
-  useEffect(() => {
     setSeconds(0);
     clearInterval(timerRef.current);
+    if (!attemptId) return undefined;
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [puzzle]);
+  }, [attemptId]);
 
   function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setPuzzle(generate(newDifficulty));
+    if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
+    else reload();
   }
 
   function handleCellChange(row, col, value) {
-    if (status === "correct") return;
+    if (status === "correct" || grid[row][col].given) return;
     const digit = value.replace(/[^1-9]/g, "").slice(-1);
     const next = displayBoard.map((r) => [...r]);
     next[row][col] = digit ? Number(digit) : 0;
@@ -65,39 +60,41 @@ export default function Kakuro() {
     setStatus("playing");
   }
 
-  function checkSolution() {
-    const isCorrect = grid.every((row, r) =>
-      row.every((cell, c) => cell.type !== "white" || displayBoard[r][c] === fullSolution[r][c])
-    );
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
+  function answerGrid() {
+    return displayBoard.slice(1).map((row) => row.slice(1));
+  }
+
+  async function checkSolution() {
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, answerGrid());
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
-    if (!gameId) return;
+    if (!attemptId) return;
     try {
-      await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty,
-        completed: true,
-      });
+      await submitScore({ attempt_id: attemptId, answer: answerGrid() });
       setStatus("submitted");
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
+
+  if (phase !== "ready" || !displayBoard || !grid) return <PuzzlePending phase={phase} />;
 
   const cellSize = cellSizeClass(size);
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">Kakuro</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="kakuro" value={difficulty} onChange={handleDifficultyChange} />
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
         className="inline-grid border-2 border-slate-700 max-w-full overflow-x-auto"
@@ -128,8 +125,12 @@ export default function Kakuro() {
                 key={`${r}-${c}`}
                 value={displayBoard[r][c] || ""}
                 onChange={(e) => handleCellChange(r, c, e.target.value)}
-                readOnly={status === "correct"}
-                className={`${cellSize} text-center border border-slate-300 bg-white focus:outline-none focus:bg-brand-100`}
+                readOnly={status === "correct" || Boolean(cell.given)}
+                className={[
+                  cellSize,
+                  "text-center border border-slate-300 focus:outline-none focus:bg-brand-100",
+                  cell.given ? "bg-slate-100 font-bold text-slate-700" : "bg-white",
+                ].join(" ")}
               />
             );
           })
@@ -141,27 +142,28 @@ export default function Kakuro() {
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         <button
-          onClick={() => setPuzzle(generate(difficulty))}
+          onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
         >
-          Yeni Bulmaca
+          {play.newPuzzle}
         </button>
         {status === "correct" && (
           <button
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Bazı hücreler yanlış, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

@@ -1,30 +1,25 @@
 import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
-import { generate } from "./puzzles";
+import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 
 export default function AmiralBatti() {
   const [difficulty, setDifficulty] = useState("easy");
-  const [{ solutionSet, rowClues, colClues, rows, cols }, setGame] = useState(() => generate("easy"));
-
-  function handleDifficultyChange(newDifficulty) {
-    setDifficulty(newDifficulty);
-    setGame(generate(newDifficulty));
-  }
+  const { issue, phase, reload } = useIssuedPuzzle("amiral-batti", difficulty);
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  const { rowClues, colClues, rows, cols } = issue.puzzle;
 
   return (
     <ToggleGridGame
       slug="amiral-batti"
-      title="Amiral Battı"
-      instructions="Satır ve sütun ipuçlarına göre gemi hücrelerine tıklayarak filoyu yerleştir."
+      attemptId={issue.id}
       rows={rows}
       cols={cols}
-      solutionSet={solutionSet}
       rowClues={rowClues}
       colClues={colClues}
       markSymbol="🚢"
-      onRegenerate={() => setGame(generate(difficulty))}
+      onRegenerate={reload}
       difficulty={difficulty}
-      onDifficultyChange={handleDifficultyChange}
+      onDifficultyChange={setDifficulty}
     />
   );
 }

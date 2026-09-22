@@ -1,5 +1,6 @@
 import { generateLatinSquare } from "../common/latinSquare";
 import { buildCageData } from "../common/cages";
+import { countCages } from "../common/solvers";
 
 // Kendoku (KenKen ailesinden): toplama/çıkarma/çarpma/bölme kafesleri.
 // Zorluk, ızgara boyutuyla ölçeklenir.
@@ -8,9 +9,13 @@ const ALLOWED_OPS = ["+", "−", "×", "÷"];
 
 export function generate(difficulty = "easy") {
   const n = GRID_SIZE_BY_DIFFICULTY[difficulty] || 4;
-  const solution = generateLatinSquare(n);
-  const puzzle = solution.map((row) => row.map(() => 0));
-  const { cageId, cageAnchor, cageCells, cageClues } = buildCageData(n, solution, ALLOWED_OPS);
-
-  return { puzzle, solution, cageId, cageAnchor, cageCells, cageClues };
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const solution = generateLatinSquare(n);
+    const puzzle = solution.map((row) => row.map(() => 0));
+    const cages = buildCageData(n, solution, ALLOWED_OPS);
+    if (countCages(puzzle, cages.cageId, cages.cageClues) === 1) {
+      return { puzzle, solution, ...cages };
+    }
+  }
+  throw new Error("Tek çözüm Dört İşlem üretilemedi");
 }

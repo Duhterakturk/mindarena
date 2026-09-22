@@ -1,6 +1,20 @@
 import { Fragment, useEffect, useRef, useState } from "react";
-import { fetchGame, submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { useGameText } from "./gameText";
+import { usePlayCopy } from "./playCopy";
+
+const REGION_BG = [
+  "bg-amber-50",
+  "bg-sky-50",
+  "bg-emerald-50",
+  "bg-rose-50",
+  "bg-violet-50",
+  "bg-orange-50",
+  "bg-teal-50",
+  "bg-lime-50",
+  "bg-fuchsia-50",
+];
 
 function cellSizeClass(gridWidth) {
   if (gridWidth >= 8) return "w-8 h-8 text-sm";
@@ -17,34 +31,30 @@ function cellSizeClass(gridWidth) {
  */
 export default function ToggleGridGame({
   slug,
-  title,
   instructions,
   rows,
   cols,
-  solutionSet,
+  attemptId,
   fixedCells = {},
   rowClues,
   colClues,
+  regionGrid,
   markSymbol = "●",
   extra,
   onRegenerate,
   difficulty,
   onDifficultyChange,
   validate,
+  answerFrom,
 }) {
+  const copy = useGameText(slug);
+  const play = usePlayCopy();
+  const blurb = instructions || copy.rules;
   const [marked, setMarked] = useState(() => new Set());
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
-  const [gameId, setGameId] = useState(null);
   const timerRef = useRef(null);
 
-  useEffect(() => {
-    fetchGame(slug)
-      .then((g) => setGameId(g.id))
-      .catch(() => {});
-  }, [slug]);
-
-  // `solutionSet` referansı değiştiğinde (ör. "Yeni Bulmaca") tahtayı sıfırla.
   useEffect(() => {
     setMarked(new Set());
     setStatus("playing");
@@ -52,7 +62,7 @@ export default function ToggleGridGame({
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [solutionSet]);
+  }, [attemptId]);
 
   function toggleCell(r, c) {
     const key = `${r}-${c}`;
@@ -66,38 +76,33 @@ export default function ToggleGridGame({
     setStatus("playing");
   }
 
-  function checkSolution() {
-    let isCorrect;
+  async function checkSolution() {
     if (validate) {
-      isCorrect = validate(marked, fixedCells);
-    } else {
-      const target = new Set(solutionSet);
-      const cellsToCheck = [];
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const key = `${r}-${c}`;
-          if (fixedCells[key] === undefined) cellsToCheck.push(key);
-        }
-      }
-      isCorrect = cellsToCheck.every((key) => marked.has(key) === target.has(key));
+      const isCorrect = validate(marked, fixedCells);
+      setStatus(isCorrect ? "correct" : "incorrect");
+      if (isCorrect) clearInterval(timerRef.current);
+      return;
     }
-    setStatus(isCorrect ? "correct" : "incorrect");
-    if (isCorrect) clearInterval(timerRef.current);
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, answerFrom ? answerFrom(marked) : { cells: [...marked] });
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
-    if (!gameId) return;
+    if (!attemptId) return;
     try {
       await submitScore({
-        game_id: gameId,
-        points: Math.max(1000 - seconds, 100),
-        duration_seconds: seconds,
-        difficulty: difficulty || "easy",
-        completed: true,
+        attempt_id: attemptId,
+        answer: answerFrom ? answerFrom(marked) : { cells: [...marked] },
       });
       setStatus("submitted");
     } catch {
-      // Giriş yapılmamışsa skor gönderilemez; sessizce yoksay.
+      setStatus("rejected");
     }
   }
 
@@ -115,14 +120,12 @@ export default function ToggleGridGame({
 
   return (
     <div className="flex flex-col items-center">
-      <h1 className="text-2xl font-bold mb-1">{title}</h1>
+      <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       {onDifficultyChange && (
         <DifficultyPicker gameSlug={slug} value={difficulty} onChange={onDifficultyChange} />
       )}
-      {instructions && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{instructions}</p>}
-      <p className="text-slate-500 text-sm mb-4">
-        Süre: {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, "0")}
-      </p>
+      {blurb && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{blurb}</p>}
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       {extra}
 
@@ -140,6 +143,7 @@ export default function ToggleGridGame({
               const key = `${r}-${c}`;
               const fixedLabel = fixedCells[key];
               const isMarked = marked.has(key);
+              const regionClass = regionGrid ? REGION_BG[regionGrid[r][c] % REGION_BG.length] : "bg-white";
               if (fixedLabel !== undefined) {
                 return (
                   <div
@@ -158,7 +162,7 @@ export default function ToggleGridGame({
                   className={[
                     cellSize,
                     "flex items-center justify-center border border-slate-300 text-lg",
-                    isMarked ? "bg-brand-500 text-white" : "bg-white hover:bg-brand-50",
+                    isMarked ? "bg-brand-500 text-white" : `${regionClass} hover:bg-brand-50`,
                   ].join(" ")}
                 >
                   {isMarked ? markSymbol : ""}
@@ -174,14 +178,14 @@ export default function ToggleGridGame({
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          Kontrol Et
+          {play.check}
         </button>
         {onRegenerate && (
           <button
             onClick={onRegenerate}
             className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
           >
-            Yeni Bulmaca
+            {play.newPuzzle}
           </button>
         )}
         {status === "correct" && (
@@ -189,14 +193,15 @@ export default function ToggleGridGame({
             onClick={handleSubmitScore}
             className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            Skoru Kaydet
+            {play.save}
           </button>
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">Tebrikler, doğru çözdün!</p>}
-      {status === "incorrect" && <p className="text-red-500 mt-3">Henüz doğru değil, tekrar dene.</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">Skor kaydedildi.</p>}
+      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
+      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
+      {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { useParams } from "react-router-dom";
 import { getGameComponent } from "../games/registry";
+import Leaderboard from "../components/games/Leaderboard";
 
 export default function GamePage() {
   const { slug } = useParams();
@@ -19,6 +20,7 @@ export default function GamePage() {
       <Suspense fallback={<p>Yükleniyor...</p>}>
         <GameComponent />
       </Suspense>
+      <Leaderboard slug={slug} />
     </div>
   );
 }
