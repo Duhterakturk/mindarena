@@ -3,6 +3,7 @@ import { submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
@@ -19,6 +20,7 @@ export default function Numbers() {
   const copy = useGameText("numbers", { total });
   const [next, setNext] = useState(1);
   const [wrongCell, setWrongCell] = useState(null);
+  const [spot, setSpot] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
@@ -27,12 +29,17 @@ export default function Numbers() {
     if (!attemptId) return undefined;
     setNext(1);
     setWrongCell(null);
+    setSpot(null);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (hint.kind === "spot") setSpot(hint.index);
+  });
 
   function newGame(nextDifficulty) {
     if (nextDifficulty && nextDifficulty !== difficulty) setDifficulty(nextDifficulty);
@@ -80,9 +87,10 @@ export default function Numbers() {
         className="inline-grid gap-1 max-w-full"
         style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
       >
-        {values.map((value) => {
+        {values.map((value, index) => {
           const done = value < next;
           const isWrong = wrongCell === value;
+          const marked = spot === index;
           return (
             <button
               key={value}
@@ -94,6 +102,7 @@ export default function Numbers() {
                 "font-bold rounded border border-slate-300",
                 done ? "bg-emerald-500 text-white" : "bg-white hover:bg-brand-50",
                 isWrong ? "bg-red-400 text-white" : "",
+                marked ? "ring-4 ring-[#2461f7]" : "",
               ].join(" ")}
             >
               {value}

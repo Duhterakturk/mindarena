@@ -20,106 +20,109 @@ import { shuffle } from "../src/games/common/latinSquare.js";
 
 const SIZE = { easy: 4, medium: 5, hard: 6 };
 
+function sealed(publicPuzzle, proofBase, solution) {
+  return { public: publicPuzzle, proof: { ...proofBase, solution } };
+}
+
 function open(slug, difficulty) {
   switch (slug) {
     case "sudoku": {
       const puzzle = sudoku(difficulty);
-      const proof = { givens: puzzle.puzzle };
-      return { public: proof, proof };
+      const pub = { givens: puzzle.puzzle };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "kakuro": {
       const puzzle = kakuro(difficulty);
       const proof = { rowSums: puzzle.rowSums, colSums: puzzle.colSums, givens: puzzle.givens };
-      return {
-        public: { grid: puzzle.grid, size: puzzle.size, rowSums: puzzle.rowSums, colSums: puzzle.colSums, givens: puzzle.givens },
-        proof,
-      };
+      const pub = { grid: puzzle.grid, size: puzzle.size, rowSums: puzzle.rowSums, colSums: puzzle.colSums, givens: puzzle.givens };
+      return sealed(pub, proof, puzzle.fullSolution);
     }
     case "bolgesel-sudoku": {
       const puzzle = bolgesel(difficulty);
-      const proof = { givens: puzzle.puzzle };
-      return { public: proof, proof };
+      const pub = { givens: puzzle.puzzle };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "apartman": {
       const puzzle = apartman(difficulty);
-      const proof = { givens: puzzle.puzzle, clues: puzzle.clues };
-      return { public: proof, proof };
+      const pub = { givens: puzzle.puzzle, clues: puzzle.clues };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "cit": {
       const puzzle = cit(difficulty);
       const proof = { clues: puzzle.clues };
-      return { public: { clues: puzzle.clues, size: puzzle.size }, proof };
+      return sealed(
+        { clues: puzzle.clues, size: puzzle.size },
+        proof,
+        { horizontal: puzzle.horizontalSolution, vertical: puzzle.verticalSolution },
+      );
     }
     case "amiral-batti": {
       const puzzle = amiral(difficulty);
-      const proof = { rowClues: puzzle.rowClues, colClues: puzzle.colClues, rows: puzzle.rows, cols: puzzle.cols };
-      return { public: proof, proof };
+      const pub = { rowClues: puzzle.rowClues, colClues: puzzle.colClues, rows: puzzle.rows, cols: puzzle.cols };
+      return sealed(pub, pub, { cells: puzzle.solutionSet });
     }
     case "sihirli-piramit": {
       const puzzle = sihirli(difficulty);
-      const proof = { rows: puzzle.puzzle };
-      return { public: proof, proof };
+      const pub = { rows: puzzle.puzzle };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "patika": {
       const puzzle = patika(difficulty);
-      const proof = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
-      return { public: proof, proof };
+      const pub = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
+      return sealed(pub, pub, { cells: puzzle.solutionSet });
     }
     case "abc-baglama": {
       const puzzle = abc(difficulty);
-      const proof = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
-      return { public: proof, proof };
+      const pub = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
+      return sealed(pub, pub, { cells: puzzle.solutionSet });
     }
     case "islem-karesi":
     case "kendoku": {
       const puzzle = (slug === "islem-karesi" ? islem : kendoku)(difficulty);
       const proof = { cageId: puzzle.cageId, cageClues: puzzle.cageClues };
-      return {
-        public: { givens: puzzle.puzzle, cageId: puzzle.cageId, cageAnchor: puzzle.cageAnchor, cageClues: puzzle.cageClues },
-        proof,
-      };
+      const pub = { givens: puzzle.puzzle, cageId: puzzle.cageId, cageAnchor: puzzle.cageAnchor, cageClues: puzzle.cageClues };
+      return sealed(pub, proof, puzzle.solution);
     }
     case "yildiz-savaslari": {
       const puzzle = yildiz(difficulty);
       const proof = { regionGrid: puzzle.regionGrid };
-      return {
-        public: { regionGrid: puzzle.regionGrid, rowClues: puzzle.rowClues, colClues: puzzle.colClues, size: puzzle.size },
-        proof,
-      };
+      const pub = { regionGrid: puzzle.regionGrid, rowClues: puzzle.rowClues, colClues: puzzle.colClues, size: puzzle.size };
+      return sealed(pub, proof, { cells: puzzle.solutionSet });
     }
     case "kare-karalamaca": {
       const puzzle = kare(difficulty);
       const proof = { rowClues: puzzle.rowClues, colClues: puzzle.colClues };
-      return { public: { ...proof, size: puzzle.size }, proof };
+      return sealed({ ...proof, size: puzzle.size }, proof, { cells: puzzle.solutionSet });
     }
     case "carpmaca": {
       const puzzle = carpmaca(difficulty);
-      const proof = { rowHeaders: puzzle.rowHeaders, colHeaders: puzzle.colHeaders, givens: puzzle.puzzle };
-      return { public: proof, proof };
+      const pub = { rowHeaders: puzzle.rowHeaders, colHeaders: puzzle.colHeaders, givens: puzzle.puzzle };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "futoshiki": {
       const puzzle = futoshiki(difficulty);
-      const proof = { givens: puzzle.puzzle, horizontal: puzzle.horizontal, vertical: puzzle.vertical };
-      return { public: proof, proof };
+      const pub = { givens: puzzle.puzzle, horizontal: puzzle.horizontal, vertical: puzzle.vertical };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "pentominolar": {
       const puzzle = pentomino(difficulty);
       const proof = { pieces: puzzle.pieces, region: puzzle.region };
-      return { public: { ...proof, rows: puzzle.rows, cols: puzzle.cols }, proof };
+      const cells = puzzle.solutionPlacements.flatMap((piece) => piece.cells);
+      return sealed({ ...proof, rows: puzzle.rows, cols: puzzle.cols }, proof, { cells });
     }
     case "metaforms": {
-      const rounds = metaRounds(difficulty).map(({ shapes }) => ({ shapes }));
-      const proof = { rounds };
-      return { public: proof, proof };
+      const generated = metaRounds(difficulty);
+      const rounds = generated.map(({ shapes }) => ({ shapes }));
+      return sealed({ rounds }, { rounds }, { choices: generated.map((round) => round.oddIndex) });
     }
     case "numbers": {
       const n = SIZE[difficulty] || 4;
-      const proof = { values: shuffle(Array.from({ length: n * n }, (_, i) => i + 1)) };
-      return { public: proof, proof };
+      const values = shuffle(Array.from({ length: n * n }, (_, i) => i + 1));
+      return { public: { values }, proof: { values } };
     }
     case "colours": {
-      const proof = { rounds: colourRounds(difficulty) };
-      return { public: proof, proof };
+      const rounds = colourRounds(difficulty);
+      return sealed({ rounds }, { rounds }, { choices: rounds.map((round) => round.inkId) });
     }
     default:
       throw new Error(`Bilinmeyen oyun: ${slug}`);

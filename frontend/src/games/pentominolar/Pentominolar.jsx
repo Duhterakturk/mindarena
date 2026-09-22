@@ -3,6 +3,7 @@ import { submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { PENTOMINOES, orient } from "./shapes";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
@@ -49,6 +50,7 @@ export default function Pentominolar() {
   const [flipped, setFlipped] = useState(false);
   const [placements, setPlacements] = useState([]);
   const [notice, setNotice] = useState(null);
+  const [hintKey, setHintKey] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
@@ -62,12 +64,17 @@ export default function Pentominolar() {
     setFlipped(false);
     setPlacements([]);
     setNotice(null);
+    setHintKey(null);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (hint.kind === "mark") setHintKey(`${hint.row}-${hint.col}`);
+  });
 
   function cellPiece(r, c) {
     return placements.find((piece) => piece.cells.some(([pr, pc]) => pr === r && pc === c));
@@ -197,7 +204,7 @@ export default function Pentominolar() {
               key={`${r}-${c}`}
               type="button"
               onClick={() => place(r, c)}
-              className={`w-10 h-10 border border-slate-400 ${color}`}
+              className={`w-10 h-10 border border-slate-400 ${color} ${hintKey === `${r}-${c}` ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
             />
           );
         })}

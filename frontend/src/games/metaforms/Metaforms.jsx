@@ -3,6 +3,7 @@ import { submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
@@ -37,6 +38,7 @@ export default function Metaforms() {
   const [roundIndex, setRoundIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [feedback, setFeedback] = useState(null);
+  const [reveal, setReveal] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
@@ -48,12 +50,17 @@ export default function Metaforms() {
     setRoundIndex(0);
     setCorrectCount(0);
     setFeedback(null);
+    setReveal(null);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (hint.kind === "choice") setReveal(hint);
+  });
 
   function newGame(nextDifficulty) {
     if (nextDifficulty && nextDifficulty !== difficulty) setDifficulty(nextDifficulty);
@@ -113,7 +120,10 @@ export default function Metaforms() {
               <button
                 key={i}
                 onClick={() => handleAnswer(i)}
-                className="w-20 h-20 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-brand-50"
+                className={[
+                  "w-20 h-20 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-brand-50",
+                  reveal && roundIndex === reveal.round && i === reveal.index ? "ring-4 ring-[#2461f7]" : "",
+                ].join(" ")}
               >
                 <Shape type={shape} />
               </button>

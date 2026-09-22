@@ -3,6 +3,7 @@ import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
+import { useApplyCellHint, writeFill } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
@@ -40,6 +41,11 @@ export default function SihirliPiramit() {
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (givenMask[hint.row]?.[hint.col]) return;
+    writeFill(setBoard, hint);
+  });
 
   function handleDifficultyChange(newDifficulty) {
     if (newDifficulty !== difficulty) setDifficulty(newDifficulty);

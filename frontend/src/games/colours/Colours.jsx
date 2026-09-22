@@ -4,6 +4,7 @@ import { submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { COLOR_HEX, COLOR_IDS } from "./rounds";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
@@ -19,6 +20,7 @@ export default function Colours() {
   const [roundIndex, setRoundIndex] = useState(0);
   const [correctCount, setCorrectCount] = useState(0);
   const [feedback, setFeedback] = useState(null);
+  const [reveal, setReveal] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
@@ -30,12 +32,17 @@ export default function Colours() {
     setRoundIndex(0);
     setCorrectCount(0);
     setFeedback(null);
+    setReveal(null);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (hint.kind === "choice") setReveal(hint);
+  });
 
   function newGame(nextDifficulty) {
     if (nextDifficulty && nextDifficulty !== difficulty) setDifficulty(nextDifficulty);
@@ -102,7 +109,10 @@ export default function Colours() {
               <button
                 key={id}
                 onClick={() => handleAnswer(id)}
-                className="px-4 py-3 rounded-lg font-semibold text-white"
+                className={[
+                  "px-4 py-3 rounded-lg font-semibold text-white",
+                  reveal && roundIndex === reveal.round && id === reveal.value ? "ring-4 ring-ink ring-offset-2" : "",
+                ].join(" ")}
                 style={{ backgroundColor: COLOR_HEX[id] }}
               >
                 {t(`colors.${id}`)}

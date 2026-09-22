@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { openPuzzle } from "../../api/games";
+import { publishAttempt } from "./cellHint";
 import { usePlayCopy } from "./playCopy";
 
 export function useIssuedPuzzle(slug, difficulty) {
@@ -11,11 +12,13 @@ export function useIssuedPuzzle(slug, difficulty) {
     let cancelled = false;
     setPhase("loading");
     setIssue(null);
+    publishAttempt(null);
     openPuzzle(slug, difficulty)
       .then((data) => {
         if (!cancelled) {
           setIssue(data);
           setPhase("ready");
+          publishAttempt(data);
         }
       })
       .catch(() => {

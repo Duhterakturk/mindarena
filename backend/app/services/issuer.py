@@ -21,8 +21,11 @@ _ROUNDS = None
 
 def issue(slug, difficulty):
     if current_app.config.get("TESTING"):
-        puzzle = deepcopy(_fixture(slug))
-        return puzzle, puzzle
+        row = _fixture(slug)
+        public = deepcopy(row["puzzle"])
+        proof = deepcopy(row["puzzle"])
+        proof["solution"] = deepcopy(row["answer"])
+        return public, proof
     public, proof = _from_node(slug, difficulty)
     return public, proof
 
@@ -33,7 +36,7 @@ def _fixture(slug):
         _ROUNDS = json.loads(_FIXTURES.read_text(encoding="utf-8"))
     if slug not in _ROUNDS:
         raise IssueError("Bulmaca açılamadı")
-    return _ROUNDS[slug]["puzzle"]
+    return _ROUNDS[slug]
 
 
 def _from_node(slug, difficulty):

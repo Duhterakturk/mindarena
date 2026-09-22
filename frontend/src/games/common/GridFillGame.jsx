@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { useApplyCellHint, writeFill } from "./cellHint";
 import { useGameText } from "./gameText";
 import { usePlayCopy } from "./playCopy";
 
@@ -67,6 +68,8 @@ export default function GridFillGame({
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [puzzle]);
+
+  useApplyCellHint(puzzle, (hint) => writeFill(setBoard, hint));
 
   function handleCellChange(row, col, value) {
     if (givenMask[row][col] || status === "correct") return;

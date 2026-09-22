@@ -22,6 +22,11 @@ export async function checkPuzzle(attemptId, answer) {
   return data.correct;
 }
 
+export async function openCellHint(attemptId) {
+  const { data } = await apiClient.post(`/puzzles/${attemptId}/cell`);
+  return data;
+}
+
 export async function submitScore(payload) {
   const { data } = await apiClient.post("/scores", payload);
   if (data.new_badges && data.new_badges.length > 0) {

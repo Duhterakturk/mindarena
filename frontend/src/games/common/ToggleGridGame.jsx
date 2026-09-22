@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
+import { useApplyCellHint } from "./cellHint";
 import { useGameText } from "./gameText";
 import { usePlayCopy } from "./playCopy";
 
@@ -63,6 +64,17 @@ export default function ToggleGridGame({
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (hint.kind !== "mark") return;
+    const key = `${hint.row}-${hint.col}`;
+    if (fixedCells[key] !== undefined) return;
+    setMarked((prev) => {
+      const next = new Set(prev);
+      next.add(key);
+      return next;
+    });
+  });
 
   function toggleCell(r, c) {
     const key = `${r}-${c}`;

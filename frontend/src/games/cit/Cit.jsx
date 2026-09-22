@@ -3,6 +3,7 @@ import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
@@ -48,6 +49,15 @@ export default function Cit() {
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useApplyCellHint(attemptId, (hint) => {
+    if (hint.kind !== "edge") return;
+    const setter = hint.axis === "h" ? setHEdges : setVEdges;
+    setter((prev) => {
+      if (!prev?.[hint.row]) return prev;
+      return prev.map((row, ri) => row.map((value, ci) => (ri === hint.row && ci === hint.col ? true : value)));
+    });
+  });
 
   function handleDifficultyChange(newDifficulty) {
     if (newDifficulty !== difficulty) setDifficulty(newDifficulty);

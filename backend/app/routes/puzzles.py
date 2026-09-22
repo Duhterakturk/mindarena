@@ -6,9 +6,12 @@ from flask_jwt_extended import get_jwt_identity, jwt_required, verify_jwt_in_req
 
 from app.extensions import db, limiter
 from app.models import Game, PuzzleAttempt, User, UserRole
+from app.services.cell_hint import HintError, pick_hint
 from app.services.difficulty import compute_unlocked_difficulties
 from app.services.grading import GradeError, accepts
 from app.services.issuer import IssueError, issue
+
+_HINT_KEYS = {"kind", "row", "col", "value", "axis", "index", "round"}
 
 puzzles_bp = Blueprint("puzzles", __name__, url_prefix="/api/puzzles")
 
@@ -74,6 +77,30 @@ def check_puzzle(attempt_id):
     return jsonify({"correct": correct})
 
 
+@puzzles_bp.post("/<string:attempt_id>/cell")
+@limiter.limit("20 per minute")
+def reveal_cell(attempt_id):
+    verify_jwt_in_request(optional=True)
+    attempt = db.session.get(PuzzleAttempt, attempt_id)
+    if attempt is None or attempt.consumed_at is not None:
+        return jsonify({"error": "Bulmaca bulunamadı"}), 404
+    if not _can_see(attempt):
+        return jsonify({"error": "Bulmaca bulunamadı"}), 404
+    if attempt.hint_json:
+        return jsonify({
+            "error": "Bu bulmacada bir kare zaten açıldı",
+            "hint": json.loads(attempt.hint_json),
+        }), 409
+    try:
+        hint = pick_hint(attempt.game.slug, attempt.public_puzzle, attempt.proof_puzzle)
+    except HintError as exc:
+        return jsonify({"error": str(exc)}), 400
+    hint = {key: value for key, value in hint.items() if key in _HINT_KEYS}
+    attempt.hint_json = json.dumps(hint)
+    db.session.commit()
+    return jsonify({"hint": hint})
+
+
 def _find_game(data):
     if data.get("game_id") is not None:
         return db.session.get(Game, data.get("game_id"))
@@ -110,5 +137,6 @@ def _payload(attempt):
         "slug": attempt.game.slug,
         "difficulty": attempt.difficulty,
         "puzzle": attempt.public_puzzle,
+        "hint": json.loads(attempt.hint_json) if attempt.hint_json else None,
         "started_at": attempt.started_at.isoformat() if attempt.started_at else None,
     }
