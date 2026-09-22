@@ -30,8 +30,3 @@ export async function submitScore(payload) {
   window.dispatchEvent(new CustomEvent("mindarena:score-saved"));
   return data;
 }
-
-export async function fetchLeaderboard(slug) {
-  const { data } = await apiClient.get(`/scores/leaderboard/${slug}`);
-  return data;
-}

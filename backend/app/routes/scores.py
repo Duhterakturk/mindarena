@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
 from app.extensions import db
-from app.models import Score, Game, PuzzleAttempt
+from app.models import Score, Game, PuzzleAttempt, User, UserRole, Classroom
 from app.services.badges import check_and_award_badges
 from app.services.grading import GradeError, grade
 
@@ -82,13 +82,36 @@ def my_scores():
 
 
 @scores_bp.get("/leaderboard/<string:game_slug>")
+@jwt_required()
 def leaderboard(game_slug):
+    teacher = db.session.get(User, get_jwt_identity())
+    if not teacher or teacher.role != UserRole.TEACHER:
+        return jsonify({"error": "Bu liste yalnızca öğretmen içindir"}), 403
+
     game = Game.query.filter_by(slug=game_slug).first()
     if not game:
         return jsonify({"error": "Oyun bulunamadı"}), 404
 
+    classroom_ids = [c.id for c in Classroom.query.filter_by(teacher_id=teacher.id).all()]
+    if not classroom_ids:
+        return jsonify([])
+
+    student_ids = [
+        user.id
+        for user in User.query.filter(
+            User.role == UserRole.STUDENT,
+            User.classroom_id.in_(classroom_ids),
+        ).all()
+    ]
+    if not student_ids:
+        return jsonify([])
+
     top_scores = (
-        Score.query.filter_by(game_id=game.id, completed=True)
+        Score.query.filter(
+            Score.game_id == game.id,
+            Score.completed.is_(True),
+            Score.user_id.in_(student_ids),
+        )
         .order_by(Score.points.desc())
         .limit(10)
         .all()

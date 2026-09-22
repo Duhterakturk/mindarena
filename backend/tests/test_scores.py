@@ -1,4 +1,4 @@
-from tests.helpers import auth_headers
+from tests.helpers import auth_headers, register_user
 from tests.payloads import post_score
 
 
@@ -38,13 +38,30 @@ def test_my_scores_filters_by_user(client, student, parent, app):
     assert resp_parent.get_json() == []
 
 
-def test_leaderboard_only_includes_completed(client, student, app):
+def test_leaderboard_is_hidden_outside_the_teachers_class(client, teacher, student, app):
     sudoku_id = client.get("/api/games/sudoku").get_json()["id"]
-    auth = auth_headers(student["token"])
-    post_score(client, auth, sudoku_id, app, duration=700)
-    post_score(client, auth, sudoku_id, app, answer=None)
+    student_auth = auth_headers(student["token"])
+    post_score(client, student_auth, sudoku_id, app, duration=700)
+    post_score(client, student_auth, sudoku_id, app, answer=None)
 
-    resp = client.get("/api/scores/leaderboard/sudoku")
+    assert client.get("/api/scores/leaderboard/sudoku").status_code == 401
+    assert client.get("/api/scores/leaderboard/sudoku", headers=student_auth).status_code == 403
+
+    classroom = client.post(
+        "/api/classrooms",
+        json={"name": "3-A"},
+        headers=auth_headers(teacher["token"]),
+    ).get_json()
+    client.post(
+        "/api/classrooms/join",
+        json={"join_code": classroom["join_code"]},
+        headers=student_auth,
+    )
+
+    outsider = register_user(client, email="outsider@example.com", full_name="Baska Ogrenci").get_json()
+    post_score(client, auth_headers(outsider["access_token"]), sudoku_id, app, duration=10)
+
+    resp = client.get("/api/scores/leaderboard/sudoku", headers=auth_headers(teacher["token"]))
     assert resp.status_code == 200
     rows = resp.get_json()
     assert [s["points"] for s in rows] == [300]
