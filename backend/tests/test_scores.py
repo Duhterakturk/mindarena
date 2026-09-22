@@ -27,15 +27,16 @@ def test_submit_score_unknown_attempt_returns_404(client, student):
     assert resp.status_code == 404
 
 
-def test_my_scores_filters_by_user(client, student, parent, app):
+def test_my_scores_filters_by_user(client, student, app):
     auth = auth_headers(student["token"])
     post_score(client, auth, 1, app, duration=900)
     resp = client.get("/api/scores/me", headers=auth)
     assert resp.status_code == 200
     assert len(resp.get_json()) == 1
 
-    resp_parent = client.get("/api/scores/me", headers=auth_headers(parent["token"]))
-    assert resp_parent.get_json() == []
+    other = register_user(client, email="other@example.com")
+    resp_other = client.get("/api/scores/me", headers=auth_headers(other.get_json()["access_token"]))
+    assert resp_other.get_json() == []
 
 
 def test_leaderboard_is_hidden_outside_the_teachers_class(client, teacher, student, app):

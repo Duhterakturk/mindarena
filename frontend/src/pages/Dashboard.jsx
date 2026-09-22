@@ -4,6 +4,7 @@ import BadgeGrid from "../components/badges/BadgeGrid";
 import ProgressSummary from "../components/progress/ProgressSummary";
 import ClassroomJoin from "../components/classroom/ClassroomJoin";
 import { StudentHomework } from "../components/classroom/ClassHomework";
+import PasswordCard from "../components/auth/PasswordCard";
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -24,6 +25,8 @@ export default function Dashboard() {
           <ClassroomJoin />
         </div>
       )}
+
+      <PasswordCard />
 
       <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 mb-6">
         <h2 className="text-lg font-semibold mb-4">İlerleme</h2>

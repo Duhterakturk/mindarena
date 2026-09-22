@@ -25,7 +25,21 @@
     "login_button": "Giriş Yap",
     "register_button": "Kayıt Ol",
     "no_account": "Hesabın yok mu?",
-    "have_account": "Zaten hesabın var mı?"
+    "have_account": "Zaten hesabın var mı?",
+    "forgot_link": "Şifremi unuttum",
+    "forgot_title": "Şifremi unuttum",
+    "forgot_help": "Kayıtlı e-postana bir bağlantı gider. Bağlantı bir saat geçerlidir.",
+    "forgot_sent": "Bu e-posta kayıtlıysa bağlantı gönderildi. Gelen kutuna ve gereksiz klasörüne bak.",
+    "send_link": "Bağlantı gönder",
+    "reset_title": "Yeni şifre",
+    "reset_missing": "Bağlantı eksik. Giriş sayfasından yeniden iste.",
+    "reset_button": "Şifreyi kaydet",
+    "reset_done": "Şifren yenilendi.",
+    "new_password": "Yeni şifre",
+    "change_password": "Şifremi değiştir",
+    "current_password": "Mevcut şifre",
+    "save_password": "Kaydet",
+    "password_changed": "Şifren değişti."
   },
   "games": {
     "title": "Oyunlar",

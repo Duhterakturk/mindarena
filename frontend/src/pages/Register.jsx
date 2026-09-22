@@ -69,7 +69,6 @@ export default function Register() {
           onChange={(e) => setForm({ ...form, role: e.target.value })}
         >
           <option value="student">{t("auth.role_student")}</option>
-          <option value="parent">{t("auth.role_parent")}</option>
           <option value="teacher">{t("auth.role_teacher")}</option>
         </select>
 

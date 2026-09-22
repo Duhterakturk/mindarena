@@ -151,18 +151,7 @@ def export_progress():
 @progress_bp.get("/child/<string:child_id>")
 @jwt_required()
 def child_progress(child_id):
-    parent = db.session.get(User, get_jwt_identity())
-    if not parent or parent.role != UserRole.PARENT:
-        return jsonify({"error": "Bu uç nokta yalnızca veli rolü içindir"}), 403
-
-    child = db.session.get(User, child_id)
-    if not child or child.parent_id != parent.id:
-        return jsonify({"error": "Bu öğrenci size bağlı değil"}), 403
-
-    scores, games = _load_scores_and_games(child.id)
-    summary = _build_summary(scores, games)
-    summary["child"] = child.to_dict()
-    return jsonify(summary)
+    return jsonify({"error": "Veli hesabı kapatıldı"}), 403
 
 
 @progress_bp.get("/students")

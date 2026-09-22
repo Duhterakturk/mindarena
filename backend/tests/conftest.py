@@ -34,13 +34,6 @@ def student(client):
 
 
 @pytest.fixture()
-def parent(client):
-    resp = register_user(client, email="parent@example.com", role="parent")
-    data = resp.get_json()
-    return {"user": data["user"], "token": data["access_token"]}
-
-
-@pytest.fixture()
 def teacher(client):
     resp = register_user(client, email="teacher@example.com", role="teacher")
     data = resp.get_json()

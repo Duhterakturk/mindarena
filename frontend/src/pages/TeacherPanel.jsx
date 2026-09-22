@@ -11,6 +11,24 @@ export default function TeacherPanel() {
   const [studentsLoading, setStudentsLoading] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  const inviteText = `MindArena'ya katılın. Bu adresten öğrenci olarak kayıt olun ve şifrenizi kendiniz belirleyin: ${window.location.origin}/register
+Şifreyi unutursanız giriş sayfasındaki Şifremi unuttum bağlantısını kullanın.`;
+
+  async function copyInvite() {
+    try {
+      await navigator.clipboard.writeText(inviteText);
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = inviteText;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+    }
+    setCopied(true);
+  }
 
   function loadClassrooms() {
     fetchMyClassrooms()
@@ -56,6 +74,21 @@ export default function TeacherPanel() {
       <p className="text-slate-600 mb-8">
         Sınıflarını yönet, öğrencilerinin katılması için sınıf kodunu paylaş.
       </p>
+
+      <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 mb-6">
+        <h2 className="text-lg font-semibold mb-2">Sınıf grubuna davet</h2>
+        <p className="text-sm text-slate-600 mb-3">
+          Bunu bir kez kopyalayıp sınıf grubuna yapıştır. Aileler kendileri kayıt olur.
+        </p>
+        <p className="text-sm whitespace-pre-wrap mb-3">{inviteText}</p>
+        <button
+          type="button"
+          onClick={copyInvite}
+          className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
+        >
+          {copied ? "Kopyalandı" : "Daveti kopyala"}
+        </button>
+      </div>
 
       <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 mb-6">
         <h2 className="text-lg font-semibold mb-3">Yeni Sınıf Oluştur</h2>

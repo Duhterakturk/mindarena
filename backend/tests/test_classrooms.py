@@ -42,14 +42,14 @@ def test_join_with_invalid_code_fails(client, student):
     assert resp.status_code == 404
 
 
-def test_join_classroom_requires_student_role(client, teacher, parent):
+def test_join_classroom_requires_student_role(client, teacher):
     classroom = client.post(
         "/api/classrooms", json={"name": "3-A"}, headers=auth_headers(teacher["token"])
     ).get_json()
     resp = client.post(
         "/api/classrooms/join",
         json={"join_code": classroom["join_code"]},
-        headers=auth_headers(parent["token"]),
+        headers=auth_headers(teacher["token"]),
     )
     assert resp.status_code == 403
 

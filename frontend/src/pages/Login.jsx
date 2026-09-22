@@ -46,6 +46,12 @@ export default function Login() {
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
+        <p className="text-sm">
+          <Link to="/forgot" className="text-brand-600 font-medium">
+            {t("auth.forgot_link")}
+          </Link>
+        </p>
+
         <button
           type="submit"
           className="w-full bg-brand-500 text-white py-2 rounded-lg font-semibold hover:bg-brand-600"

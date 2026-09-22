@@ -5,6 +5,7 @@ from app.models.attempt import PuzzleAttempt
 from app.models.badge import Badge, UserBadge, BADGE_CATALOG
 from app.models.classroom import Classroom
 from app.models.assignment import Assignment
+from app.models.password_reset import PasswordReset
 
 __all__ = [
     "User",
@@ -18,4 +19,5 @@ __all__ = [
     "BADGE_CATALOG",
     "Classroom",
     "Assignment",
+    "PasswordReset",
 ]

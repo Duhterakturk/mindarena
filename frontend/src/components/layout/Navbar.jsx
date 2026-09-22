@@ -34,11 +34,6 @@ export default function Navbar() {
           <Link to="/dashboard" className={linkClass} onClick={() => setMenuOpen(false)}>
             {t("nav.dashboard")}
           </Link>
-          {user.role === "parent" && (
-            <Link to="/parent" className={linkClass} onClick={() => setMenuOpen(false)}>
-              Veli Paneli
-            </Link>
-          )}
           {user.role === "teacher" && (
             <Link to="/teacher" className={linkClass} onClick={() => setMenuOpen(false)}>
               Öğretmen Paneli

@@ -25,7 +25,21 @@
     "login_button": "Log In",
     "register_button": "Sign Up",
     "no_account": "Don't have an account?",
-    "have_account": "Already have an account?"
+    "have_account": "Already have an account?",
+    "forgot_link": "Forgot password",
+    "forgot_title": "Forgot password",
+    "forgot_help": "A link goes to the email on the account. It works for one hour.",
+    "forgot_sent": "If this email is registered, the link was sent. Check the inbox and the spam folder.",
+    "send_link": "Send link",
+    "reset_title": "New password",
+    "reset_missing": "The link is missing. Ask for a new one from the login page.",
+    "reset_button": "Save password",
+    "reset_done": "Your password was updated.",
+    "new_password": "New password",
+    "change_password": "Change password",
+    "current_password": "Current password",
+    "save_password": "Save",
+    "password_changed": "Your password was changed."
   },
   "games": {
     "title": "Games",

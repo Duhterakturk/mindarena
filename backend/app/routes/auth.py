@@ -1,6 +1,9 @@
+import os
 import re
+import secrets
+from datetime import datetime
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, current_app, request, jsonify
 from flask_jwt_extended import (
     create_access_token,
     create_refresh_token,
@@ -10,6 +13,8 @@ from flask_jwt_extended import (
 
 from app.extensions import db, limiter
 from app.models import User, UserRole
+from app.models.password_reset import PasswordReset, fresh_expiry, hash_token
+from app.services.mail import send_password_reset
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -36,7 +41,10 @@ def register():
     if len(password) < MIN_PASSWORD_LENGTH:
         return jsonify({"error": f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalıdır"}), 400
 
-    if role not in [r.value for r in UserRole]:
+    if role == UserRole.PARENT.value:
+        return jsonify({"error": "Veli hesabı yok. Evde öğrenci hesabı açın."}), 400
+
+    if role not in (UserRole.STUDENT.value, UserRole.TEACHER.value):
         return jsonify({"error": "Geçersiz rol"}), 400
 
     if User.query.filter_by(email=email).first():
@@ -87,3 +95,78 @@ def me():
     if not user:
         return jsonify({"error": "Kullanıcı bulunamadı"}), 404
     return jsonify(user.to_dict())
+
+
+@auth_bp.post("/password")
+@jwt_required()
+@limiter.limit("10 per minute")
+def change_password():
+    data = request.get_json(force=True) or {}
+    current_password = data.get("current_password") or ""
+    new_password = data.get("new_password") or ""
+
+    user = db.session.get(User, get_jwt_identity())
+    if not user or not user.check_password(current_password):
+        return jsonify({"error": "Mevcut şifre hatalı"}), 400
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        return jsonify({"error": f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalıdır"}), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+FORGOT_MESSAGE = "Bu e-posta kayıtlıysa şifre bağlantısı gönderildi."
+
+
+@auth_bp.post("/forgot")
+@limiter.limit("5 per minute")
+def forgot_password():
+    data = request.get_json(force=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    current_app.config["LAST_RESET_TOKEN"] = None
+
+    user = User.query.filter_by(email=email).first() if email else None
+    if user:
+        raw = secrets.token_urlsafe(32)
+        PasswordReset.query.filter_by(user_id=user.id, used_at=None).update(
+            {"used_at": datetime.utcnow()}
+        )
+        db.session.add(
+            PasswordReset(user_id=user.id, token_hash=hash_token(raw), expires_at=fresh_expiry())
+        )
+        db.session.commit()
+        if current_app.config.get("TESTING"):
+            current_app.config["LAST_RESET_TOKEN"] = raw
+        else:
+            base = os.environ.get(
+                "PUBLIC_APP_URL", "https://duhterakturk-mindarena.onrender.com"
+            ).rstrip("/")
+            send_password_reset(user.email, f"{base}/reset?token={raw}")
+
+    return jsonify({"message": FORGOT_MESSAGE})
+
+
+@auth_bp.post("/reset")
+@limiter.limit("10 per minute")
+def reset_password():
+    data = request.get_json(force=True) or {}
+    raw = (data.get("token") or "").strip()
+    new_password = data.get("password") or ""
+    if not raw:
+        return jsonify({"error": "Bağlantı geçersiz"}), 400
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        return jsonify({"error": f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalıdır"}), 400
+
+    row = PasswordReset.query.filter_by(token_hash=hash_token(raw)).first()
+    if not row or not row.is_open():
+        return jsonify({"error": "Bağlantının süresi dolmuş. Yeniden iste."}), 400
+
+    user = db.session.get(User, row.user_id)
+    if not user:
+        return jsonify({"error": "Bağlantı geçersiz"}), 400
+
+    user.set_password(new_password)
+    row.used_at = datetime.utcnow()
+    db.session.commit()
+    return jsonify({"ok": True})

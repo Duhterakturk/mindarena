@@ -197,13 +197,13 @@ kısıtlarını koruduğunu doğrular.
   en iyi skor + son 20 skorluk zaman çizelgesi), `GET /api/progress/export`
   (openpyxl ile üretilen `.xlsx` indirme). Frontend'de `ProgressSummary`
   bileşeni (stat kartları + hafif bir SVG/CSS bar grafiği, harici grafik
-  kütüphanesi kullanılmadı) `Dashboard`, `ParentPanel` ve gerektiğinde başka
-  sayfalarda yeniden kullanılabilir.
-- **Öğretmen/veli panelleri:**
-  - Veli: `POST /api/users/children/link` ile e-posta üzerinden mevcut bir
-    öğrenci hesabını kendine bağlar (`User.parent_id`); `GET
-    /api/users/children` ve `GET /api/progress/child/<id>` (sahiplik
-    doğrulamalı) ile çocuğun ilerlemesini görür. Frontend: `pages/ParentPanel.jsx`.
+  kütüphanesi kullanılmadı) `Dashboard` sayfasında kullanılır.
+- **Hesaplar:** Kayıtta yalnız öğrenci ve öğretmen vardır. Veli rolü ve
+  e-postayla çocuk bağlama kapalıdır (`/api/users/children`,
+  `/api/progress/child/<id>` 403 döner). Giriş yapmış kullanıcı
+  `POST /api/auth/password` ile şifresini değiştirir. `POST /api/auth/forgot`
+  kayıtlı e-postaya bir saatlik bağlantı yazar; `POST /api/auth/reset` yeni
+  şifreyi kaydeder. E-posta SMTP ortam değişkenleriyle gider.
   - Öğretmen: `POST /api/classrooms` ile sınıf oluşturur (katılım kodu döner),
     `GET /api/progress/students` **yalnızca kendi sınıflarındaki**
     öğrencilerin özet istatistiğini döner (bkz. aşağıdaki "Sınıf Modeli"
