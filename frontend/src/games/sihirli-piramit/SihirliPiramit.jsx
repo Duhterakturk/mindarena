@@ -4,6 +4,7 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 function cloneRows(rows) {
   return rows.map((row) => [...row]);
@@ -12,7 +13,7 @@ function cloneRows(rows) {
 export default function SihirliPiramit() {
   const copy = useGameText("sihirli-piramit");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("sihirli-piramit", difficulty);
   const puzzle = issue?.puzzle?.rows || null;
   const attemptId = issue?.id;

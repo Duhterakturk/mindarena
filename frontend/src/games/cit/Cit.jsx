@@ -4,6 +4,7 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 const DOT = 6;
 
@@ -14,7 +15,7 @@ function emptyGrid(rows, cols, value) {
 export default function Cit() {
   const copy = useGameText("cit");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("cit", difficulty);
   const puzzle = issue?.puzzle || null;
   const clues = puzzle?.clues;

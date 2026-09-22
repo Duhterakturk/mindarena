@@ -4,6 +4,7 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 function oddIndexOf(shapes) {
   const freq = {};
@@ -29,7 +30,7 @@ const GRID_COLS = { 4: 2, 6: 3, 9: 3 };
 export default function Metaforms() {
   const copy = useGameText("metaforms");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("metaforms", difficulty);
   const rounds = issue?.puzzle?.rounds || [];
   const attemptId = issue?.id;

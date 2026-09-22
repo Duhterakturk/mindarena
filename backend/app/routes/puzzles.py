@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required, verify_jwt_in_request
 
 from app.extensions import db, limiter
-from app.models import Game, PuzzleAttempt
+from app.models import Game, PuzzleAttempt, User, UserRole
 from app.services.difficulty import compute_unlocked_difficulties
 from app.services.grading import GradeError, accepts
 from app.services.issuer import IssueError, issue
@@ -88,6 +88,9 @@ def _difficulty_allowed(user_id, slug, difficulty):
         return True
     if not user_id:
         return False
+    user = db.session.get(User, user_id)
+    if user and user.role == UserRole.TEACHER:
+        return True
     progress = compute_unlocked_difficulties(user_id, slug)
     return bool(progress and progress["unlocked"].get(difficulty))
 

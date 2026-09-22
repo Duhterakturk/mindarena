@@ -5,6 +5,7 @@ import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { PENTOMINOES, orient } from "./shapes";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 const PIECE_COLOR = ["bg-brand-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
 
@@ -35,7 +36,7 @@ function ShapePreview({ name, turns, flipped, anchor }) {
 export default function Pentominolar() {
   const copy = useGameText("pentominolar");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("pentominolar", difficulty);
   const puzzle = issue?.puzzle || null;
   const pieces = puzzle?.pieces || [];

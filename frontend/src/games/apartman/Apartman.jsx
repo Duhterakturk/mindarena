@@ -4,6 +4,7 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 function cloneBoard(grid) {
   return grid.map((row) => [...row]);
@@ -12,7 +13,7 @@ function cloneBoard(grid) {
 export default function Apartman() {
   const copy = useGameText("apartman");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("apartman", difficulty);
   const puzzle = issue?.puzzle?.givens || null;
   const clues = issue?.puzzle?.clues;

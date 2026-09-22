@@ -1,7 +1,7 @@
-import { useState } from "react";
 import GridFillGame from "../common/GridFillGame";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { REGIONS } from "./puzzles";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 const REGION_BG = {
   A: "bg-brand-50",
@@ -11,7 +11,7 @@ const REGION_BG = {
 };
 
 export default function BolgeselSudoku() {
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("bolgesel-sudoku", difficulty);
   if (phase !== "ready") return <PuzzlePending phase={phase} />;
   const puzzle = issue.puzzle.givens;

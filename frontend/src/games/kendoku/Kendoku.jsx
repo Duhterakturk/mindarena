@@ -1,9 +1,9 @@
-import { useState } from "react";
 import GridFillGame from "../common/GridFillGame";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 export default function Kendoku() {
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("kendoku", difficulty);
   if (phase !== "ready") return <PuzzlePending phase={phase} />;
   const { givens: puzzle, cageId, cageAnchor, cageClues } = issue.puzzle;

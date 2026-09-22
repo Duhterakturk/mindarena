@@ -6,12 +6,13 @@ import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { COLOR_HEX, COLOR_IDS } from "./rounds";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 export default function Colours() {
   const { t, i18n } = useTranslation();
   const copy = useGameText("colours");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("colours", difficulty);
   const rounds = issue?.puzzle?.rounds || [];
   const attemptId = issue?.id;

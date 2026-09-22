@@ -25,6 +25,20 @@ body {
   display: inline-block;
 }
 
+.board-mode .difficulty-picker {
+  display: none;
+}
+
+.board-play {
+  zoom: 1.55;
+}
+
+@media (min-width: 1024px) {
+  .board-play {
+    zoom: 1.85;
+  }
+}
+
 .board-card:hover .toy-icon {
   animation: wiggle 520ms ease;
 }
@@ -161,6 +175,7 @@ body {
   .card-rise,
   .toy,
   .toy-icon,
+  .board-play,
   .play-correct,
   .play-correct::before,
   .badge-settle,

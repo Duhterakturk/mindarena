@@ -27,7 +27,7 @@ export default function DifficultyPicker({ gameSlug, value, onChange }) {
   const order = ["easy", "medium", "hard"];
 
   return (
-    <div className="flex gap-2 mb-2 flex-wrap items-center">
+    <div className="difficulty-picker flex gap-2 mb-2 flex-wrap items-center">
       {order.map((level) => {
         const isUnlocked = state.unlocked[level];
         const isActive = value === level;

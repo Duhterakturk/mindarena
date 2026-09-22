@@ -1,9 +1,9 @@
-import { useState } from "react";
 import ToggleGridGame from "../common/ToggleGridGame";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 export default function AmiralBatti() {
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("amiral-batti", difficulty);
   if (phase !== "ready") return <PuzzlePending phase={phase} />;
   const { rowClues, colClues, rows, cols } = issue.puzzle;

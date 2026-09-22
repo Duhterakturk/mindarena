@@ -4,12 +4,13 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 const CELL_SIZE = { 4: "w-14 h-14 text-lg", 5: "w-12 h-12 text-base", 6: "w-10 h-10 text-sm" };
 
 export default function Numbers() {
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("numbers", difficulty);
   const values = issue?.puzzle?.values || [];
   const total = values.length;

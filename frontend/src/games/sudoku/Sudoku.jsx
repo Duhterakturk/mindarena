@@ -4,6 +4,7 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 function cloneBoard(board) {
   return board.map((row) => [...row]);
@@ -12,7 +13,7 @@ function cloneBoard(board) {
 export default function Sudoku() {
   const copy = useGameText("sudoku");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("sudoku", difficulty);
   const puzzle = issue?.puzzle?.givens || null;
   const attemptId = issue?.id;

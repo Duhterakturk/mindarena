@@ -14,13 +14,15 @@ import Reset from "./pages/Reset";
 import Dashboard from "./pages/Dashboard";
 import Exam from "./pages/Exam";
 import TeacherPanel from "./pages/TeacherPanel";
+import Board from "./pages/Board";
 
 function Shell() {
   const location = useLocation();
+  const onBoard = location.pathname.startsWith("/board");
   return (
     <>
-      <Navbar />
-      <main key={location.pathname} className="page-enter">
+      {!onBoard && <Navbar />}
+      <main key={location.pathname} className={onBoard ? undefined : "page-enter"}>
         <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/games" element={<Games />} />
@@ -46,6 +48,14 @@ function Shell() {
             }
           />
           <Route
+            path="/board/:slug"
+            element={
+              <ProtectedRoute role="teacher">
+                <Board />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/teacher"
             element={
               <ProtectedRoute role="teacher">
@@ -55,7 +65,7 @@ function Shell() {
           />
         </Routes>
       </main>
-      <BadgeToastHost />
+      {!onBoard && <BadgeToastHost />}
     </>
   );
 }

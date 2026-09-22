@@ -4,6 +4,7 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
+import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 function emptyBoard(grid) {
   return grid.map((row) => row.map((cell) => (cell.type === "white" && cell.given ? cell.given : 0)));
@@ -18,7 +19,7 @@ function cellSizeClass(size) {
 export default function Kakuro() {
   const copy = useGameText("kakuro");
   const play = usePlayCopy();
-  const [difficulty, setDifficulty] = useState("easy");
+  const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("kakuro", difficulty);
   const puzzle = issue?.puzzle || null;
   const grid = puzzle?.grid;

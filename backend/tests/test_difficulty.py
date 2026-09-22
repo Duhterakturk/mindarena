@@ -2,6 +2,23 @@ from tests.helpers import auth_headers
 from tests.payloads import post_score
 
 
+def test_teacher_can_open_a_locked_difficulty(client, teacher, student):
+    sudoku_id = client.get("/api/games/sudoku").get_json()["id"]
+    blocked = client.post(
+        "/api/puzzles",
+        json={"game_id": sudoku_id, "difficulty": "medium"},
+        headers=auth_headers(student["token"]),
+    )
+    assert blocked.status_code == 403
+    opened = client.post(
+        "/api/puzzles",
+        json={"game_id": sudoku_id, "difficulty": "medium"},
+        headers=auth_headers(teacher["token"]),
+    )
+    assert opened.status_code == 201
+    assert opened.get_json()["difficulty"] == "medium"
+
+
 def test_easy_always_unlocked(client, student):
     resp = client.get("/api/progress/unlocked/sudoku", headers=auth_headers(student["token"]))
     assert resp.status_code == 200

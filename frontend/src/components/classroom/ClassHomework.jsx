@@ -115,9 +115,17 @@ export function ClassHomework({ classroomId, classroomName }) {
           )}
           <p className="text-sm text-stone-600 mb-4">Ödevi tamamlamayan {board.pending_count} kişi var.</p>
           <p className="bg-white border border-line rounded-xl px-4 py-3 text-sm mb-3">{board.sentence}</p>
-          <button type="button" onClick={handleCopy} className="text-sm font-bold text-brand-700">
-            {copied ? "Kopyalandı" : "Cümleyi kopyala"}
-          </button>
+          <div className="flex flex-wrap items-center gap-4">
+            <Link
+              to={`/board/${assignment.slug}?difficulty=${assignment.difficulty}`}
+              className="press-btn !px-4 !py-2 text-sm"
+            >
+              Tahtaya yansıt
+            </Link>
+            <button type="button" onClick={handleCopy} className="text-sm font-bold text-brand-700">
+              {copied ? "Kopyalandı" : "Cümleyi kopyala"}
+            </button>
+          </div>
         </div>
       )}
     </section>
