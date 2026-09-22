@@ -1,28 +1,27 @@
-// Her oyun için temsili emoji + renk eşlemesi. Oyun kartlarında ve
-// önizlemelerde tek harfli avatar yerine kullanılır. Slug listesi
-// backend/app/models/game.py -> GAME_CATALOG ile birebir eşleşir.
+// Her oyun için temsili emoji + soluk mühür rengi. Kartın kendisi kâğıt
+// kalır; renk yalnızca küçük bir izdir. Slug listesi GAME_CATALOG ile eşleşir.
 export const GAME_VISUALS = {
-  kakuro: { emoji: "➕", color: "bg-emerald-100 text-emerald-700" },
-  sudoku: { emoji: "🔢", color: "bg-blue-100 text-blue-700" },
-  "bolgesel-sudoku": { emoji: "🧩", color: "bg-indigo-100 text-indigo-700" },
-  apartman: { emoji: "🏢", color: "bg-slate-100 text-slate-700" },
-  cit: { emoji: "🔲", color: "bg-cyan-100 text-cyan-700" },
-  "amiral-batti": { emoji: "🚢", color: "bg-rose-100 text-rose-700" },
-  "sihirli-piramit": { emoji: "🔺", color: "bg-amber-100 text-amber-700" },
-  patika: { emoji: "🛤️", color: "bg-green-100 text-green-700" },
-  "abc-baglama": { emoji: "🔤", color: "bg-violet-100 text-violet-700" },
-  "islem-karesi": { emoji: "➗", color: "bg-orange-100 text-orange-700" },
-  kendoku: { emoji: "📐", color: "bg-teal-100 text-teal-700" },
-  "yildiz-savaslari": { emoji: "⭐", color: "bg-yellow-100 text-yellow-700" },
-  "kare-karalamaca": { emoji: "✏️", color: "bg-stone-100 text-stone-700" },
-  carpmaca: { emoji: "✖️", color: "bg-lime-100 text-lime-700" },
-  futoshiki: { emoji: "⚖️", color: "bg-sky-100 text-sky-700" },
-  pentominolar: { emoji: "🧱", color: "bg-fuchsia-100 text-fuchsia-700" },
-  metaforms: { emoji: "🔷", color: "bg-purple-100 text-purple-700" },
-  numbers: { emoji: "🎲", color: "bg-pink-100 text-pink-700" },
-  colours: { emoji: "🎨", color: "bg-red-100 text-red-700" },
+  kakuro: { emoji: "➕", color: "bg-[#e7f2ea]" },
+  sudoku: { emoji: "🔢", color: "bg-[#e7eef8]" },
+  "bolgesel-sudoku": { emoji: "🧩", color: "bg-[#eceaf6]" },
+  apartman: { emoji: "🏢", color: "bg-[#eeeae4]" },
+  cit: { emoji: "🔲", color: "bg-[#e5f1f2]" },
+  "amiral-batti": { emoji: "🚢", color: "bg-[#f6e9ea]" },
+  "sihirli-piramit": { emoji: "🔺", color: "bg-[#f6efe2]" },
+  patika: { emoji: "🛤️", color: "bg-[#e8f1e6]" },
+  "abc-baglama": { emoji: "🔤", color: "bg-[#eeeaf4]" },
+  "islem-karesi": { emoji: "➗", color: "bg-[#f6eee4]" },
+  kendoku: { emoji: "📐", color: "bg-[#e6f1ee]" },
+  "yildiz-savaslari": { emoji: "⭐", color: "bg-[#f7f1dc]" },
+  "kare-karalamaca": { emoji: "✏️", color: "bg-[#efeae4]" },
+  carpmaca: { emoji: "✖️", color: "bg-[#eef3df]" },
+  futoshiki: { emoji: "⚖️", color: "bg-[#e7f0f6]" },
+  pentominolar: { emoji: "🧱", color: "bg-[#f3eaf1]" },
+  metaforms: { emoji: "🔷", color: "bg-[#ece8f4]" },
+  numbers: { emoji: "🎲", color: "bg-[#f6eaf0]" },
+  colours: { emoji: "🎨", color: "bg-[#f6ebe7]" },
 };
 
 export function getGameVisual(slug) {
-  return GAME_VISUALS[slug] || { emoji: "🧠", color: "bg-brand-100 text-brand-700" };
+  return GAME_VISUALS[slug] || { emoji: "🧠", color: "bg-[#eee8dc]" };
 }

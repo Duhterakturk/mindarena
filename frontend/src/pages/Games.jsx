@@ -23,7 +23,7 @@ export default function Games() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <h1 className="text-2xl font-bold mb-6">{t("games.title")}</h1>
+      <h1 className="font-display text-4xl font-semibold mb-6">{t("games.title")}</h1>
 
       {error && <p className="text-red-500">{error}</p>}
 
@@ -34,7 +34,7 @@ export default function Games() {
           </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" aria-hidden="true">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl p-5 border border-slate-100 animate-pulse">
+              <div key={i} className="bg-[#fffdf8] rounded-2xl p-5 border border-line animate-pulse">
                 <div className="h-24 rounded-xl bg-slate-100 mb-3" />
                 <div className="h-4 w-2/3 rounded bg-slate-100 mb-2" />
                 <div className="h-3 w-1/3 rounded bg-slate-100" />
@@ -45,9 +45,9 @@ export default function Games() {
       )}
 
       {!loading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-          {games.map((game) => (
-            <GameCard key={game.slug} game={game} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-6">
+          {games.map((game, index) => (
+            <GameCard key={game.slug} game={game} index={index} />
           ))}
         </div>
       )}

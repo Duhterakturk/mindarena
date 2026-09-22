@@ -37,7 +37,7 @@ export default function BadgeToastHost() {
       {toasts.map((badge) => (
         <div
           key={badge._toastId}
-          className="bg-white border border-amber-200 shadow-lg rounded-xl px-4 py-3 flex items-center gap-3 max-w-xs"
+          className="badge-settle bg-[#fffdf8] border border-line shadow-lg rounded-2xl px-4 py-3 flex items-center gap-3 max-w-xs"
         >
           <span className="text-3xl">{badge.icon}</span>
           <div>

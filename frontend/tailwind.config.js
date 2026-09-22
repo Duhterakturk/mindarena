@@ -4,6 +4,9 @@ export default {
   theme: {
     extend: {
       colors: {
+        ink: "#1e1a16",
+        paper: "#f3eee4",
+        line: "#e4d8c4",
         brand: {
           50: "#eef4ff",
           100: "#d9e6ff",
@@ -19,6 +22,7 @@ export default {
       },
       fontFamily: {
         sans: ["Nunito", "system-ui", "sans-serif"],
+        display: ["Fraunces", "Georgia", "serif"],
       },
     },
   },

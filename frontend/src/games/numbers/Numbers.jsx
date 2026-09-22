@@ -110,7 +110,7 @@ export default function Numbers() {
 
       {status === "correct" && (
         <>
-          <p className="text-emerald-600 mt-4">{play.numbersDone}</p>
+          <p className="play-correct text-emerald-600 mt-4">{play.numbersDone}</p>
           <button
             onClick={handleSubmitScore}
             className="mt-3 bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"

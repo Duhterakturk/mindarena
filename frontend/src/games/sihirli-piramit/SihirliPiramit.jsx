@@ -126,7 +126,7 @@ export default function SihirliPiramit() {
         )}
       </div>
 
-      {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "correct" && <p className="play-correct text-emerald-600 mt-3">{play.correct}</p>}
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}

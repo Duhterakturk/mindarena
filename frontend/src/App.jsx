@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/common/ProtectedRoute";
@@ -13,12 +13,13 @@ import Dashboard from "./pages/Dashboard";
 import ParentPanel from "./pages/ParentPanel";
 import TeacherPanel from "./pages/TeacherPanel";
 
-export default function App() {
+function Shell() {
+  const location = useLocation();
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Navbar />
-        <Routes>
+    <>
+      <Navbar />
+      <main key={location.pathname} className="page-enter">
+        <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/:slug" element={<GamePage />} />
@@ -49,7 +50,17 @@ export default function App() {
             }
           />
         </Routes>
-        <BadgeToastHost />
+      </main>
+      <BadgeToastHost />
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <Shell />
       </AuthProvider>
     </BrowserRouter>
   );

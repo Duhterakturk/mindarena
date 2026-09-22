@@ -73,9 +73,9 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-10">
+    <nav className="bg-paper/90 backdrop-blur sticky top-0 z-10 border-b border-line">
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="text-xl font-bold text-brand-600" onClick={() => setMenuOpen(false)}>
+        <Link to="/" className="font-display text-2xl font-semibold text-ink" onClick={() => setMenuOpen(false)}>
           {t("app.name")}
         </Link>
 
