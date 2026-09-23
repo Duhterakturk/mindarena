@@ -32,6 +32,17 @@ def test_metaforms_rejects_a_swapped_piece():
     raise AssertionError("yerleri değişen parçalar kabul edildi")
 
 
+def test_pyramid_rejects_a_repeated_digit():
+    assert GAME_CATALOG[6]["slug"] == "sihirli-piramit"
+    puzzle, answer = reference(7)
+    answer["path"] = [0, 1, 1, 1]
+    try:
+        grade("sihirli-piramit", "easy", puzzle, answer, 10)
+    except GradeError:
+        return
+    raise AssertionError("tekrarlayan sayılı yol kabul edildi")
+
+
 def test_grade_rejects_empty_sudoku():
     try:
         grade("sudoku", "easy", {"givens": [[0] * 9 for _ in range(9)]}, [[1] * 9 for _ in range(9)], 10)

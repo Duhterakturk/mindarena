@@ -9,7 +9,7 @@ GAME_CATALOG = [
     {"slug": "apartman", "name_tr": "Apartman", "name_en": "Building Heights", "min_grade_level": 3},
     {"slug": "cit", "name_tr": "Çit", "name_en": "Fence Loop", "min_grade_level": 4},
     {"slug": "amiral-batti", "name_tr": "Gizli Gemiler", "name_en": "Hidden Ships", "min_grade_level": 3},
-    {"slug": "sihirli-piramit", "name_tr": "Sihirli Piramit", "name_en": "Number Pyramid", "min_grade_level": 2},
+    {"slug": "sihirli-piramit", "name_tr": "Sihirli Piramit", "name_en": "Number Path", "min_grade_level": 2},
     {"slug": "patika", "name_tr": "Patika", "name_en": "Number Trail", "min_grade_level": 2},
     {"slug": "abc-baglama", "name_tr": "Harf Bağlama", "name_en": "Letter Links", "min_grade_level": 2},
     {"slug": "islem-karesi", "name_tr": "İşlem Karesi", "name_en": "Operation Grid", "min_grade_level": 4},

@@ -123,7 +123,7 @@
     "apartman": "Her satır ve sütun 1-4 yüksekliklerini birer kez içerir. Kenar sayısı, o yönden görünen bina adedidir.",
     "cit": "Sayı, o hücrenin kaç kenarının çizgide olduğunu söyler. Çizgi tek bir kapalı halka olmalı. Boş hücrede sayı yoktur.",
     "amiral-batti": "Satır ve sütun sayıları, o çizgideki gemi karelerinin adedidir. Gemiler birbirine değmez.",
-    "sihirli-piramit": "Her taş, hemen altındaki iki taşın toplamıdır. Verilen taşlardan piramidi tamamla.",
+    "sihirli-piramit": "Tepeden başla, her sıradan bir daire seçerek tabana in. Adım yalnız alttaki komşu daireye değer. Yolda 1’den sıra sayısına kadar her sayı bir kez kullanılır.",
     "patika": "Numaralı noktaları, yatay ve dikey adımlarla kesintisiz bir yol olacak şekilde birleştir.",
     "abc-baglama": "Aynı harfleri, birbirini kesmeyen yatay ve dikey bir çizgiyle birleştir.",
     "islem-karesi": "Her satır ve her sütun, aradaki işlemlerle sağdaki ve alttaki sonuca ulaşır. Çarpma ve bölme önce yapılır. Sayılar 1-9 arasındadır ve tekrar etmez.",

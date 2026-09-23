@@ -151,6 +151,17 @@ def test_metaforms_hint_places_one_piece():
     assert hint["color"] == piece["color"]
 
 
+def test_pyramid_hint_marks_one_circle_on_the_path():
+    from app.services.cell_hint import pick_hint
+
+    path = [0, 0, 1, 1]
+    hint = pick_hint("sihirli-piramit", {"rows": [[1], [2, 1], [2, 4, 3], [4, 3, 1, 2]]}, {"solution": {"path": path}})
+    assert hint["kind"] == "mark"
+    assert hint["note"] == "path"
+    assert hint["row"] >= 1
+    assert hint["col"] == path[hint["row"]]
+
+
 def test_other_student_cannot_open_the_cell(client, student):
     opened = _open(client, student["token"], "sudoku")
     attempt_id = opened.get_json()["id"]

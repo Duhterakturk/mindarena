@@ -4,12 +4,12 @@ import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
-import { useApplyCellHint, writeFill } from "../common/cellHint";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
-function cloneRows(rows) {
-  return rows.map((row) => [...row]);
+function emptyMarks(rows) {
+  return rows.map((_, row) => (row === 0 ? 0 : null));
 }
 
 export default function SihirliPiramit() {
@@ -17,21 +17,20 @@ export default function SihirliPiramit() {
   const play = usePlayCopy();
   const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("sihirli-piramit", difficulty);
-  const puzzle = issue?.puzzle?.rows || null;
+  const rows = issue?.puzzle?.rows || null;
   const attemptId = issue?.id;
-  const givenMask = puzzle ? puzzle.map((row) => row.map((v) => v !== 0)) : [];
 
-  const [board, setBoard] = useState(null);
+  const [marks, setMarks] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
 
-  const [renderedPuzzle, setRenderedPuzzle] = useState(null);
-  let displayBoard = board;
-  if (puzzle && puzzle !== renderedPuzzle) {
-    displayBoard = cloneRows(puzzle);
-    setRenderedPuzzle(puzzle);
-    setBoard(displayBoard);
+  const [renderedRows, setRenderedRows] = useState(null);
+  let displayMarks = marks;
+  if (rows && rows !== renderedRows) {
+    displayMarks = emptyMarks(rows);
+    setRenderedRows(rows);
+    setMarks(displayMarks);
     setStatus("playing");
   }
 
@@ -44,8 +43,14 @@ export default function SihirliPiramit() {
   }, [attemptId]);
 
   useApplyCellHint(attemptId, (hint) => {
-    if (givenMask[hint.row]?.[hint.col]) return;
-    writeFill(setBoard, hint);
+    if (hint?.kind !== "mark" || hint.note !== "path") return;
+    setMarks((prev) => {
+      if (!prev || hint.row == null) return prev;
+      const next = [...prev];
+      next[hint.row] = hint.col;
+      return next;
+    });
+    setStatus("playing");
   });
 
   function handleDifficultyChange(newDifficulty) {
@@ -54,24 +59,27 @@ export default function SihirliPiramit() {
   }
 
   function clearBoard() {
-    if (!puzzle) return;
-    setBoard(cloneRows(puzzle));
+    if (!rows) return;
+    setMarks(emptyMarks(rows));
     setStatus("playing");
   }
 
-  function handleCellChange(row, col, value) {
-    if (givenMask[row][col] || status === "correct") return;
-    const digits = value.replace(/[^0-9]/g, "").slice(0, 3);
-    const next = cloneRows(displayBoard);
-    next[row][col] = digits ? Number(digits) : 0;
-    setBoard(next);
+  function choose(row, col) {
+    if (!displayMarks || status === "correct" || row === 0) return;
+    const next = [...displayMarks];
+    next[row] = next[row] === col ? null : col;
+    setMarks(next);
     setStatus("playing");
   }
 
   async function checkSolution() {
-    if (!attemptId) return;
+    if (!attemptId || !displayMarks) return;
+    if (displayMarks.some((col) => col == null)) {
+      setStatus("incorrect");
+      return;
+    }
     try {
-      const correct = await checkPuzzle(attemptId, displayBoard);
+      const correct = await checkPuzzle(attemptId, { path: displayMarks });
       setStatus(correct ? "correct" : "incorrect");
       if (correct) clearInterval(timerRef.current);
     } catch {
@@ -80,16 +88,18 @@ export default function SihirliPiramit() {
   }
 
   async function handleSubmitScore() {
-    if (!attemptId) return;
+    if (!attemptId || !displayMarks) return;
     try {
-      await submitScore({ attempt_id: attemptId, answer: displayBoard });
+      await submitScore({ attempt_id: attemptId, answer: { path: displayMarks } });
       setStatus("submitted");
     } catch {
       setStatus("rejected");
     }
   }
 
-  if (phase !== "ready" || !displayBoard) return <PuzzlePending phase={phase} />;
+  if (phase !== "ready" || !rows || !displayMarks) return <PuzzlePending phase={phase} />;
+
+  const size = rows.length >= 6 ? "w-9 h-9 text-sm" : "w-11 h-11";
 
   return (
     <div className="flex flex-col items-center">
@@ -98,26 +108,32 @@ export default function SihirliPiramit() {
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
-      <div className="flex flex-col items-center gap-1 max-w-full overflow-x-auto">
-        {displayBoard.map((row, r) => (
-          <div key={r} className="flex gap-1">
-            {row.map((val, c) => (
-              <input
-                key={c}
-                value={val || ""}
-                onChange={(e) => handleCellChange(r, c, e.target.value)}
-                readOnly={givenMask[r][c] || status === "correct"}
-                className={[
-                  "w-12 h-12 text-center text-base border border-slate-300 focus:outline-none focus:bg-brand-100",
-                  givenMask[r][c] ? "bg-slate-100 font-bold text-slate-700" : "bg-white",
-                ].join(" ")}
-              />
-            ))}
+      <div className="flex flex-col items-center gap-1.5 max-w-full overflow-x-auto py-1">
+        {rows.map((row, r) => (
+          <div key={r} className="flex gap-1.5">
+            {row.map((value, c) => {
+              const selected = displayMarks[r] === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => choose(r, c)}
+                  aria-pressed={selected}
+                  className={[
+                    size,
+                    "rounded-full font-semibold text-[#1e1a16]",
+                    selected ? "bg-white border-[3px] border-[#2461f7]" : "bg-white border border-slate-300",
+                  ].join(" ")}
+                >
+                  {value}
+                </button>
+              );
+            })}
           </div>
         ))}
       </div>
 
-      <div className="flex gap-3 mt-6">
+      <div className="flex flex-wrap justify-center gap-3 mt-6">
         <button
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"

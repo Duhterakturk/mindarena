@@ -46,7 +46,7 @@ const rounds = {
   })(),
   "sihirli-piramit": (() => {
     const puzzle = sihirli("easy");
-    return { puzzle: { rows: puzzle.puzzle }, answer: puzzle.solution };
+    return { puzzle: { rows: puzzle.rows }, answer: { path: puzzle.path } };
   })(),
   patika: (() => {
     const puzzle = patika("easy");

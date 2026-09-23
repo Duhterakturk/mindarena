@@ -25,8 +25,8 @@ export const HINTS = {
     en: { hint: "A row marked 0 is empty. Ships never touch, not even diagonally.", example: "A row marked 1 holds exactly one ship cell." },
   },
   "sihirli-piramit": {
-    tr: { hint: "Üstteki taş, altındaki iki taşın toplamıdır. Eksik olanı çıkarma ile bul.", example: "Üstte 7, solda 3 varsa sağdaki taş 4’tür." },
-    en: { hint: "Each stone is the sum of the two stones under it.", example: "A 7 sitting on a 3 needs a 4 beside it." },
+    tr: { hint: "Tepeden in. Her sırada bir daire seç ve yalnız altındaki komşuya geç. Aynı sayı yolda bir kez durur.", example: "Tepedeki 3 kullanıldıysa, alttaki başka bir 3’e inme." },
+    en: { hint: "Come down from the top. Pick one circle on each row and step only to the neighbor below it. Each number is used once.", example: "If the top 3 is used, do not step onto another 3." },
   },
   patika: {
     tr: { hint: "1’den başla, sıradaki sayıya yalnız sağa, sola, yukarı veya aşağı git.", example: "1 ile 2 yan yanaysa aralarına düz bir çizgi çek." },

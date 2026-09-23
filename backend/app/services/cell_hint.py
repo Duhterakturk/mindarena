@@ -14,7 +14,6 @@ _FILL = {
     "kendoku",
     "carpmaca",
     "futoshiki",
-    "sihirli-piramit",
     "numbers",
 }
 _MARK_NOTE = {
@@ -44,6 +43,8 @@ def pick_hint(slug, public, proof, focus=None):
         return _palette(solution)
     if slug == "metaforms":
         return _form(public, solution)
+    if slug == "sihirli-piramit":
+        return _pyramid(solution)
     raise HintError("Bu bulmacada ipucu yok")
 
 
@@ -191,6 +192,17 @@ def _cells(solution):
     for piece in solution.get("placements") or []:
         cells.extend(piece.get("cells") or [])
     return cells
+
+
+def _pyramid(solution):
+    path = solution.get("path") if isinstance(solution, dict) else None
+    if not isinstance(path, list) or len(path) < 2:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    row_index = random.randrange(1, len(path))
+    col_index = path[row_index]
+    if isinstance(col_index, bool) or not isinstance(col_index, int):
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    return {"kind": "mark", "row": row_index, "col": col_index, "note": "path"}
 
 
 def _palette(solution):

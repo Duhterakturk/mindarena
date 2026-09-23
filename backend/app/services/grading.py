@@ -726,27 +726,26 @@ def _count_fleets(row_clues, col_clues, ships, limit):
 
 
 def _grade_pyramid(difficulty, puzzle, answer):
-    base = PYRAMID_BASE[difficulty]
-    rows = (puzzle or {}).get("rows") if isinstance(puzzle, dict) else puzzle
-    if not isinstance(rows, list) or len(rows) != base:
+    height = PYRAMID_BASE[difficulty]
+    rows = (puzzle or {}).get("rows") if isinstance(puzzle, dict) else None
+    if not isinstance(rows, list) or len(rows) != height:
         raise GradeError("Izgara boyutu uyuşmuyor")
-    solved = answer if isinstance(answer, list) else None
-    if not isinstance(solved, list) or len(solved) != base:
+    for index, row in enumerate(rows):
+        if not isinstance(row, list) or len(row) != index + 1:
+            raise GradeError("Izgara boyutu uyuşmuyor")
+        if any(not isinstance(value, int) or isinstance(value, bool) or value < 1 or value > height for value in row):
+            raise GradeError("İpucu geçersiz")
+    path = answer.get("path") if isinstance(answer, dict) else None
+    if not isinstance(path, list) or len(path) != height or path[0] != 0:
         raise GradeError("Çözüm eksik")
-    given_base = rows[-1]
-    if not isinstance(given_base, list) or len(given_base) != base:
-        raise GradeError("Izgara boyutu uyuşmuyor")
-    if any(not isinstance(v, int) or isinstance(v, bool) or v < 1 or v > 9 for v in given_base):
-        raise GradeError("İpucu geçersiz")
-    for index, row in enumerate(rows[:-1]):
-        if row != [0] * (index + 1):
-            raise GradeError("Yalnızca taban satırı verilir")
-    built = [given_base[:]]
-    while len(built[-1]) > 1:
-        prev = built[-1]
-        built.append([prev[i] + prev[i + 1] for i in range(len(prev) - 1)])
-    built.reverse()
-    if solved != built:
+    seen = []
+    for index, col in enumerate(path):
+        if isinstance(col, bool) or not isinstance(col, int) or col < 0 or col > index:
+            raise GradeError("Çözüm kurallara uymuyor")
+        if index and col != path[index - 1] and col != path[index - 1] + 1:
+            raise GradeError("Çözüm kurallara uymuyor")
+        seen.append(rows[index][col])
+    if sorted(seen) != list(range(1, height + 1)):
         raise GradeError("Çözüm kurallara uymuyor")
 
 

@@ -61,8 +61,8 @@ function open(slug, difficulty) {
     }
     case "sihirli-piramit": {
       const puzzle = sihirli(difficulty);
-      const pub = { rows: puzzle.puzzle };
-      return sealed(pub, pub, puzzle.solution);
+      const pub = { rows: puzzle.rows };
+      return sealed(pub, pub, { path: puzzle.path });
     }
     case "patika": {
       const puzzle = patika(difficulty);

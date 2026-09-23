@@ -25,6 +25,9 @@ function describe(hint, tr) {
   if (hint.kind === "mark" && hint.note === "shade") {
     return tr ? "Bu kare boyalı." : "This cell is shaded.";
   }
+  if (hint.kind === "mark" && hint.note === "path") {
+    return tr ? "Bu daire yolda." : "This circle is on the path.";
+  }
   if (hint.kind === "marks") {
     return tr
       ? `${hint.label} harfinin yolu bu karelerden geçer.`
