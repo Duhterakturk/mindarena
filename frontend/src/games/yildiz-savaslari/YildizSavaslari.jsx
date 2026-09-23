@@ -18,6 +18,7 @@ export default function YildizSavaslari() {
       colClues={colClues}
       regionGrid={regionGrid}
       markSymbol="★"
+      allowCross
       onRegenerate={reload}
       difficulty={difficulty}
       onDifficultyChange={setDifficulty}

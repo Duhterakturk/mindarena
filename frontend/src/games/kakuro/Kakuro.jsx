@@ -5,6 +5,9 @@ import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { useApplyCellHint, writeFill } from "../common/cellHint";
+import NotesOverlay from "../common/NotesOverlay";
+import NotesToggle from "../common/NotesToggle";
+import { clearCellNotes, emptyNotes, toggleNote } from "../common/pencilNotes";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
@@ -28,16 +31,22 @@ export default function Kakuro() {
   const size = puzzle?.size;
   const attemptId = issue?.id;
   const [board, setBoard] = useState(null);
+  const [notes, setNotes] = useState(null);
+  const [notesMode, setNotesMode] = useState(false);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
 
   const [renderedPuzzle, setRenderedPuzzle] = useState(null);
   let displayBoard = board;
+  let displayNotes = notes;
   if (puzzle && puzzle !== renderedPuzzle) {
     displayBoard = emptyBoard(grid);
+    displayNotes = emptyNotes(grid.length, grid[0].length);
     setRenderedPuzzle(puzzle);
     setBoard(displayBoard);
+    setNotes(displayNotes);
+    setNotesMode(false);
     setStatus("playing");
   }
 
@@ -49,7 +58,12 @@ export default function Kakuro() {
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
 
-  useApplyCellHint(attemptId, (hint) => writeFill(setBoard, hint, 1, 1));
+  useApplyCellHint(attemptId, (hint) => {
+    writeFill(setBoard, hint, 1, 1);
+    if (hint?.kind === "fill") {
+      setNotes((prev) => (prev ? clearCellNotes(prev, hint.row + 1, hint.col + 1) : prev));
+    }
+  });
 
   function handleDifficultyChange(newDifficulty) {
     if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
@@ -59,15 +73,28 @@ export default function Kakuro() {
   function clearBoard() {
     if (!grid) return;
     setBoard(emptyBoard(grid));
+    setNotes(emptyNotes(grid.length, grid[0].length));
     setStatus("playing");
   }
 
   function handleCellChange(row, col, value) {
     if (status === "correct" || grid[row][col].given) return;
     const digit = value.replace(/[^1-9]/g, "").slice(-1);
+    if (notesMode) {
+      if (!digit) return;
+      setBoard((prev) => {
+        const next = prev.map((r) => [...r]);
+        next[row][col] = 0;
+        return next;
+      });
+      setNotes((prev) => toggleNote(prev, row, col, Number(digit)));
+      setStatus("playing");
+      return;
+    }
     const next = displayBoard.map((r) => [...r]);
     next[row][col] = digit ? Number(digit) : 0;
     setBoard(next);
+    setNotes((prev) => clearCellNotes(prev, row, col));
     setStatus("playing");
   }
 
@@ -96,7 +123,7 @@ export default function Kakuro() {
     }
   }
 
-  if (phase !== "ready" || !displayBoard || !grid) return <PuzzlePending phase={phase} />;
+  if (phase !== "ready" || !displayBoard || !displayNotes || !grid) return <PuzzlePending phase={phase} />;
 
   const cellSize = cellSizeClass(size);
 
@@ -105,6 +132,7 @@ export default function Kakuro() {
       <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="kakuro" value={difficulty} onChange={handleDifficultyChange} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-xs mb-2 max-w-md text-center">{play.notesHint}</p>
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
@@ -132,29 +160,40 @@ export default function Kakuro() {
               );
             }
             return (
-              <input
-                key={`${r}-${c}`}
-                value={displayBoard[r][c] || ""}
-                onChange={(e) => handleCellChange(r, c, e.target.value)}
-                readOnly={status === "correct" || Boolean(cell.given)}
-                className={[
-                  cellSize,
-                  "text-center border border-slate-300 focus:outline-none focus:bg-brand-100",
-                  cell.given ? "bg-slate-100 font-bold text-slate-700" : "bg-white",
-                ].join(" ")}
-              />
+              <div key={`${r}-${c}`} className="relative">
+                <input
+                  value={displayBoard[r][c] || ""}
+                  onChange={(e) => handleCellChange(r, c, e.target.value)}
+                  readOnly={status === "correct" || Boolean(cell.given)}
+                  className={[
+                    cellSize,
+                    "relative z-10 text-center border border-slate-300 focus:outline-none focus:bg-brand-100 bg-transparent",
+                    cell.given ? "font-bold text-slate-700" : "",
+                  ].join(" ")}
+                  style={{ backgroundColor: cell.given ? "#f1f5f9" : "#fff" }}
+                />
+                {!displayBoard[r][c] && !cell.given && (
+                  <NotesOverlay digits={displayNotes[r][c]} maxDigit={9} />
+                )}
+              </div>
             );
           })
         )}
       </div>
 
-      <div className="flex gap-3 mt-6">
+      <div className="flex flex-wrap justify-center gap-3 mt-6">
         <button
           onClick={checkSolution}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
           {play.check}
         </button>
+        <NotesToggle
+          on={notesMode}
+          onClick={() => setNotesMode((value) => !value)}
+          label={notesMode ? play.notesOn : play.notes}
+          hint={play.notesHint}
+        />
         <ClearBoardButton onClick={clearBoard} />
         <button
           onClick={reload}

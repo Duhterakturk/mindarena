@@ -4,6 +4,7 @@ import ClearBoardButton from "./ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useApplyCellHint } from "./cellHint";
 import { useGameText } from "./gameText";
+import { applyMarkCycle } from "./markCycle";
 import { pathArms } from "./pathValidation";
 import { usePlayCopy } from "./playCopy";
 
@@ -40,11 +41,8 @@ function cellSizeClass(gridWidth) {
 }
 
 /**
- * Hücre tıklayarak işaretleme mekaniğine sahip oyunlar için paylaşılan iskelet
- * (Amiral Battı, Yıldız Savaşları, Pentominolar, Patika, ABC Bağlama). Kullanıcı
- * hücrelere tıklayarak işaretler/kaldırır; çözüm, işaretli hücre kümesinin
- * `solutionSet` ile birebir eşleşmesiyle doğrulanır. `fixedCells` tıklanamayan,
- * önceden verilmiş etiketli hücrelerdir (kontrol dışında tutulur).
+ * Hücre tıklayarak işaretleme mekaniğine sahip oyunlar için paylaşılan iskelet.
+ * `allowCross` açıkken tık: boş → işaret → X → boş. Çözüme yalnızca işaret gider.
  */
 export default function ToggleGridGame({
   slug,
@@ -58,6 +56,7 @@ export default function ToggleGridGame({
   regionGrid,
   markSymbol = "●",
   flowMarks = false,
+  allowCross = false,
   extra,
   onRegenerate,
   difficulty,
@@ -69,12 +68,14 @@ export default function ToggleGridGame({
   const play = usePlayCopy();
   const blurb = instructions || copy.rules;
   const [marked, setMarked] = useState(() => new Set());
+  const [crossed, setCrossed] = useState(() => new Set());
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
 
   useEffect(() => {
     setMarked(new Set());
+    setCrossed(new Set());
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
@@ -94,22 +95,34 @@ export default function ToggleGridGame({
       });
       return next;
     });
+    setCrossed((prev) => {
+      const next = new Set(prev);
+      keys.forEach((key) => next.delete(key));
+      return next;
+    });
   });
 
   function clearBoard() {
     setMarked(new Set());
+    setCrossed(new Set());
     setStatus("playing");
   }
 
   function toggleCell(r, c) {
     const key = `${r}-${c}`;
     if (fixedCells[key] !== undefined || status === "correct") return;
-    setMarked((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    if (allowCross) {
+      const next = applyMarkCycle(marked, crossed, key);
+      setMarked(next.marked);
+      setCrossed(next.crossed);
+    } else {
+      setMarked((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) next.delete(key);
+        else next.add(key);
+        return next;
+      });
+    }
     setStatus("playing");
   }
 
@@ -148,8 +161,6 @@ export default function ToggleGridGame({
   const cellSize = cellSizeClass(gridCols);
   const clueCell = `${cellSize} flex items-center justify-center text-xs font-bold text-brand-700 text-center leading-tight`;
 
-  // Bir ipucu tek sayı olabilir (Amiral Battı vb.) ya da nonogram tarzı
-  // birden çok koşu uzunluğu dizisi olabilir (Kare Karalamaca).
   function renderClue(value) {
     if (Array.isArray(value)) return value.join(" ");
     return value;
@@ -162,6 +173,7 @@ export default function ToggleGridGame({
         <DifficultyPicker gameSlug={slug} value={difficulty} onChange={onDifficultyChange} />
       )}
       {blurb && <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{blurb}</p>}
+      {allowCross && <p className="text-slate-500 text-xs mb-2 max-w-md text-center">{play.crossHint}</p>}
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       {extra}
@@ -180,6 +192,7 @@ export default function ToggleGridGame({
               const key = `${r}-${c}`;
               const fixedLabel = fixedCells[key];
               const isMarked = marked.has(key);
+              const isCrossed = crossed.has(key);
               const regionClass = regionGrid ? REGION_BG[regionGrid[r][c] % REGION_BG.length] : "bg-white";
               if (fixedLabel !== undefined) {
                 return (
@@ -199,10 +212,16 @@ export default function ToggleGridGame({
                   className={[
                     cellSize,
                     "relative flex items-center justify-center border border-slate-300 text-lg",
-                    isMarked ? "bg-brand-500 text-white" : `${regionClass} hover:bg-brand-50`,
+                    isMarked ? "bg-brand-500 text-white" : isCrossed ? `${regionClass} text-slate-500` : `${regionClass} hover:bg-brand-50`,
                   ].join(" ")}
                 >
-                  {isMarked ? (flowMarks ? <PathStroke row={r} col={c} marked={marked} fixedCells={fixedCells} /> : markSymbol) : ""}
+                  {isMarked
+                    ? flowMarks
+                      ? <PathStroke row={r} col={c} marked={marked} fixedCells={fixedCells} />
+                      : markSymbol
+                    : isCrossed
+                      ? "×"
+                      : ""}
                 </button>
               );
             })}

@@ -17,6 +17,7 @@ export default function KareKaralamaca() {
       rowClues={rowClues}
       colClues={colClues}
       markSymbol="■"
+      allowCross
       onRegenerate={reload}
       difficulty={difficulty}
       onDifficultyChange={setDifficulty}
