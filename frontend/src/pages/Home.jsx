@@ -2,14 +2,24 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const MARKS = [
-  { top: "16%", left: "9%", delay: "0s", duration: "13s", rot: "-8deg", color: "#d9c7a3", node: "digit" },
-  { top: "22%", left: "78%", delay: "1.2s", duration: "15s", rot: "10deg", color: "#9bb7c9", node: "star" },
-  { top: "68%", left: "12%", delay: "0.6s", duration: "12s", rot: "6deg", color: "#c9a39a", node: "ship" },
-  { top: "72%", left: "80%", delay: "1.8s", duration: "14s", rot: "-12deg", color: "#a8c0b2", node: "grid" },
-  { top: "40%", left: "6%", delay: "2.1s", duration: "16s", rot: "4deg", color: "#e4ddd0", node: "ring" },
-  { top: "44%", left: "86%", delay: "0.4s", duration: "11s", rot: "-6deg", color: "#d9c7a3", node: "plus" },
-  { top: "84%", left: "42%", delay: "1.5s", duration: "13s", rot: "8deg", color: "#9bb7c9", node: "path" },
-  { top: "10%", left: "46%", delay: "2.4s", duration: "15s", rot: "-4deg", color: "#c9a39a", node: "brick" },
+  { top: "12%", left: "8%", delay: "0s", duration: "13s", rot: "-8deg", scale: 1, color: "#d9c7a3", node: "digit" },
+  { top: "18%", left: "72%", delay: "1.2s", duration: "15s", rot: "10deg", scale: 0.85, color: "#9bb7c9", node: "star" },
+  { top: "70%", left: "10%", delay: "0.6s", duration: "12s", rot: "6deg", scale: 1.05, color: "#c9a39a", node: "ship" },
+  { top: "74%", left: "78%", delay: "1.8s", duration: "14s", rot: "-12deg", scale: 0.9, color: "#a8c0b2", node: "grid" },
+  { top: "42%", left: "4%", delay: "2.1s", duration: "16s", rot: "4deg", scale: 0.75, color: "#e4ddd0", node: "ring" },
+  { top: "46%", left: "88%", delay: "0.4s", duration: "11s", rot: "-6deg", scale: 0.8, color: "#d9c7a3", node: "plus" },
+  { top: "88%", left: "38%", delay: "1.5s", duration: "13s", rot: "8deg", scale: 0.7, color: "#9bb7c9", node: "path" },
+  { top: "8%", left: "42%", delay: "2.4s", duration: "15s", rot: "-4deg", scale: 0.85, color: "#c9a39a", node: "brick" },
+  { top: "8%", left: "22%", delay: "0.8s", duration: "14s", rot: "12deg", scale: 0.7, color: "#9bb7c9", node: "star" },
+  { top: "14%", left: "90%", delay: "1.6s", duration: "12s", rot: "-10deg", scale: 0.65, color: "#e4ddd0", node: "digit" },
+  { top: "30%", left: "18%", delay: "2.2s", duration: "16s", rot: "7deg", scale: 0.6, color: "#a8c0b2", node: "ring" },
+  { top: "28%", left: "84%", delay: "0.3s", duration: "13s", rot: "-8deg", scale: 0.75, color: "#c9a39a", node: "brick" },
+  { top: "58%", left: "3%", delay: "1.1s", duration: "15s", rot: "5deg", scale: 0.7, color: "#d9c7a3", node: "grid" },
+  { top: "60%", left: "92%", delay: "2.6s", duration: "11s", rot: "-14deg", scale: 0.65, color: "#9bb7c9", node: "ship" },
+  { top: "86%", left: "16%", delay: "0.9s", duration: "14s", rot: "9deg", scale: 0.8, color: "#e4ddd0", node: "plus" },
+  { top: "90%", left: "64%", delay: "1.9s", duration: "16s", rot: "-5deg", scale: 0.75, color: "#c9a39a", node: "star" },
+  { top: "34%", left: "76%", delay: "2.8s", duration: "12s", rot: "11deg", scale: 0.55, color: "#a8c0b2", node: "path" },
+  { top: "78%", left: "48%", delay: "0.2s", duration: "15s", rot: "-7deg", scale: 0.6, color: "#d9c7a3", node: "ring" },
 ];
 
 function Mark({ kind }) {
@@ -84,9 +94,9 @@ export default function Home() {
   return (
     <div className="home-desk">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        {MARKS.map((mark) => (
+        {MARKS.map((mark, index) => (
           <span
-            key={`${mark.node}-${mark.top}`}
+            key={index}
             className="home-mark"
             style={{
               top: mark.top,
@@ -97,12 +107,14 @@ export default function Home() {
               "--rot": mark.rot,
             }}
           >
-            <Mark kind={mark.node} />
+            <span style={{ zoom: mark.scale }}>
+              <Mark kind={mark.node} />
+            </span>
           </span>
         ))}
       </div>
       <div className="relative z-10 min-h-[calc(100vh-4rem)] flex items-center justify-center px-6">
-        <h1 className="font-display text-4xl sm:text-6xl font-semibold text-white text-center text-balance leading-[1.05]">
+        <h1 className="home-line font-hand text-5xl sm:text-7xl font-semibold text-white text-center text-balance leading-[1.15] max-w-3xl">
           <Link to="/games" className="hover:text-white/80">
             {t("home.title")}
           </Link>

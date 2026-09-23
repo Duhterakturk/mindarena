@@ -217,6 +217,11 @@ textarea,
   overflow: hidden;
 }
 
+.home-line {
+  -webkit-text-stroke: 10px #0c0c0c;
+  paint-order: stroke fill;
+}
+
 .home-mark {
   position: absolute;
   animation: drift var(--dur, 12s) ease-in-out infinite;

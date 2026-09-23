@@ -23,6 +23,7 @@ export default {
       fontFamily: {
         sans: ["Nunito", "system-ui", "sans-serif"],
         display: ["Fraunces", "Georgia", "serif"],
+        hand: ["Dancing Script", "cursive"],
       },
     },
   },
