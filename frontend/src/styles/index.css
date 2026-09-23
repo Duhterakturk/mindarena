@@ -108,12 +108,14 @@ textarea,
 
   .play-scale {
     zoom: 1.4;
+    max-width: calc(100% / 1.4);
   }
 }
 
 @media (min-width: 1100px) {
   .play-scale {
-    zoom: 1.6;
+    zoom: 1.55;
+    max-width: calc(100% / 1.55);
   }
 }
 

@@ -175,49 +175,53 @@ export default function Colours() {
   const placed = new Set(board.flat().filter(Boolean).map((piece) => `${piece.shape}:${piece.color}`));
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-full max-w-xl flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="colours" value={difficulty} onChange={newGame} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
-      <div className="flex flex-wrap justify-center gap-2 max-w-xl mb-4">
+      <div className="mb-4 flex w-full flex-wrap justify-center gap-2">
         {clues.map((clue, index) => <ClueCard key={index} clue={clue} />)}
       </div>
 
-      <div className="inline-grid grid-cols-4 gap-1 bg-slate-300 p-1 rounded-lg mb-4">
-        {board.map((row, rowIndex) => row.map((piece, colIndex) => {
-          const key = `${rowIndex}-${colIndex}`;
-          return (
-            <button
-              key={key}
-              type="button"
-              onClick={() => place(rowIndex, colIndex)}
-              className={`w-14 h-14 bg-white border border-slate-300 flex items-center justify-center ${hintCell === key ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
-            >
-              {piece ? <Glyph shape={piece.shape} color={piece.color} size={32} /> : null}
-            </button>
-          );
-        }))}
-      </div>
+      <div className="mb-4 flex items-start justify-center gap-3">
+        <div className="inline-grid grid-cols-4 gap-1 rounded-lg bg-slate-300 p-1">
+          {board.map((row, rowIndex) => row.map((piece, colIndex) => {
+            const key = `${rowIndex}-${colIndex}`;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => place(rowIndex, colIndex)}
+                className={`flex h-12 w-12 items-center justify-center border border-slate-300 bg-white sm:h-14 sm:w-14 ${hintCell === key ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
+              >
+                {piece ? <Glyph shape={piece.shape} color={piece.color} size={32} /> : null}
+              </button>
+            );
+          }))}
+        </div>
 
-      <p className="text-xs font-semibold text-slate-400 mb-2">{play.pieces}</p>
-      <div className="flex flex-wrap justify-center gap-2 max-w-md mb-4">
-        {pieces.map((piece) => {
-          const used = placed.has(`${piece.shape}:${piece.color}`);
-          const active = samePiece(selected, piece);
-          return (
-            <button
-              key={`${piece.shape}-${piece.color}`}
-              type="button"
-              disabled={used}
-              onClick={() => setSelected(active ? null : piece)}
-              className={`w-12 h-12 rounded-lg border bg-white flex items-center justify-center ${used ? "opacity-30" : ""} ${active ? "border-[#2461f7] ring-2 ring-[#2461f7]" : "border-slate-300"}`}
-            >
-              <Glyph shape={piece.shape} color={piece.color} size={28} />
-            </button>
-          );
-        })}
+        <div className="flex flex-col items-center gap-2">
+          <p className="text-xs font-semibold text-slate-400">{play.pieces}</p>
+          <div className={`grid gap-2 ${pieces.length > 4 ? "grid-cols-2" : "grid-cols-1"}`}>
+            {pieces.map((piece) => {
+              const used = placed.has(`${piece.shape}:${piece.color}`);
+              const active = samePiece(selected, piece);
+              return (
+                <button
+                  key={`${piece.shape}-${piece.color}`}
+                  type="button"
+                  disabled={used}
+                  onClick={() => setSelected(active ? null : piece)}
+                  className={`flex h-11 w-11 items-center justify-center rounded-lg border bg-white sm:h-12 sm:w-12 ${used ? "opacity-30" : ""} ${active ? "border-[#2461f7] ring-2 ring-[#2461f7]" : "border-slate-300"}`}
+                >
+                  <Glyph shape={piece.shape} color={piece.color} size={26} />
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-wrap justify-center gap-3">

@@ -120,7 +120,7 @@ Katılmak isterseniz aşağıdaki adımları takip edebilirsiniz:
 3. Şifrenin unutulması durumunda, belirlediğiniz hatırlatma kelimesini kullanarak yeni bir şifre oluşturabilirsiniz.
 4. Kayıt işlemi tamamlandıktan sonra, paylaşacağım sınıf kodunu “Panelim” sayfasına girerek sınıfa katılabilirsiniz.
 
-Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil olabilirler. 🌸`;
+Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil olabilirler.`;
 
   async function copyInvite() {
     try {
@@ -206,7 +206,7 @@ Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil 
               Kayıt işlemi tamamlandıktan sonra, paylaşacağım <strong>sınıf kodunu “Panelim” sayfasına</strong> girerek sınıfa katılabilirsiniz.
             </li>
           </ol>
-          <p>Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil olabilirler. 🌸</p>
+          <p>Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil olabilirler.</p>
         </div>
         <button
           type="button"
