@@ -27,7 +27,7 @@ function Mark({ kind }) {
     return (
       <svg viewBox="0 0 48 48" className="w-9 h-9">
         <rect x="4" y="4" width="40" height="40" rx="10" fill="none" stroke="currentColor" strokeWidth="2.5" />
-        <text x="24" y="31" textAnchor="middle" fontSize="18" fontFamily="Nunito, sans-serif" fill="currentColor">7</text>
+        <text x="24" y="31" textAnchor="middle" fontSize="18" fontFamily="Newsreader, Georgia, serif" fill="currentColor">7</text>
       </svg>
     );
   }

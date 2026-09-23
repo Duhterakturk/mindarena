@@ -1,16 +1,16 @@
 // Canlı bulmacanın cevabını vermez. Yalnızca nasıl düşünüleceğini söyler.
 export const HINTS = {
   kakuro: {
-    tr: { hint: "Önce iki karelik küçük toplamları dene. 3 yalnızca 1 ve 2 olabilir.", example: "Üstte 4 yazıyorsa ve iki kare varsa, oraya 1 ile 3 gelir. Aynı rakam tekrar etmez." },
-    en: { hint: "Start with short runs. A sum of 3 in two cells can only be 1 and 2.", example: "A 4 over two cells is 1 and 3, in either order." },
+    tr: { hint: "İki karelik küçük toplamlar önce gelir. 3 yalnız 1 ve 2 olabilir.", example: "Üstte 4 ve iki kare varsa oraya 1 ile 3 düşer. Aynı rakam tekrar etmez." },
+    en: { hint: "Short runs come first. A sum of 3 in two cells can only be 1 and 2.", example: "A 4 over two cells is 1 and 3, in either order." },
   },
   sudoku: {
-    tr: { hint: "Bir satırda eksik tek rakam varsa onu yaz. Sonra kutuya bak.", example: "Satırda 1’den 8’e kadar doluysa boş kare 9’dur." },
-    en: { hint: "If a row is missing one digit, write it. Then check the box.", example: "A row with 1 through 8 already filled must end with 9." },
+    tr: { hint: "Bir satırda tek rakam eksikse o rakam bellidir. Sonra kutu okunur.", example: "Satırda 1’den 8’e kadar doluysa boş kare 9’dur." },
+    en: { hint: "A row missing one digit already knows that digit. The box is read next.", example: "A row with 1 through 8 already filled ends with 9." },
   },
   "bolgesel-sudoku": {
-    tr: { hint: "Renkli bölgeyi bir satır gibi düşün. 1, 2, 3, 4 her bölgede bir kez durur.", example: "Bölgede 1, 2 ve 4 varsa boş yere 3 gelir." },
-    en: { hint: "Treat each colored region like a row. 1 through 4 appear once.", example: "A region that already has 1, 2 and 4 needs a 3." },
+    tr: { hint: "Renkli bölge bir satır gibi okunur. 1, 2, 3, 4 her bölgede bir kez durur.", example: "Bölgede 1, 2 ve 4 varsa boş yere 3 gelir." },
+    en: { hint: "A colored region reads like a row. 1 through 4 appear once.", example: "A region that already has 1, 2 and 4 needs a 3." },
   },
   apartman: {
     tr: { hint: "Kenarda 4 yazıyorsa binalar o yönde küçükten büyüğe dizilir.", example: "Solda 4 görünen bir satır 1, 2, 3, 4 sırasıdır." },
@@ -21,60 +21,60 @@ export const HINTS = {
     en: { hint: "A 3 means three sides of that cell are on the loop. The line closes once.", example: "A 2 in a corner often uses the two outer edges." },
   },
   "amiral-batti": {
-    tr: { hint: "0 yazan satıra gemi koyma. Gemiler birbirine değmez, çapraz da değmez.", example: "Satırda 1 yazıyorsa o satırda tek bir gemi karesi vardır." },
-    en: { hint: "A row marked 0 is empty. Ships never touch, not even diagonally.", example: "A row marked 1 holds exactly one ship cell." },
+    tr: { hint: "0 yazan satır boş kalır. Gemiler birbirine değmez, çapraz da değmez.", example: "Satırda 1 yazıyorsa o satırda tek bir gemi karesi vardır." },
+    en: { hint: "A row marked 0 stays empty. Ships never touch, not even diagonally.", example: "A row marked 1 holds exactly one ship cell." },
   },
   "sihirli-piramit": {
-    tr: { hint: "Tepeden in. Her sırada bir daire seç ve yalnız altındaki komşuya geç. Aynı sayı yolda bir kez durur.", example: "Tepedeki 3 kullanıldıysa, alttaki başka bir 3’e inme." },
-    en: { hint: "Come down from the top. Pick one circle on each row and step only to the neighbor below it. Each number is used once.", example: "If the top 3 is used, do not step onto another 3." },
+    tr: { hint: "Yol tepeden iner. Her sırada bir daire durur ve adım yalnız alttaki komşuya değer. Aynı sayı yolda bir kez geçer.", example: "Tepedeki 3 kullanıldıysa alttaki başka bir 3 yola girmez." },
+    en: { hint: "The path comes down from the top. One circle stands on each row, and a step only touches the neighbor below. Each number appears once.", example: "Once the top 3 is used, another 3 stays off the path." },
   },
   patika: {
-    tr: { hint: "1’den başla, sıradaki sayıya yalnız sağa, sola, yukarı veya aşağı git.", example: "1 ile 2 yan yanaysa aralarına düz bir çizgi çek." },
-    en: { hint: "Start at 1. Move only up, down, left or right to the next number.", example: "If 1 and 2 are neighbors, draw the straight step between them." },
+    tr: { hint: "Yol 1’den başlar. Sıradaki sayıya yalnız sağa, sola, yukarı veya aşağı gidilir.", example: "1 ile 2 yan yanaysa aralarında düz bir adım durur." },
+    en: { hint: "The path begins at 1. The next number is only up, down, left, or right.", example: "When 1 and 2 are neighbors, a straight step sits between them." },
   },
   "abc-baglama": {
-    tr: { hint: "Aynı harfi birbirine bağla. Çizgiler kesişmesin ve kendi üzerine binmesin.", example: "İki A köşedeyse, önce boş bir koridor seç, sonra çiz." },
-    en: { hint: "Join matching letters. Paths do not cross or overlap.", example: "When two A’s sit in corners, pick an empty corridor first." },
+    tr: { hint: "Aynı harf birbirine bağlanır. Çizgiler kesişmez ve üst üste binmez.", example: "İki A köşedeyse arada boş bir koridor durur." },
+    en: { hint: "Matching letters join. Paths do not cross or overlap.", example: "When two A’s sit in corners, an empty corridor lies between them." },
   },
   "islem-karesi": {
-    tr: { hint: "Önce çarpma ve bölmeye bak. Verilen sayıyı sabit tut, boş kareyi sonuçtan geri yürü.", example: "9 × boş − 8 = 46 ise boş kare 6’dır." },
-    en: { hint: "Do the multiplications and divisions first. Keep a given number and work back from the result.", example: "If 9 × blank − 8 = 46, the blank is 6." },
+    tr: { hint: "Çarpma ve bölme önce gelir. Verilen sayı sabit kalır, boş kare sonuçtan geri okunur.", example: "9 × boş − 8 = 46 ise boş kare 6’dır." },
+    en: { hint: "Multiplication and division come first. A given number stays, and the blank is read back from the result.", example: "If 9 × blank − 8 = 46, the blank is 6." },
   },
   kendoku: {
     tr: { hint: "Çıkarma ve bölmede sıra serbesttir. 2− olan iki kare, aralarında 2 fark olan bir çifttir.", example: "3− yazan iki kare 1 ve 4, ya da 2 ve 5 olabilir." },
     en: { hint: "Subtraction and division ignore order. A cage of 2− is a pair two apart.", example: "A 3− cage can be 1 and 4, or 2 and 5." },
   },
   "yildiz-savaslari": {
-    tr: { hint: "Bir yıldıza komşu sekiz kareye başka yıldız koyma. Her satırda bir tane durur.", example: "Köşeye yıldız koyunca yanındaki satır ve sütun o köşeye yaklaşamaz." },
-    en: { hint: "A star blocks all eight neighbors. Each row holds one star.", example: "A corner star pushes the next star away from that row and column." },
+    tr: { hint: "Bir yıldıza komşu sekiz kare boş kalır. Her satırda bir tane durur.", example: "Köşedeki yıldız, yanındaki satır ve sütunu o köşeden uzak tutar." },
+    en: { hint: "The eight cells around a star stay empty. Each row holds one star.", example: "A corner star keeps the next star away from that row and column." },
   },
   "kare-karalamaca": {
     tr: { hint: "Satırdaki sayılar boyalı grupların uzunluğudur. Aralarında en az bir boş kare vardır.", example: "5 karelik satırda 5 yazıyorsa satırın tamamı boyalıdır." },
     en: { hint: "The numbers are the lengths of shaded groups, with a gap between them.", example: "A 5 in a row of five cells means the whole row is shaded." },
   },
   carpmaca: {
-    tr: { hint: "Satırdaki sayı ile sütundaki sayıyı çarp. Tabloyu ezberlemen gerekmez, tek tek çarp.", example: "Satır 3, sütun 4 ise hücre 12’dir." },
-    en: { hint: "Multiply the row heading by the column heading.", example: "Row 3 and column 4 make 12." },
+    tr: { hint: "Hücre, satırdaki sayı ile sütundaki sayının çarpımıdır.", example: "Satır 3, sütun 4 ise hücre 12’dir." },
+    en: { hint: "A cell is the row heading times the column heading.", example: "Row 3 and column 4 make 12." },
   },
   futoshiki: {
-    tr: { hint: "Küçük ağız küçük sayıyı gösterir. Önce işarete komşu iki kareyi doldur.", example: "1 < boş ise boş kare 1 olamaz. En az 2’dir." },
-    en: { hint: "The small end of the sign points at the smaller number.", example: "If 1 < blank, the blank cannot be 1." },
+    tr: { hint: "Küçük ağız küçük sayıyı gösterir. İşarete komşu iki kare önce okunur.", example: "1 < boş ise boş kare 1 olamaz. En az 2’dir." },
+    en: { hint: "The small end of the sign points at the smaller number. The two cells beside a sign are read first.", example: "If 1 < blank, the blank cannot be 1." },
   },
   pentominolar: {
-    tr: { hint: "Önce çerçeveye tam oturan köşe parçasını yerleştir. Parçayı döndürmeyi unutma.", example: "Artı şekli ortaya yakın durur; köşeye sığmaz." },
-    en: { hint: "Place the piece that fits a corner first. Rotate it if you need to.", example: "The plus shape sits near the middle. It does not fit a corner." },
+    tr: { hint: "Çerçeveye tam oturan köşe parçası önce gelir. Parça döndürülebilir.", example: "Artı şekli ortaya yakın durur; köşeye sığmaz." },
+    en: { hint: "The piece that fits a corner comes first. It can be turned.", example: "The plus shape sits near the middle. It does not fit a corner." },
   },
   metaforms: {
-    tr: { hint: "Önce tek kareye kilitlenen parçayı koy. Sonra satır ve sütun işaretlerine bak.", example: "Kırmızı daire yalnızca üst satırdaysa o satırdaki boş karelerden birine girer." },
-    en: { hint: "Place a piece that is locked to one cell first. Then read the row and column marks.", example: "If the red circle is only in the top row, it goes in one of those empty cells." },
+    tr: { hint: "Tek kareye kilitlenen parça önce oturur. Sonra satır ve sütun işaretleri okunur.", example: "Kırmızı daire yalnızca üst satırdaysa o satırdaki boş karelerden birine girer." },
+    en: { hint: "A piece locked to one cell settles first. Row and column marks are read after that.", example: "If the red circle is only in the top row, it goes in one of those empty cells." },
   },
   numbers: {
-    tr: { hint: "Verilen sayıdan başla. İki yıldızın toplamı belliyse boş olanı çıkar.", example: "Biri 4 ve toplam 11 ise diğeri 7’dir." },
-    en: { hint: "Start from a given number. If two stars add up to a total, subtract to find the blank.", example: "If one star is 4 and the sum is 11, the other is 7." },
+    tr: { hint: "Verilen sayı başlangıçtır. İki yıldızın toplamı belliyse boş olan çıkar.", example: "Biri 4 ve toplam 11 ise diğeri 7’dir." },
+    en: { hint: "A given number is the start. When two stars add up to a total, the blank is what remains.", example: "If one star is 4 and the sum is 11, the other is 7." },
   },
   colours: {
-    tr: { hint: "Önce parçası çizili kareye o parçayı koy. Çarpılı kare boş kalır.", example: "Kırmızı daire bir karede gösteriliyorsa başka kareye gitmez." },
-    en: { hint: "Put a drawn piece in the cell that shows it. A crossed cell stays empty.", example: "If the red circle is shown in one cell, it does not go anywhere else." },
+    tr: { hint: "Çizili parça, gösterildiği kareye oturur. Çarpılı kare boş kalır.", example: "Kırmızı daire bir karede gösteriliyorsa başka kareye gitmez." },
+    en: { hint: "A drawn piece settles in the cell that shows it. A crossed cell stays empty.", example: "If the red circle is shown in one cell, it does not go anywhere else." },
   },
 };
 

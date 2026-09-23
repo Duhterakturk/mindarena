@@ -43,8 +43,8 @@ def board(assignment):
     finished.sort(key=lambda row: row["full_name"])
     pending = len(students) - len(finished)
     sentence = (
-        f"{assignment.classroom.name} bu hafta {total} bulmaca bitirdi. "
-        f"Ödevi tamamlamayan {pending} kişi var."
+        f"{assignment.classroom.name} bu hafta {total} bulmacayı tamamladı. "
+        f"Ödevi süren {pending} kişi kaldı."
     )
     return {
         "assignment": assignment_payload(assignment),

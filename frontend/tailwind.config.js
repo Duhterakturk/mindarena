@@ -21,7 +21,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["Nunito", "system-ui", "sans-serif"],
+        sans: ["Newsreader", "Georgia", "serif"],
         display: ["Fraunces", "Georgia", "serif"],
         hand: ["Dancing Script", "cursive"],
       },

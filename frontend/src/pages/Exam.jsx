@@ -60,12 +60,12 @@ export default function Exam() {
     <div className="max-w-3xl mx-auto px-4 py-10">
       <h1 className="font-display text-4xl font-semibold mb-2">Karışık deneme</h1>
       <p className="text-stone-600 mb-6">
-        Üç farklı oyun. Süre 15 dakika. Kolay kademeden oyna, bitince buraya dön.
+        Üç ayrı oyun, on beş dakika. Kolay kademede ilerlenir; bitince bu sayfaya dönülür.
       </p>
 
       {!exam && (
         <button type="button" onClick={handleStart} className="press-btn">
-          Denemeyi başlat
+          Denemeyi aç
         </button>
       )}
 

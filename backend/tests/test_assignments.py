@@ -83,7 +83,7 @@ def test_homework_counts_only_matching_completed_scores_after_it_starts(client, 
     assert board["finished"] == []
     assert board["pending_count"] == 1
     assert board["class_total"] == 1
-    assert "tamamlamayan 1 kişi" in board["sentence"]
+    assert "süren 1 kişi" in board["sentence"]
 
     _score(app, student["user"]["id"], "cit")
     board = client.get(
@@ -93,7 +93,7 @@ def test_homework_counts_only_matching_completed_scores_after_it_starts(client, 
     assert [row["full_name"] for row in board["finished"]] == ["Test User"]
     assert board["pending_count"] == 0
     assert board["class_total"] == 2
-    assert board["sentence"] == "3-A bu hafta 2 bulmaca bitirdi. Ödevi tamamlamayan 0 kişi var."
+    assert board["sentence"] == "3-A bu hafta 2 bulmacayı tamamladı. Ödevi süren 0 kişi kaldı."
 
 
 def test_board_does_not_name_students_who_are_still_short(client, teacher, student, app):

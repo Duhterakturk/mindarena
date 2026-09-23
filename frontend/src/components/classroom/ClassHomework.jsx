@@ -42,7 +42,7 @@ export function ClassHomework({ classroomId, classroomName }) {
       });
       setBoard(next);
     } catch (err) {
-      setError(err.response?.data?.error || "Ödev verilemedi");
+      setError(err.response?.data?.error || "Ödev kaydedilemedi");
     }
   }
 
@@ -59,7 +59,7 @@ export function ClassHomework({ classroomId, classroomName }) {
     <section className="bg-[#fffdf8] rounded-2xl border border-line p-6 mb-6">
       <h2 className="font-display text-2xl text-ink mb-1">Bu haftanın ödevi</h2>
       <p className="text-sm text-stone-500 mb-4">
-        {classroomName} için bir oyun seç. Sayım, ödev verildiği andan itibaren başlar. Kolay her öğrenciye açıktır.
+        {classroomName} için bir oyun seçilir. Sayım, ödevin bırakıldığı andan başlar. Kolay kademe herkese açıktır.
       </p>
 
       <form onSubmit={handleCreate} className="flex flex-wrap gap-2 mb-5">
@@ -90,12 +90,12 @@ export function ClassHomework({ classroomId, classroomName }) {
           onChange={(e) => setForm({ ...form, target_count: e.target.value })}
           className="w-20 border border-line rounded-lg px-3 py-2 text-sm bg-white"
         />
-        <button type="submit" className="press-btn !px-4 !py-2 text-sm">Ödev ver</button>
+        <button type="submit" className="press-btn !px-4 !py-2 text-sm">Ödevi bırak</button>
       </form>
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
       {!assignment ? (
-        <p className="text-sm text-stone-500">Bu hafta henüz ödev yok.</p>
+        <p className="text-sm text-stone-500">Bu hafta henüz bir ödev yok.</p>
       ) : (
         <div>
           <p className="text-sm text-stone-600 mb-4">
@@ -113,17 +113,17 @@ export function ClassHomework({ classroomId, classroomName }) {
               ))}
             </ul>
           )}
-          <p className="text-sm text-stone-600 mb-4">Ödevi tamamlamayan {board.pending_count} kişi var.</p>
+          <p className="text-sm text-stone-600 mb-4">Ödevi süren {board.pending_count} kişi kaldı.</p>
           <p className="bg-white border border-line rounded-xl px-4 py-3 text-sm mb-3">{board.sentence}</p>
           <div className="flex flex-wrap items-center gap-4">
             <Link
               to={`/board/${assignment.slug}?difficulty=${assignment.difficulty}`}
               className="press-btn !px-4 !py-2 text-sm"
             >
-              Tahtaya yansıt
+              Tahtada aç
             </Link>
             <button type="button" onClick={handleCopy} className="text-sm font-bold text-brand-700">
-              {copied ? "Kopyalandı" : "Cümleyi kopyala"}
+              {copied ? "Alındı" : "Metni al"}
             </button>
           </div>
         </div>
@@ -152,11 +152,11 @@ export function StudentHomework() {
         <span className="text-2xl text-stone-400"> / {assignment.target_count}</span>
       </p>
       <p className="text-sm text-stone-500 mt-1 mb-4">
-        {assignment.finished ? "Ödevin tamam." : "Bitirdiğinde burada görünecek."}
+        {assignment.finished ? "Ödev tamam." : "Tamamlandığında burada görünür."}
       </p>
       {!assignment.finished && (
         <Link to={`/games/${assignment.slug}`} className="press-btn !px-4 !py-2 text-sm">
-          Oyna
+          Bulmacaya geç
         </Link>
       )}
     </section>

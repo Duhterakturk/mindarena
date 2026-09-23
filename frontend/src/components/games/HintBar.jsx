@@ -10,8 +10,8 @@ function describe(hint, tr) {
   const col = (hint.col ?? 0) + 1;
   if (hint.kind === "fill") {
     return tr
-      ? `Bu kareye ${hint.value} yaz: ${row}. satır, ${col}. sütun.`
-      : `Write ${hint.value} in row ${row}, column ${col}.`;
+      ? `Bu kareye ${hint.value} düşer: ${row}. satır, ${col}. sütun.`
+      : `${hint.value} belongs in row ${row}, column ${col}.`;
   }
   if (hint.kind === "mark" && hint.note === "step") {
     return tr ? `${hint.label}’den sonraki adım bu kare.` : `The step after ${hint.label} is this cell.`;
@@ -20,7 +20,7 @@ function describe(hint, tr) {
     return tr ? "Bu karede gemi var." : "A ship sits in this cell.";
   }
   if (hint.kind === "mark" && hint.note === "star") {
-    return tr ? "Bu kareye yıldız koy." : "Put a star in this cell.";
+    return tr ? "Bu karede bir yıldız durur." : "A star belongs in this cell.";
   }
   if (hint.kind === "mark" && hint.note === "shade") {
     return tr ? "Bu kare boyalı." : "This cell is shaded.";
@@ -94,7 +94,7 @@ export default function HintBar({ slug }) {
         setUsed(true);
         setNote(describe(body.hint, tr));
       } else {
-        setNote(body?.error || (tr ? "İpucu verilemedi." : "The hint could not be given."));
+        setNote(body?.error || (tr ? "İpucu şu an yok." : "A hint is not available just now."));
       }
     } finally {
       setBusy(false);

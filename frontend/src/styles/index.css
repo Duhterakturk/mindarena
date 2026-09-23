@@ -5,6 +5,8 @@
 body {
   background-color: #0c0c0c;
   color: #f4efe6;
+  font-family: Newsreader, Georgia, serif;
+  line-height: 1.55;
 }
 
 input,
@@ -109,7 +111,8 @@ textarea,
   display: inline-block;
   background: #2461f7;
   color: white;
-  font-weight: 800;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   padding: 0.9rem 1.75rem;
   border-radius: 14px;
   box-shadow: 0 5px 0 #1638a6;

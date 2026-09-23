@@ -47,7 +47,7 @@ function StudentPassword({ classroomId, student }) {
         </p>
         <div className="flex gap-2 mt-1">
           <button type="button" onClick={copyPassword} className="text-brand-600 font-semibold">
-            {copiedPassword ? "Kopyalandı" : "Kopyala"}
+            {copiedPassword ? "Alındı" : "Şifreyi al"}
           </button>
           <button type="button" onClick={() => setShown(null)} className="text-slate-500">
             Kapattım
@@ -60,7 +60,7 @@ function StudentPassword({ classroomId, student }) {
   if (!open) {
     return (
       <button type="button" onClick={() => setOpen(true)} className="text-brand-600 font-semibold">
-        Şifre ver
+        Şifre bırak
       </button>
     );
   }
@@ -108,8 +108,8 @@ export default function TeacherPanel() {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const inviteText = `MindArena'ya katılın. Bu adresten öğrenci olarak kayıt olun ve şifrenizi kendiniz belirleyin: ${window.location.origin}/register
-Şifreyi unutursanız giriş sayfasındaki Şifremi unuttum bağlantısını kullanın.`;
+  const inviteText = `MindArena'da bir yer açıldı. Öğrenci kaydı bu adresten yapılır; şifre ailede belirlenir: ${window.location.origin}/register
+Şifre unutulursa giriş sayfasındaki hatırlatma yeter.`;
 
   async function copyInvite() {
     try {
@@ -167,13 +167,13 @@ export default function TeacherPanel() {
     <div className="max-w-4xl mx-auto px-4 py-10">
       <h1 className="text-2xl font-bold mb-2">Öğretmen Paneli</h1>
       <p className="text-slate-600 mb-8">
-        Sınıflarını yönet, öğrencilerinin katılması için sınıf kodunu paylaş.
+        Sınıflar burada durur. Katılım kodu paylaşıldığında öğrenciler kendiliğinden görünür.
       </p>
 
       <div className="bg-white rounded-2xl shadow-sm p-6 border border-slate-100 mb-6">
-        <h2 className="text-lg font-semibold mb-2">Sınıf grubuna davet</h2>
+        <h2 className="text-lg font-semibold mb-2">Sınıf grubuna not</h2>
         <p className="text-sm text-slate-600 mb-3">
-          Bunu bir kez kopyalayıp sınıf grubuna yapıştır. Aileler kendileri kayıt olur.
+          Bu not sınıf grubuna bir kez bırakılabilir. Kayıt ve şifre ailede kalır.
         </p>
         <p className="text-sm whitespace-pre-wrap mb-3">{inviteText}</p>
         <button
@@ -181,7 +181,7 @@ export default function TeacherPanel() {
           onClick={copyInvite}
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
-          {copied ? "Kopyalandı" : "Daveti kopyala"}
+          {copied ? "Alındı" : "Notu al"}
         </button>
       </div>
 
@@ -200,7 +200,7 @@ export default function TeacherPanel() {
             type="submit"
             className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600 text-sm"
           >
-            Oluştur
+            Sınıfı aç
           </button>
         </form>
         {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
@@ -208,8 +208,7 @@ export default function TeacherPanel() {
 
       {classrooms.length === 0 ? (
         <p className="text-slate-500 text-sm">
-          Henüz bir sınıfın yok. Yukarıdan bir sınıf oluştur, ardından öğrencilerin sana
-          katılması için oluşan sınıf kodunu paylaş.
+          Henüz bir sınıf yok. Bir ad yeterli. Kod, sınıf açılınca belirir.
         </p>
       ) : (
         <>
@@ -240,7 +239,7 @@ export default function TeacherPanel() {
               <span className="font-mono font-bold text-brand-700 bg-brand-50 px-2 py-0.5 rounded">
                 {selectedClassroom.join_code}
               </span>{" "}
-              — öğrenciler "Panelim" sayfasından bu kodla sınıfa katılabilir.
+              — kod, Panelim sayfasından sınıfa bağlanır.
             </p>
           )}
 
