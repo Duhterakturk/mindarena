@@ -107,8 +107,11 @@ function open(slug, difficulty) {
     case "pentominolar": {
       const puzzle = pentomino(difficulty);
       const proof = { pieces: puzzle.pieces, region: puzzle.region };
-      const cells = puzzle.solutionPlacements.flatMap((piece) => piece.cells);
-      return sealed({ ...proof, rows: puzzle.rows, cols: puzzle.cols }, proof, { cells });
+      return sealed(
+        { ...proof, rows: puzzle.rows, cols: puzzle.cols },
+        proof,
+        { placements: puzzle.solutionPlacements },
+      );
     }
     case "metaforms": {
       const generated = metaRounds(difficulty);

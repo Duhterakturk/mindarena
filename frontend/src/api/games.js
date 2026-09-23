@@ -22,8 +22,9 @@ export async function checkPuzzle(attemptId, answer) {
   return data.correct;
 }
 
-export async function openCellHint(attemptId) {
-  const { data } = await apiClient.post(`/puzzles/${attemptId}/cell`);
+export async function openCellHint(attemptId, round) {
+  const body = Number.isInteger(round) ? { round } : {};
+  const { data } = await apiClient.post(`/puzzles/${attemptId}/cell`, body);
   return data;
 }
 

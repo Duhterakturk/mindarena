@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { openCellHint } from "../../api/games";
-import { publishCellHint } from "../../games/common/cellHint";
+import { currentHintFocus, publishCellHint } from "../../games/common/cellHint";
 import { hintFor } from "../../games/hints";
 
 function describe(hint, tr) {
@@ -10,22 +10,42 @@ function describe(hint, tr) {
   const col = (hint.col ?? 0) + 1;
   if (hint.kind === "fill") {
     return tr
-      ? `Açılan kare: ${row}. satır, ${col}. sütun, sayı ${hint.value}.`
-      : `Opened cell: row ${row}, column ${col}, number ${hint.value}.`;
+      ? `Bu kareye ${hint.value} yaz: ${row}. satır, ${col}. sütun.`
+      : `Write ${hint.value} in row ${row}, column ${col}.`;
   }
-  if (hint.kind === "mark") {
+  if (hint.kind === "mark" && hint.note === "step") {
+    return tr ? `${hint.label}’den sonraki adım bu kare.` : `The step after ${hint.label} is this cell.`;
+  }
+  if (hint.kind === "mark" && hint.note === "ship") {
+    return tr ? "Bu karede gemi var." : "A ship sits in this cell.";
+  }
+  if (hint.kind === "mark" && hint.note === "star") {
+    return tr ? "Bu kareye yıldız koy." : "Put a star in this cell.";
+  }
+  if (hint.kind === "mark" && hint.note === "shade") {
+    return tr ? "Bu kare boyalı." : "This cell is shaded.";
+  }
+  if (hint.kind === "marks") {
     return tr
-      ? `Bu kare işaretli: ${row}. satır, ${col}. sütun.`
-      : `This cell is marked: row ${row}, column ${col}.`;
+      ? `${hint.label} harfinin yolu bu karelerden geçer.`
+      : `The ${hint.label} path runs through these cells.`;
   }
   if (hint.kind === "edge") {
-    return tr ? "Bu çizgi çizili." : "This line is drawn.";
+    return tr ? "Bu kenar çitin bir parçası." : "This side is part of the fence.";
+  }
+  if (hint.kind === "piece") {
+    return tr
+      ? `${hint.name} parçası durması gereken yere kondu.`
+      : `The ${hint.name} piece is placed where it belongs.`;
   }
   if (hint.kind === "spot") {
-    return tr ? "1 buradan başlar." : "Start at 1. It is highlighted.";
+    return tr ? "1 burada." : "1 is here.";
+  }
+  if (hint.kind === "choice" && hint.value) {
+    return tr ? "Doğru renk işaretlendi." : "The right color is marked.";
   }
   if (hint.kind === "choice") {
-    return tr ? "Doğru seçenek işaretlendi." : "The right choice is marked.";
+    return tr ? "Aykırı şekil işaretlendi." : "The odd shape is marked.";
   }
   return "";
 }
@@ -55,7 +75,7 @@ export default function HintBar({ slug }) {
     if (!attempt?.id || used || busy) return;
     setBusy(true);
     try {
-      const data = await openCellHint(attempt.id);
+      const data = await openCellHint(attempt.id, currentHintFocus());
       publishCellHint(data.hint);
       setUsed(true);
       setNote(describe(data.hint, tr));
@@ -66,7 +86,7 @@ export default function HintBar({ slug }) {
         setUsed(true);
         setNote(describe(body.hint, tr));
       } else {
-        setNote(body?.error || (tr ? "Kare açılamadı." : "The cell could not be opened."));
+        setNote(body?.error || (tr ? "İpucu verilemedi." : "The hint could not be given."));
       }
     } finally {
       setBusy(false);
@@ -84,7 +104,7 @@ export default function HintBar({ slug }) {
           className="press-btn text-sm"
           style={{ padding: "0.55rem 1.1rem" }}
         >
-          {open ? (tr ? "İpucunu gizle" : "Hide hint") : (tr ? "İpucu" : "Hint")}
+          {open ? (tr ? "Gizle" : "Hide") : (tr ? "Nasıl düşünülür" : "How to think")}
         </button>
         <button
           type="button"
@@ -93,7 +113,7 @@ export default function HintBar({ slug }) {
           className="press-btn text-sm disabled:opacity-50"
           style={{ padding: "0.55rem 1.1rem" }}
         >
-          {used ? (tr ? "Kare açıldı" : "Cell opened") : (tr ? "Bir kare aç" : "Open one cell")}
+          {used ? (tr ? "İpucu verildi" : "Hint used") : (tr ? "İpucu" : "Hint")}
         </button>
       </div>
       {open && (

@@ -35,6 +35,22 @@ export function orient(cells, turns, flipped) {
   return shape;
 }
 
+export function poseMatching(name, cellKeys) {
+  const placed = cellKeys.map((key) => (Array.isArray(key) ? key : key.split("-").map(Number)));
+  const minR = Math.min(...placed.map(([r]) => r));
+  const minC = Math.min(...placed.map(([, c]) => c));
+  const norm = placed.map(([r, c]) => `${r - minR}-${c - minC}`);
+  for (const flipped of [false, true]) {
+    for (let turns = 0; turns < 4; turns++) {
+      const shape = orient(PENTOMINOES[name], turns, flipped).map(([r, c]) => `${r}-${c}`);
+      if (shape.length === norm.length && shape.every((key) => norm.includes(key))) {
+        return { turns, flipped };
+      }
+    }
+  }
+  return { turns: 0, flipped: false };
+}
+
 export function randomTransform(cells) {
   return orient(cells, Math.floor(Math.random() * 4), Math.random() < 0.5);
 }

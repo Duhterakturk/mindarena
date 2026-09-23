@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PENTOMINOES, placementAt, randomTransform } from "./shapes";
+import { PENTOMINOES, orient, placementAt, poseMatching, randomTransform } from "./shapes";
 
 function isConnected(cells) {
   const set = new Set(cells.map(([r, c]) => `${r}-${c}`));
@@ -64,5 +64,13 @@ describe("randomTransform", () => {
       expect(maxR).toBeLessThanOrEqual(4);
       expect(maxC).toBeLessThanOrEqual(4);
     }
+  });
+});
+
+describe("poseMatching", () => {
+  it("recovers the rotation of a placed piece", () => {
+    const shape = orient(PENTOMINOES.Z, 1, true);
+    const keys = shape.map(([r, c]) => `${r + 2}-${c + 3}`);
+    expect(poseMatching("Z", keys)).toEqual({ turns: 1, flipped: true });
   });
 });

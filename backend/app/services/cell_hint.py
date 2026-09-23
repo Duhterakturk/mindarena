@@ -16,17 +16,14 @@ _FILL = {
     "futoshiki",
     "sihirli-piramit",
 }
-_MARK = {
-    "amiral-batti",
-    "patika",
-    "abc-baglama",
-    "yildiz-savaslari",
-    "kare-karalamaca",
-    "pentominolar",
+_MARK_NOTE = {
+    "amiral-batti": "ship",
+    "yildiz-savaslari": "star",
+    "kare-karalamaca": "shade",
 }
 
 
-def pick_hint(slug, public, proof):
+def pick_hint(slug, public, proof, focus=None):
     public = public or {}
     proof = proof or {}
     solution = proof.get("solution")
@@ -34,20 +31,27 @@ def pick_hint(slug, public, proof):
         return _fill(public, solution)
     if slug == "cit":
         return _edge(solution)
-    if slug in _MARK:
-        return _mark(public, solution)
+    if slug == "patika":
+        return _step(public, solution)
+    if slug == "abc-baglama":
+        return _letter_path(public, solution)
+    if slug == "pentominolar":
+        return _piece(solution)
+    if slug in _MARK_NOTE:
+        return _mark(public, solution, _MARK_NOTE[slug])
     if slug == "numbers":
         return _spot(public)
     if slug == "colours":
-        return _colour(public, solution)
+        return _colour(public, solution, focus)
     if slug == "metaforms":
-        return _odd_shape(solution)
-    raise HintError("Bu bulmacada açılacak kare yok")
+        return _odd_shape(solution, focus)
+    raise HintError("Bu bulmacada ipucu yok")
 
 
 def _fill(public, solution):
+    solution = _aligned(public, solution)
     if not isinstance(solution, list):
-        raise HintError("Bu bulmaca kare açmaya hazır değil. Yeni bir tane aç.")
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
     blanks = []
     for row_index, row in enumerate(solution):
         if not isinstance(row, list):
@@ -58,7 +62,7 @@ def _fill(public, solution):
             if _blank(public, row_index, col_index):
                 blanks.append((row_index, col_index, value))
     if not blanks:
-        raise HintError("Açılacak boş kare kalmadı")
+        raise HintError("İpucu verilecek boş kare kalmadı")
     row_index, col_index, value = random.choice(blanks)
     return {"kind": "fill", "row": row_index, "col": col_index, "value": value}
 
@@ -80,9 +84,24 @@ def _jagged(rows):
     return isinstance(rows, list) and rows and isinstance(rows[0], list)
 
 
+def _aligned(public, solution):
+    """Çapraz Toplam çözümü kenar satırıyla durur. İpucu iç kareyi söyler."""
+    givens = public.get("givens")
+    if (
+        isinstance(givens, list)
+        and givens
+        and isinstance(solution, list)
+        and len(solution) == len(givens) + 1
+        and solution[0]
+        and len(solution[0]) == len(givens[0]) + 1
+    ):
+        return [row[1:] for row in solution[1:]]
+    return solution
+
+
 def _edge(solution):
     if not isinstance(solution, dict):
-        raise HintError("Bu bulmaca kare açmaya hazır değil. Yeni bir tane aç.")
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
     spots = []
     for axis, key in (("horizontal", "h"), ("vertical", "v")):
         grid = solution.get(axis) or []
@@ -91,15 +110,15 @@ def _edge(solution):
                 if flag:
                     spots.append((key, row_index, col_index))
     if not spots:
-        raise HintError("Açılacak çizgi kalmadı")
+        raise HintError("İpucu verilecek çizgi kalmadı")
     axis, row_index, col_index = random.choice(spots)
     return {"kind": "edge", "axis": axis, "row": row_index, "col": col_index}
 
 
-def _mark(public, solution):
+def _mark(public, solution, note):
     cells = _cells(solution)
     if not cells:
-        raise HintError("Bu bulmaca kare açmaya hazır değil. Yeni bir tane aç.")
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
     fixed = set((public.get("fixedCells") or {}).keys())
     spots = []
     for key in cells:
@@ -110,9 +129,58 @@ def _mark(public, solution):
             continue
         spots.append((int(parts[0]), int(parts[1])))
     if not spots:
-        raise HintError("Açılacak boş kare kalmadı")
+        raise HintError("İpucu verilecek boş kare kalmadı")
     row_index, col_index = random.choice(spots)
-    return {"kind": "mark", "row": row_index, "col": col_index}
+    return {"kind": "mark", "row": row_index, "col": col_index, "note": note}
+
+
+def _step(public, solution):
+    cells = [str(key) for key in _cells(solution)]
+    fixed = _fixed(public)
+    start = next((key for key, label in fixed.items() if label == "1"), None)
+    if start not in cells:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    previous = "1"
+    for key in cells[cells.index(start) + 1:]:
+        if key in fixed:
+            previous = fixed[key]
+            continue
+        row_index, col_index = (int(part) for part in key.split("-"))
+        return {"kind": "mark", "row": row_index, "col": col_index, "note": "step", "label": previous}
+    raise HintError("İpucu verilecek boş kare kalmadı")
+
+
+def _letter_path(public, solution):
+    cells = [str(key) for key in _cells(solution)]
+    fixed = _fixed(public)
+    path = []
+    for key in cells:
+        path.append(key)
+        if len(path) < 2 or key not in fixed or path[0] not in fixed:
+            continue
+        if fixed[path[0]] != fixed[key]:
+            continue
+        middles = [item for item in path if item not in fixed]
+        if middles:
+            return {"kind": "marks", "cells": middles, "label": fixed[path[0]]}
+        path = []
+    raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+
+
+def _piece(solution):
+    placements = solution.get("placements") if isinstance(solution, dict) else None
+    if not placements or not isinstance(placements, list):
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    piece = placements[0] or {}
+    cells = [str(key) for key in (piece.get("cells") or [])]
+    name = piece.get("name")
+    if not name or len(cells) != 5:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    return {"kind": "piece", "name": name, "cells": cells}
+
+
+def _fixed(public):
+    return {str(key): str(value) for key, value in (public.get("fixedCells") or {}).items()}
 
 
 def _cells(solution):
@@ -131,22 +199,32 @@ def _spot(public):
     try:
         index = list(values).index(1)
     except ValueError as exc:
-        raise HintError("Açılacak kare kalmadı") from exc
+        raise HintError("İpucu verilecek kare kalmadı") from exc
     return {"kind": "spot", "index": index, "value": 1}
 
 
-def _colour(public, solution):
-    choices = solution.get("choices") if isinstance(solution, dict) else None
-    if choices:
-        return {"kind": "choice", "round": 0, "value": choices[0]}
-    rounds = public.get("rounds") or []
-    if not rounds or "inkId" not in rounds[0]:
-        raise HintError("Bu bulmaca kare açmaya hazır değil. Yeni bir tane aç.")
-    return {"kind": "choice", "round": 0, "value": rounds[0]["inkId"]}
-
-
-def _odd_shape(solution):
+def _colour(public, solution, focus):
     choices = solution.get("choices") if isinstance(solution, dict) else None
     if not choices:
-        raise HintError("Bu bulmaca kare açmaya hazır değil. Yeni bir tane aç.")
-    return {"kind": "choice", "round": 0, "index": choices[0]}
+        rounds = public.get("rounds") or []
+        choices = [row.get("inkId") for row in rounds if isinstance(row, dict) and "inkId" in row]
+    index = _focus(focus, len(choices or []))
+    if index is None:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    return {"kind": "choice", "round": index, "value": choices[index]}
+
+
+def _odd_shape(solution, focus):
+    choices = solution.get("choices") if isinstance(solution, dict) else None
+    index = _focus(focus, len(choices or []))
+    if index is None:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    return {"kind": "choice", "round": index, "index": choices[index]}
+
+
+def _focus(focus, length):
+    if length <= 0:
+        return None
+    if isinstance(focus, int) and not isinstance(focus, bool) and 0 <= focus < length:
+        return focus
+    return 0

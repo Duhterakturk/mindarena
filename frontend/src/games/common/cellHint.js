@@ -2,8 +2,18 @@ import { useEffect, useRef } from "react";
 
 let currentAttempt = null;
 let currentHint = null;
+let hintFocus = null;
+
+export function publishHintFocus(round) {
+  hintFocus = Number.isInteger(round) ? round : null;
+}
+
+export function currentHintFocus() {
+  return hintFocus;
+}
 
 export function publishAttempt(issue) {
+  hintFocus = null;
   currentAttempt = issue ? { id: issue.id, hint: issue.hint || null } : null;
   currentHint = issue?.hint || null;
   window.dispatchEvent(new CustomEvent("mindarena:attempt", { detail: currentAttempt }));

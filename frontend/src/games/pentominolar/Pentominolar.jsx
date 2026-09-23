@@ -6,7 +6,7 @@ import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
-import { PENTOMINOES, orient, placementAt } from "./shapes";
+import { PENTOMINOES, orient, placementAt, poseMatching } from "./shapes";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 const PIECE_COLOR = ["bg-brand-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
@@ -51,7 +51,8 @@ export default function Pentominolar() {
   const [flipped, setFlipped] = useState(false);
   const [placements, setPlacements] = useState([]);
   const [notice, setNotice] = useState(null);
-  const [hintKey, setHintKey] = useState(null);
+  const [hintCells, setHintCells] = useState([]);
+  const [hintName, setHintName] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
@@ -65,7 +66,8 @@ export default function Pentominolar() {
     setFlipped(false);
     setPlacements([]);
     setNotice(null);
-    setHintKey(null);
+    setHintCells([]);
+    setHintName(null);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
@@ -74,7 +76,23 @@ export default function Pentominolar() {
   }, [attemptId]);
 
   useApplyCellHint(attemptId, (hint) => {
-    if (hint.kind === "mark") setHintKey(`${hint.row}-${hint.col}`);
+    if (hint.kind !== "piece" || !hint.name || !Array.isArray(hint.cells)) return;
+    const cells = hint.cells.map((key) => key.split("-").map(Number));
+    const pose = poseMatching(hint.name, hint.cells);
+    const index = pieces.indexOf(hint.name);
+    if (index >= 0) setSelected(index);
+    setTurns(pose.turns);
+    setFlipped(pose.flipped);
+    setHintName(hint.name);
+    setHintCells(hint.cells);
+    setPlacements((prev) => {
+      const covered = new Set(hint.cells);
+      const rest = prev.filter(
+        (piece) => piece.name !== hint.name && piece.cells.every(([r, c]) => !covered.has(`${r}-${c}`)),
+      );
+      return [...rest, { name: hint.name, cells }];
+    });
+    setNotice(null);
   });
 
   function cellPiece(r, c) {
@@ -109,7 +127,8 @@ export default function Pentominolar() {
   function clearBoard() {
     setPlacements([]);
     setNotice(null);
-    setHintKey(null);
+    setHintCells([]);
+    setHintName(null);
     setStatus("playing");
   }
 
@@ -171,6 +190,7 @@ export default function Pentominolar() {
                   "px-2 py-2 rounded-lg border flex flex-col items-center gap-1 min-w-16",
                   used ? "opacity-40" : "",
                   active ? "border-brand-500 bg-brand-50" : "border-slate-200 bg-white",
+                  hintName === name ? "ring-2 ring-[#2461f7]" : "",
                 ].join(" ")}
               >
                 <ShapePreview name={name} turns={active ? turns : 0} flipped={active ? flipped : false} />
@@ -210,7 +230,7 @@ export default function Pentominolar() {
               key={`${r}-${c}`}
               type="button"
               onClick={() => place(r, c)}
-              className={`w-10 h-10 border border-slate-400 ${color} ${hintKey === `${r}-${c}` ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
+              className={`w-10 h-10 border border-slate-400 ${color} ${hintCells.includes(`${r}-${c}`) ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
             />
           );
         })}

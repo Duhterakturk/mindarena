@@ -83,12 +83,15 @@ export default function ToggleGridGame({
   }, [attemptId]);
 
   useApplyCellHint(attemptId, (hint) => {
-    if (hint.kind !== "mark") return;
-    const key = `${hint.row}-${hint.col}`;
-    if (fixedCells[key] !== undefined) return;
+    const keys = [];
+    if (hint.kind === "mark") keys.push(`${hint.row}-${hint.col}`);
+    if (hint.kind === "marks" && Array.isArray(hint.cells)) keys.push(...hint.cells);
+    if (!keys.length) return;
     setMarked((prev) => {
       const next = new Set(prev);
-      next.add(key);
+      keys.forEach((key) => {
+        if (fixedCells[key] === undefined) next.add(key);
+      });
       return next;
     });
   });

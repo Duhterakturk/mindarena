@@ -11,7 +11,7 @@ from app.services.difficulty import compute_unlocked_difficulties
 from app.services.grading import GradeError, accepts
 from app.services.issuer import IssueError, issue
 
-_HINT_KEYS = {"kind", "row", "col", "value", "axis", "index", "round"}
+_HINT_KEYS = {"kind", "row", "col", "value", "axis", "index", "round", "note", "label", "name", "cells"}
 
 puzzles_bp = Blueprint("puzzles", __name__, url_prefix="/api/puzzles")
 
@@ -88,11 +88,12 @@ def reveal_cell(attempt_id):
         return jsonify({"error": "Bulmaca bulunamadı"}), 404
     if attempt.hint_json:
         return jsonify({
-            "error": "Bu bulmacada bir kare zaten açıldı",
+            "error": "Bu bulmacada ipucu zaten kullanıldı",
             "hint": json.loads(attempt.hint_json),
         }), 409
+    focus = (request.get_json(silent=True) or {}).get("round")
     try:
-        hint = pick_hint(attempt.game.slug, attempt.public_puzzle, attempt.proof_puzzle)
+        hint = pick_hint(attempt.game.slug, attempt.public_puzzle, attempt.proof_puzzle, focus)
     except HintError as exc:
         return jsonify({"error": str(exc)}), 400
     hint = {key: value for key, value in hint.items() if key in _HINT_KEYS}

@@ -5,7 +5,7 @@ import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
-import { useApplyCellHint } from "../common/cellHint";
+import { publishHintFocus, useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { COLOR_HEX, COLOR_IDS } from "./rounds";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
@@ -40,6 +40,10 @@ export default function Colours() {
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  useEffect(() => {
+    publishHintFocus(roundIndex);
+  }, [roundIndex]);
 
   function clearBoard() {
     choicesRef.current = [];
