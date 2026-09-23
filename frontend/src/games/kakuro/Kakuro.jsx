@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
+import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
@@ -53,6 +54,12 @@ export default function Kakuro() {
   function handleDifficultyChange(newDifficulty) {
     if (newDifficulty !== difficulty) setDifficulty(newDifficulty);
     else reload();
+  }
+
+  function clearBoard() {
+    if (!grid) return;
+    setBoard(emptyBoard(grid));
+    setStatus("playing");
   }
 
   function handleCellChange(row, col, value) {
@@ -148,6 +155,7 @@ export default function Kakuro() {
         >
           {play.check}
         </button>
+        <ClearBoardButton onClick={clearBoard} />
         <button
           onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"

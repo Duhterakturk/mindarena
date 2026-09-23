@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { submitScore } from "../../api/games";
+import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
@@ -39,6 +40,15 @@ export default function Colours() {
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  function clearBoard() {
+    choicesRef.current = [];
+    setRoundIndex(0);
+    setCorrectCount(0);
+    setFeedback(null);
+    setReveal(null);
+    setStatus("playing");
+  }
 
   useApplyCellHint(attemptId, (hint) => {
     if (hint.kind === "choice") setReveal(hint);
@@ -124,6 +134,9 @@ export default function Colours() {
               {feedback === "right" ? play.right : play.wrong}
             </p>
           )}
+          <div className="mt-6">
+            <ClearBoardButton onClick={clearBoard} />
+          </div>
         </>
       )}
 
@@ -137,6 +150,7 @@ export default function Colours() {
             >
               {play.save}
             </button>
+            <ClearBoardButton onClick={clearBoard} />
             <button
               onClick={() => newGame()}
               className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"

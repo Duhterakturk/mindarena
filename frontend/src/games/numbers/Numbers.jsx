@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { submitScore } from "../../api/games";
+import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
@@ -36,6 +37,13 @@ export default function Numbers() {
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  function clearBoard() {
+    setNext(1);
+    setWrongCell(null);
+    setSpot(null);
+    setStatus("playing");
+  }
 
   useApplyCellHint(attemptId, (hint) => {
     if (hint.kind === "spot") setSpot(hint.index);
@@ -111,12 +119,15 @@ export default function Numbers() {
         })}
       </div>
 
+      <div className="flex gap-3 mt-4">
+      <ClearBoardButton onClick={clearBoard} />
       <button
         onClick={() => newGame()}
-        className="mt-4 bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
+        className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
       >
         {play.newPuzzle}
       </button>
+      </div>
 
       {status === "correct" && (
         <>

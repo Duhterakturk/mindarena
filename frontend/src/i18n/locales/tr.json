@@ -60,6 +60,7 @@
     "time": "Süre: {{clock}}",
     "check": "Kontrol Et",
     "new": "Yeni Bulmaca",
+    "clear": "Temizle",
     "save": "Skoru Kaydet",
     "correct": "Tebrikler, doğru çözdün!",
     "incorrect": "Henüz doğru değil, tekrar dene.",

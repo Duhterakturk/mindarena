@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
+import ClearBoardButton from "./ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useApplyCellHint } from "./cellHint";
 import { useGameText } from "./gameText";
@@ -91,6 +92,11 @@ export default function ToggleGridGame({
       return next;
     });
   });
+
+  function clearBoard() {
+    setMarked(new Set());
+    setStatus("playing");
+  }
 
   function toggleCell(r, c) {
     const key = `${r}-${c}`;
@@ -208,6 +214,7 @@ export default function ToggleGridGame({
         >
           {play.check}
         </button>
+        <ClearBoardButton onClick={clearBoard} />
         {onRegenerate && (
           <button
             onClick={onRegenerate}

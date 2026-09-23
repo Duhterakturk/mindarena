@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { submitScore } from "../../api/games";
+import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
@@ -103,6 +104,13 @@ export default function Pentominolar() {
     setStatus("playing");
     const next = pieces.findIndex((piece, index) => index !== selected && !placements.some((p) => p.name === piece) && piece !== name);
     if (next >= 0) setSelected(next);
+  }
+
+  function clearBoard() {
+    setPlacements([]);
+    setNotice(null);
+    setHintKey(null);
+    setStatus("playing");
   }
 
   function checkSolution() {
@@ -217,6 +225,7 @@ export default function Pentominolar() {
         >
           {play.check}
         </button>
+        <ClearBoardButton onClick={clearBoard} />
         <button
           onClick={reload}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"

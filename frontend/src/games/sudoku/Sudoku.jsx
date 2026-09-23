@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
+import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
@@ -36,6 +37,13 @@ export default function Sudoku() {
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
+
+  function clearBoard() {
+    if (!puzzle) return;
+    setBoard(cloneBoard(puzzle));
+    setSelected(null);
+    setStatus("playing");
+  }
 
   useApplyCellHint(attemptId, (hint) => {
     if (givenMask[hint.row]?.[hint.col]) return;
@@ -115,6 +123,7 @@ export default function Sudoku() {
         >
           {play.check}
         </button>
+        <ClearBoardButton onClick={clearBoard} />
         <button
           onClick={() => newPuzzle()}
           className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"

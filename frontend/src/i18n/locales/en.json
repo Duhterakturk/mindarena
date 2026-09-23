@@ -60,6 +60,7 @@
     "time": "Time: {{clock}}",
     "check": "Check",
     "new": "New Puzzle",
+    "clear": "Clear",
     "save": "Save Score",
     "correct": "Correct — you solved it!",
     "incorrect": "Not yet. Try again.",

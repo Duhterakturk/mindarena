@@ -12,6 +12,7 @@ export function usePlayCopy() {
     },
     check: t("play.check"),
     newPuzzle: t("play.new"),
+    clear: t("play.clear"),
     save: t("play.save"),
     correct: t("play.correct"),
     incorrect: t("play.incorrect"),

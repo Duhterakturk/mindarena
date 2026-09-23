@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
+import ClearBoardButton from "./ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useApplyCellHint, writeFill } from "./cellHint";
 import { useGameText } from "./gameText";
@@ -70,6 +71,11 @@ export default function GridFillGame({
   }, [puzzle]);
 
   useApplyCellHint(puzzle, (hint) => writeFill(setBoard, hint));
+
+  function clearBoard() {
+    setBoard(cloneBoard(puzzle));
+    setStatus("playing");
+  }
 
   function handleCellChange(row, col, value) {
     if (givenMask[row][col] || status === "correct") return;
@@ -145,6 +151,7 @@ export default function GridFillGame({
         >
           {play.check}
         </button>
+        <ClearBoardButton onClick={clearBoard} />
         {onRegenerate && (
           <button
             onClick={onRegenerate}
