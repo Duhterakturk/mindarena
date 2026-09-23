@@ -49,6 +49,11 @@ textarea,
   color: #57534e;
 }
 
+/* Aday rakam beyaz karenin üstünde durur. text-slate-500 sayfada açık renge çekildiği için burada sabit. */
+.cell-notes {
+  color: #57534e;
+}
+
 .page-enter {
   animation: rise 520ms cubic-bezier(0.22, 1, 0.36, 1);
 }
