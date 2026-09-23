@@ -140,6 +140,26 @@ function open(slug, difficulty) {
   }
 }
 
-const slug = process.argv[2];
-const difficulty = process.argv[3] || "easy";
-process.stdout.write(JSON.stringify(open(slug, difficulty)));
+import readline from "node:readline";
+
+function writeLine(value) {
+  process.stdout.write(`${JSON.stringify(value)}\n`);
+}
+
+function reply(slug, difficulty) {
+  try {
+    writeLine(open(slug, difficulty || "easy"));
+  } catch {
+    writeLine({ error: "Bulmaca açılamadı" });
+  }
+}
+
+if (process.argv[2]) {
+  reply(process.argv[2], process.argv[3]);
+} else {
+  const lines = readline.createInterface({ input: process.stdin });
+  lines.on("line", (line) => {
+    const [slug, difficulty] = line.trim().split(/\s+/);
+    if (slug) reply(slug, difficulty);
+  });
+}

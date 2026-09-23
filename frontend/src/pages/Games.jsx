@@ -9,6 +9,12 @@ export default function Games() {
   const [games, setGames] = useState([]);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setSlow(true), 8000);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     fetchGames()
@@ -35,9 +41,11 @@ export default function Games() {
 
       {loading && (
         <>
-          <p className="text-slate-500 text-sm mb-4">
-            {t("games.waking")}
-          </p>
+          {slow && (
+            <p className="text-slate-500 text-sm mb-4">
+              {t("games.waking")}
+            </p>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" aria-hidden="true">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="bg-[#fffdf8] rounded-2xl p-5 border border-line animate-pulse">

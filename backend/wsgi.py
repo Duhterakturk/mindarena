@@ -19,4 +19,14 @@ def _prepare_database():
         app.logger.exception("Veritabanı hazırlanamadı")
 
 
+def _warm_puzzles():
+    try:
+        from app.services.issuer import warm_shelf
+
+        warm_shelf()
+    except Exception:
+        app.logger.exception("Bulmaca rafı hazırlanamadı")
+
+
 threading.Thread(target=_prepare_database, daemon=True).start()
+threading.Thread(target=_warm_puzzles, daemon=True).start()

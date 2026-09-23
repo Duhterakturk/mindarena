@@ -25,6 +25,7 @@ export function usePlayCopy() {
     saved: t("play.saved"),
     rejected: t("play.rejected"),
     loading: t("play.loading"),
+    loadingSlow: t("play.loadingSlow"),
     unavailable: t("play.unavailable"),
     right: t("play.right"),
     wrong: t("play.wrong"),

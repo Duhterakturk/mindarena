@@ -34,9 +34,17 @@ export function useIssuedPuzzle(slug, difficulty) {
 
 export function PuzzlePending({ phase }) {
   const play = usePlayCopy();
-  return (
-    <p className={phase === "error" ? "text-red-500" : "text-slate-500"}>
-      {phase === "error" ? play.unavailable : play.loading}
-    </p>
-  );
+  const [slow, setSlow] = useState(false);
+
+  useEffect(() => {
+    if (phase === "error") return undefined;
+    const timer = setTimeout(() => setSlow(true), 8000);
+    return () => clearTimeout(timer);
+  }, [phase]);
+
+  let text = play.loading;
+  if (phase === "error") text = play.unavailable;
+  else if (slow) text = play.loadingSlow;
+
+  return <p className={phase === "error" ? "text-red-500" : "text-slate-500"}>{text}</p>;
 }

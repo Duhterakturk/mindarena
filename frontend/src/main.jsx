@@ -6,6 +6,7 @@ import "./i18n";
 import "./styles/index.css";
 
 wakeApi();
+setInterval(wakeApi, 4 * 60 * 1000);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
