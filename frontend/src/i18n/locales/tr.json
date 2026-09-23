@@ -9,9 +9,9 @@
     "logout": "Çıkış Yap"
   },
   "home": {
-    "title": "Akıl Oyunlarıyla Geleceğe Hazırlan",
-    "subtitle": "Kolaydan zora ilerleyen, profesyonel tasarlanmış 19 akıl oyunuyla mantık becerilerini geliştir.",
-    "cta": "Oyunlara Göz At"
+    "title": "Bugün bir bulmaca.",
+    "subtitle": "Birini seç. Kolaydan başla.",
+    "cta": "Oyunlara bak"
   },
   "auth": {
     "email": "E-posta",

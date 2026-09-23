@@ -9,9 +9,9 @@
     "logout": "Log Out"
   },
   "home": {
-    "title": "Prepare for the Future with Brain Games",
-    "subtitle": "Build logic skills with 19 professionally designed brain games that scale from easy to hard.",
-    "cta": "Browse Games"
+    "title": "A puzzle for today.",
+    "subtitle": "Pick one. Start easy.",
+    "cta": "See the games"
   },
   "auth": {
     "email": "Email",
