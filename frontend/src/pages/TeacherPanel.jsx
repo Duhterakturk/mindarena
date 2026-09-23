@@ -108,8 +108,19 @@ export default function TeacherPanel() {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const inviteText = `MindArena'da bir yer açıldı. Öğrenci kaydı bu adresten yapılır; şifre ailede belirlenir: ${window.location.origin}/register
-Şifre unutulursa giriş sayfasındaki hatırlatma yeter.`;
+  const registerUrl = `${window.location.origin}/register`;
+  const inviteText = `Sayın Velilerim,
+
+MindArena, çocuklarımızın diledikleri zaman kullanabilecekleri, bulmaca ve düşünme etkinlikleri içeren bir uygulamadır. Ayrıca uygulama üzerinden zaman zaman deneme çalışmaları da paylaşabilirim.
+
+Katılmak isterseniz aşağıdaki adımları takip edebilirsiniz:
+
+1. Paylaşacağım adres üzerinden öğrenci olarak kayıt olabilirsiniz: ${registerUrl}
+2. Kayıt sırasında bir şifre belirlemeniz yeterlidir.
+3. Şifrenin unutulması durumunda, belirlediğiniz hatırlatma kelimesini kullanarak yeni bir şifre oluşturabilirsiniz.
+4. Kayıt işlemi tamamlandıktan sonra, paylaşacağım sınıf kodunu “Panelim” sayfasına girerek sınıfa katılabilirsiniz.
+
+Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil olabilirler. 🌸`;
 
   async function copyInvite() {
     try {
@@ -175,7 +186,28 @@ export default function TeacherPanel() {
         <p className="text-sm text-slate-600 mb-3">
           Bu not sınıf grubuna bir kez bırakılabilir. Kayıt ve şifre ailede kalır.
         </p>
-        <p className="text-sm whitespace-pre-wrap mb-3">{inviteText}</p>
+        <div className="text-sm whitespace-pre-wrap mb-3 space-y-3">
+          <p>Sayın Velilerim,</p>
+          <p>
+            MindArena, çocuklarımızın diledikleri zaman kullanabilecekleri, bulmaca ve düşünme etkinlikleri içeren bir uygulamadır. Ayrıca uygulama üzerinden zaman zaman deneme çalışmaları da paylaşabilirim.
+          </p>
+          <p>Katılmak isterseniz aşağıdaki adımları takip edebilirsiniz:</p>
+          <ol className="list-decimal pl-5 space-y-1">
+            <li>
+              Paylaşacağım adres üzerinden <strong>öğrenci olarak kayıt</strong> olabilirsiniz: {registerUrl}
+            </li>
+            <li>
+              Kayıt sırasında bir <strong>şifre belirlemeniz</strong> yeterlidir.
+            </li>
+            <li>
+              Şifrenin unutulması durumunda, belirlediğiniz <strong>hatırlatma kelimesini</strong> kullanarak yeni bir şifre oluşturabilirsiniz.
+            </li>
+            <li>
+              Kayıt işlemi tamamlandıktan sonra, paylaşacağım <strong>sınıf kodunu “Panelim” sayfasına</strong> girerek sınıfa katılabilirsiniz.
+            </li>
+          </ol>
+          <p>Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil olabilirler. 🌸</p>
+        </div>
         <button
           type="button"
           onClick={copyInvite}
