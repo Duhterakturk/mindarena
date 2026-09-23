@@ -16,4 +16,4 @@ COPY backend/ .
 COPY --from=bundle /puzzle-runner.mjs /app/puzzle-runner.mjs
 ENV PUZZLE_RUNNER=/app/puzzle-runner.mjs
 ENV FLASK_ENV=production
-CMD ["sh", "-c", "flask --app wsgi db upgrade && python seed.py && gunicorn -w 1 --timeout 120 -b 0.0.0.0:${PORT:-10000} wsgi:app"]
+CMD ["sh", "-c", "gunicorn -w 1 --timeout 120 -b 0.0.0.0:${PORT:-10000} wsgi:app"]

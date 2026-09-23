@@ -1,4 +1,4 @@
-import apiClient from "./client";
+import apiClient, { withWake } from "./client";
 
 export async function register(payload) {
   const { data } = await apiClient.post("/auth/register", payload);
@@ -11,8 +11,10 @@ export async function login(payload) {
 }
 
 export async function fetchMe() {
-  const { data } = await apiClient.get("/auth/me");
-  return data;
+  return withWake(async () => {
+    const { data } = await apiClient.get("/auth/me");
+    return data;
+  });
 }
 
 export async function changePassword(currentPassword, newPassword) {

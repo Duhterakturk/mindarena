@@ -1,8 +1,10 @@
-import apiClient from "./client";
+import apiClient, { withWake } from "./client";
 
 export async function fetchGames() {
-  const { data } = await apiClient.get("/games");
-  return data;
+  return withWake(async () => {
+    const { data } = await apiClient.get("/games");
+    return data;
+  });
 }
 
 export async function fetchGame(slug) {
@@ -13,8 +15,10 @@ export async function fetchGame(slug) {
 export const BADGES_EARNED_EVENT = "mindarena:badges-earned";
 
 export async function openPuzzle(slug, difficulty = "easy") {
-  const { data } = await apiClient.post("/puzzles", { slug, difficulty });
-  return data;
+  return withWake(async () => {
+    const { data } = await apiClient.post("/puzzles", { slug, difficulty });
+    return data;
+  });
 }
 
 export async function checkPuzzle(attemptId, answer) {

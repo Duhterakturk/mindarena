@@ -5,7 +5,7 @@
 // varlıklarını (hashli JS/CSS, ikonlar) önbelleğe alıp tekrar ziyarette ve
 // zayıf bağlantıda hızlandırmak. `/api/*` istekleri KASITLI olarak asla
 // önbelleğe alınmaz — skor/oturum verisi her zaman güncel olmalı.
-const CACHE_VERSION = "mindarena-v1";
+const CACHE_VERSION = "mindarena-v2";
 const APP_SHELL = ["/", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {
@@ -24,6 +24,25 @@ self.addEventListener("activate", (event) => {
   );
 });
 
+async function openShell(request) {
+  const cached = caches.match("/");
+  const network = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        caches.open(CACHE_VERSION).then((cache) => cache.put("/", copy)).catch(() => {});
+      }
+      return response;
+    })
+    .catch(() => null);
+  const hurried = new Promise((resolve) => {
+    setTimeout(() => cached.then(resolve), 2500);
+  });
+  const winner = await Promise.race([network, hurried]);
+  if (winner) return winner;
+  return (await network) || (await cached) || fetch(request);
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -33,9 +52,7 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return; // her zaman ağdan, hiç önbelleklenmez
 
   if (request.mode === "navigate") {
-    event.respondWith(
-      fetch(request).catch(() => caches.match("/").then((cached) => cached || fetch(request)))
-    );
+    event.respondWith(openShell(request));
     return;
   }
 

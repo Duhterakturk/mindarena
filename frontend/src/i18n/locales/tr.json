@@ -48,7 +48,7 @@
     "play": "Oyna",
     "min_grade": "Min. Sınıf",
     "loadError": "Oyunlar yüklenemedi. Backend çalışıyor mu?",
-    "waking": "Oyunlar yükleniyor — sunucu bir süredir kullanılmadıysa uyanması birkaç saniye sürebilir…"
+    "waking": "Sunucu uyuyormuş, şimdi uyanıyor. Telefonda bu bir dakika sürebilir."
   },
   "difficulty": {
     "easy": "Kolay",
@@ -67,7 +67,7 @@
     "incorrectCells": "Bazı hücreler yanlış, tekrar dene.",
     "saved": "Skor kaydedildi.",
     "rejected": "Skor kaydedilemedi. Çözüm doğrulanamadı.",
-    "loading": "Bulmaca hazırlanıyor…",
+    "loading": "Sunucu uyanıyor, bulmaca hazırlanıyor. Bu bir dakika sürebilir.",
     "unavailable": "Bulmaca şu an açılamadı. Biraz sonra yeniden dene.",
     "right": "Doğru!",
     "wrong": "Yanlış.",

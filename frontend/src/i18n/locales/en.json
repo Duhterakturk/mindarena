@@ -48,7 +48,7 @@
     "play": "Play",
     "min_grade": "Min. Grade",
     "loadError": "Games could not be loaded. Is the backend running?",
-    "waking": "Loading games — if the server has been idle, waking it can take a few seconds…"
+    "waking": "The server was asleep and is waking up. On a phone this can take a minute."
   },
   "difficulty": {
     "easy": "Easy",
@@ -67,7 +67,7 @@
     "incorrectCells": "Some cells are wrong. Try again.",
     "saved": "Score saved.",
     "rejected": "The score was not saved. The solution could not be verified.",
-    "loading": "Preparing a puzzle…",
+    "loading": "The server is waking up and the puzzle is being prepared. This can take a minute.",
     "unavailable": "The puzzle could not be opened. Try again in a moment.",
     "right": "Right!",
     "wrong": "Wrong.",

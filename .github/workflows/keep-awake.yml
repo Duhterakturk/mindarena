@@ -1,6 +1,6 @@
 # Render'ın ücretsiz web servisi 15 dakika istek gelmezse uyur.
-# Bu süre ayardan uzamaz. Beş dakikada bir sağlık ucuna dokunmak
-# servisi uyanık tutar. Ayda tek servis, ücretsiz saatin içinde kalır.
+# GitHub bu zamanı sık geciktirir; asıl uyanma, site açılınca tarayıcının
+# sağlık ucuna dokunmasıdır. Bu iş yine de fırsat buldukça pingler.
 name: Keep API awake
 
 on:
