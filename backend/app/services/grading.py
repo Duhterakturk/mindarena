@@ -18,8 +18,6 @@ class _Budget:
 
 def accepts(slug, difficulty, puzzle, answer):
     difficulty = _difficulty(difficulty)
-    if slug in ("colours", "metaforms"):
-        return _accuracy(slug, difficulty, puzzle, answer) == 1000
     _validate(slug, difficulty, puzzle, answer)
     return True
 
@@ -27,8 +25,6 @@ def accepts(slug, difficulty, puzzle, answer):
 def grade(slug, difficulty, puzzle, answer, duration_seconds):
     difficulty = _difficulty(difficulty)
     duration = _duration(duration_seconds)
-    if slug in ("colours", "metaforms"):
-        return _accuracy(slug, difficulty, puzzle, answer), duration
     _validate(slug, difficulty, puzzle, answer)
     return max(1000 - duration, 100), duration
 
@@ -49,12 +45,6 @@ def _duration(value):
     return duration
 
 
-def _accuracy(slug, difficulty, puzzle, answer):
-    if slug == "colours":
-        return _grade_colours(difficulty, puzzle, answer)
-    return _grade_metaforms(difficulty, puzzle, answer)
-
-
 def _validate(slug, difficulty, puzzle, answer):
     checkers = {
         "sudoku": _grade_sudoku,
@@ -66,14 +56,16 @@ def _validate(slug, difficulty, puzzle, answer):
         "sihirli-piramit": _grade_pyramid,
         "patika": _grade_patika,
         "abc-baglama": _grade_abc,
-        "islem-karesi": _grade_cages,
+        "islem-karesi": _grade_islem,
         "kendoku": _grade_cages,
         "yildiz-savaslari": _grade_stars,
         "kare-karalamaca": _grade_nonogram,
         "carpmaca": _grade_products,
         "futoshiki": _grade_futoshiki,
         "pentominolar": _grade_pentomino,
+        "metaforms": _grade_metaforms,
         "numbers": _grade_numbers,
+        "colours": _grade_colours,
     }
     checker = checkers.get(slug)
     if checker is None:
@@ -247,14 +239,9 @@ FUTOSHIKI = {
     "hard": (6, 5, 4),
 }
 PENTOMINO_COUNT = {"easy": 2, "medium": 3, "hard": 4}
-NUMBER_SIZE = {"easy": 4, "medium": 5, "hard": 6}
-COLOUR_ROUNDS = {"easy": 6, "medium": 10, "hard": 14}
-COLOUR_IDS = {"red", "blue", "green", "yellow"}
-META_CONFIG = {
-    "easy": (4, 4),
-    "medium": (6, 6),
-    "hard": (8, 9),
-}
+FORM_SHAPES = {"circle", "square", "triangle"}
+FORM_COLORS = {"red", "yellow", "blue"}
+FORM_CELLS = {f"{row}-{col}" for row in range(3) for col in range(3)}
 PENTOMINOES = {
     "F": [(0, 1), (0, 2), (1, 0), (1, 1), (2, 1)],
     "I": [(0, 0), (1, 0), (2, 0), (3, 0), (4, 0)],
@@ -1258,49 +1245,229 @@ def _distinct_tilings(names, region):
     return len(signatures)
 
 
-def _grade_numbers(difficulty, puzzle, answer):
-    n = NUMBER_SIZE[difficulty]
-    values = (puzzle or {}).get("values") if isinstance(puzzle, dict) else None
-    if not isinstance(values, list) or sorted(values) != list(range(1, n * n + 1)):
-        raise GradeError("Sayılar eksik")
-    if not isinstance(answer, dict) or answer.get("done") is not True:
-        raise GradeError("Çözüm eksik")
+def _as_grid(answer):
+    if isinstance(answer, dict) and isinstance(answer.get("grid"), list):
+        return answer["grid"]
+    return answer
 
 
-def _grade_colours(difficulty, puzzle, answer):
-    count = COLOUR_ROUNDS[difficulty]
-    rounds = (puzzle or {}).get("rounds") if isinstance(puzzle, dict) else None
-    choices = (answer or {}).get("choices") if isinstance(answer, dict) else None
-    if not isinstance(rounds, list) or len(rounds) != count or not isinstance(choices, list) or len(choices) != count:
-        raise GradeError("Tur sayısı uyuşmuyor")
-    correct = 0
-    for round_, choice in zip(rounds, choices):
-        word, ink = round_.get("wordId"), round_.get("inkId")
-        if word not in COLOUR_IDS or ink not in COLOUR_IDS or word == ink:
-            raise GradeError("Tur geçersiz")
-        if choice == ink:
-            correct += 1
-    return round(1000 * correct / count)
+def _eval_line(values, ops):
+    nums = list(values)
+    operators = list(ops)
+    index = 0
+    while index < len(operators):
+        op = operators[index]
+        if op not in ("×", "÷", "*", "/"):
+            index += 1
+            continue
+        left, right = nums[index], nums[index + 1]
+        if op in ("×", "*"):
+            nxt = left * right
+        elif right and left % right == 0:
+            nxt = left // right
+        else:
+            return None
+        nums[index:index + 2] = [nxt]
+        del operators[index]
+    total = nums[0]
+    for step, op in enumerate(operators):
+        if op == "+":
+            total += nums[step + 1]
+        elif op in ("−", "-"):
+            total -= nums[step + 1]
+        else:
+            return None
+    return total
 
 
-def _grade_metaforms(difficulty, puzzle, answer):
-    rounds_n, per_round = META_CONFIG[difficulty]
-    rounds = (puzzle or {}).get("rounds") if isinstance(puzzle, dict) else None
-    choices = (answer or {}).get("choices") if isinstance(answer, dict) else None
-    if not isinstance(rounds, list) or len(rounds) != rounds_n or not isinstance(choices, list) or len(choices) != rounds_n:
-        raise GradeError("Tur sayısı uyuşmuyor")
-    correct = 0
-    for round_, choice in zip(rounds, choices):
-        shapes = round_.get("shapes") if isinstance(round_, dict) else None
-        if not isinstance(shapes, list) or len(shapes) != per_round:
-            raise GradeError("Tur geçersiz")
-        freq = {}
-        for shape in shapes:
-            freq[shape] = freq.get(shape, 0) + 1
-        odds = [shape for shape, n in freq.items() if n == 1]
-        if len(odds) != 1 or len(freq) != 2:
-            raise GradeError("Tur geçersiz")
-        odd_index = shapes.index(odds[0])
-        if choice == odd_index:
-            correct += 1
-    return round(1000 * correct / rounds_n)
+def _grade_islem(_difficulty, puzzle, answer):
+    givens = (puzzle or {}).get("givens") if isinstance(puzzle, dict) else None
+    across = (puzzle or {}).get("across")
+    down = (puzzle or {}).get("down")
+    row_results = (puzzle or {}).get("rowResults")
+    col_results = (puzzle or {}).get("colResults")
+    grid = _as_grid(answer)
+    if not isinstance(givens, list) or not givens or not isinstance(grid, list) or len(grid) != len(givens):
+        raise GradeError("Izgara boyutu uyuşmuyor")
+    size = len(givens)
+    seen = set()
+    for row in range(size):
+        if not isinstance(grid[row], list) or len(grid[row]) != size or len(givens[row]) != size:
+            raise GradeError("Izgara boyutu uyuşmuyor")
+        for col in range(size):
+            value = grid[row][col]
+            if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 9:
+                raise GradeError("Sayı geçersiz")
+            if value in seen:
+                raise GradeError("Sayı tekrar ediyor")
+            seen.add(value)
+            given = givens[row][col]
+            if given and given != value:
+                raise GradeError("Verilen sayı değişmiş")
+    for row in range(size):
+        if _eval_line(grid[row], across[row]) != row_results[row]:
+            raise GradeError("Satır sonucu tutmuyor")
+    for col in range(size):
+        values = [grid[row][col] for row in range(size)]
+        ops = [down[row][col] for row in range(size - 1)]
+        if _eval_line(values, ops) != col_results[col]:
+            raise GradeError("Sütun sonucu tutmuyor")
+
+
+def _number_cells(grid, cells):
+    values = []
+    for cell in cells:
+        if not isinstance(cell, str) or cell.count("-") != 1:
+            return None
+        row, col = cell.split("-")
+        if not row.isdigit() or not col.isdigit():
+            return None
+        row, col = int(row), int(col)
+        if row >= len(grid) or col >= len(grid[row]):
+            return None
+        values.append(grid[row][col])
+    return values
+
+
+def _grade_numbers(_difficulty, puzzle, answer):
+    givens = (puzzle or {}).get("givens") if isinstance(puzzle, dict) else None
+    clues = (puzzle or {}).get("clues")
+    grid = _as_grid(answer)
+    if not isinstance(givens, list) or not isinstance(grid, list) or len(grid) != len(givens):
+        raise GradeError("Izgara boyutu uyuşmuyor")
+    for row, given_row in enumerate(givens):
+        if len(grid[row]) != len(given_row):
+            raise GradeError("Izgara boyutu uyuşmuyor")
+        for col, given in enumerate(given_row):
+            value = grid[row][col]
+            if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 9:
+                raise GradeError("Sayı geçersiz")
+            if given and given != value:
+                raise GradeError("Verilen sayı değişmiş")
+    if not isinstance(clues, list) or not clues:
+        raise GradeError("İpucu eksik")
+    for clue in clues:
+        values = _number_cells(grid, clue.get("cells") or [])
+        if not values or not _number_clue(clue, values):
+            raise GradeError("İşlem tutmuyor")
+
+
+def _number_clue(clue, values):
+    op = clue.get("op")
+    target = clue.get("target")
+    if op == "sum":
+        return sum(values) == target
+    if op == "product":
+        product = 1
+        for value in values:
+            product *= value
+        return product == target
+    if op == "diff" and len(values) == 2:
+        return values[0] - values[1] == target
+    if op == "ratio" and len(values) == 4 and values[1] and values[3]:
+        return values[0] * values[3] == values[1] * values[2]
+    return False
+
+
+def _grade_colours(_difficulty, puzzle, answer):
+    pieces = (puzzle or {}).get("pieces") if isinstance(puzzle, dict) else None
+    clues = (puzzle or {}).get("clues")
+    grid = _as_grid(answer)
+    if not isinstance(pieces, list) or not pieces or not isinstance(grid, list) or len(grid) != 4:
+        raise GradeError("Izgara boyutu uyuşmuyor")
+    found = []
+    for row in grid:
+        if not isinstance(row, list) or len(row) != 4:
+            raise GradeError("Izgara boyutu uyuşmuyor")
+        for cell in row:
+            if cell in (None, ""):
+                continue
+            if not isinstance(cell, dict):
+                raise GradeError("Parça geçersiz")
+            found.append((cell.get("shape"), cell.get("color")))
+    expected = [(piece.get("shape"), piece.get("color")) for piece in pieces]
+    if sorted(found) != sorted(expected):
+        raise GradeError("Parça eksik")
+    if not isinstance(clues, list) or not clues:
+        raise GradeError("İpucu eksik")
+    for clue in clues:
+        if not _colour_clue(grid, clue):
+            raise GradeError("İpucu tutmuyor")
+
+
+def _colour_cell(grid, cell):
+    piece = grid[cell["row"]][cell["col"]]
+    mark = cell.get("mark")
+    if mark == "empty":
+        return piece in (None, "")
+    if mark in ("filled", "unknown"):
+        return isinstance(piece, dict)
+    if mark == "piece":
+        return isinstance(piece, dict) and piece.get("shape") == cell.get("shape") and piece.get("color") == cell.get("color")
+    return False
+
+
+def _colour_clue(grid, clue):
+    cells = clue.get("cells") if isinstance(clue, dict) else None
+    if not isinstance(cells, list) or not cells:
+        return False
+    matched = all(_colour_cell(grid, cell) for cell in cells)
+    if clue.get("sign") == "yes":
+        return matched
+    if clue.get("sign") == "no":
+        return not matched
+    return False
+
+
+def _grade_metaforms(_difficulty, puzzle, answer):
+    clues = (puzzle or {}).get("clues") if isinstance(puzzle, dict) else None
+    grid = (answer or {}).get("grid") if isinstance(answer, dict) else None
+    if not isinstance(clues, list) or not clues or not isinstance(grid, list) or len(grid) != 3:
+        raise GradeError("Izgara boyutu uyuşmuyor")
+    placed = []
+    seen = set()
+    for row_index, row in enumerate(grid):
+        if not isinstance(row, list) or len(row) != 3:
+            raise GradeError("Izgara boyutu uyuşmuyor")
+        for col_index, cell in enumerate(row):
+            if not isinstance(cell, dict):
+                raise GradeError("Parça eksik")
+            shape, color = cell.get("shape"), cell.get("color")
+            if shape not in FORM_SHAPES or color not in FORM_COLORS:
+                raise GradeError("Parça geçersiz")
+            if (shape, color) in seen:
+                raise GradeError("Parça tekrar ediyor")
+            seen.add((shape, color))
+            placed.append((shape, color, f"{row_index}-{col_index}"))
+    if len(seen) != 9:
+        raise GradeError("Parça eksik")
+    for clue in clues:
+        if not _form_clue_ok(placed, clue):
+            raise GradeError("İpucu tutmuyor")
+
+
+def _form_clue_ok(placed, clue):
+    if not isinstance(clue, dict) or clue.get("sign") not in ("yes", "no"):
+        return False
+    shape, color = clue.get("shape"), clue.get("color")
+    cells = clue.get("cells")
+    if shape is not None and shape not in FORM_SHAPES:
+        return False
+    if color is not None and color not in FORM_COLORS:
+        return False
+    if shape is None and color is None:
+        return False
+    if not isinstance(cells, list) or not cells:
+        return False
+    region = set()
+    for cell in cells:
+        if cell not in FORM_CELLS:
+            return False
+        region.add(cell)
+    matches = [cell for piece_shape, piece_color, cell in placed if (shape is None or piece_shape == shape) and (color is None or piece_color == color)]
+    inside = sum(1 for cell in matches if cell in region)
+    if shape and color:
+        return inside == (1 if clue["sign"] == "yes" else 0)
+    if clue["sign"] == "yes":
+        return inside >= 1
+    return inside == 0

@@ -17,7 +17,7 @@ export const GAME_VISUALS = {
   carpmaca: { emoji: "✖️", color: "bg-[#eef3df]" },
   futoshiki: { emoji: "⚖️", color: "bg-[#e7f0f6]" },
   pentominolar: { emoji: "🧱", color: "bg-[#f3eaf1]" },
-  metaforms: { emoji: "🔷", color: "bg-[#ece8f4]" },
+  metaforms: { emoji: "🧩", color: "bg-[#ece8f4]" },
   numbers: { emoji: "🎲", color: "bg-[#f6eaf0]" },
   colours: { emoji: "🎨", color: "bg-[#f6ebe7]" },
 };

@@ -37,8 +37,8 @@ export const HINTS = {
     en: { hint: "Join matching letters. Paths do not cross or overlap.", example: "When two A’s sit in corners, pick an empty corridor first." },
   },
   "islem-karesi": {
-    tr: { hint: "Küçük kafesten başla. Toplam ya da çarpım, rakamları tek tek denemeden önce daraltır.", example: "İki karede çarpım 6 ise çift 1 ve 6 ya da 2 ve 3’tür." },
-    en: { hint: "Start with the smallest cage. The sum or product cuts the choices.", example: "A product of 6 in two cells is 1×6 or 2×3." },
+    tr: { hint: "Önce çarpma ve bölmeye bak. Verilen sayıyı sabit tut, boş kareyi sonuçtan geri yürü.", example: "9 × boş − 8 = 46 ise boş kare 6’dır." },
+    en: { hint: "Do the multiplications and divisions first. Keep a given number and work back from the result.", example: "If 9 × blank − 8 = 46, the blank is 6." },
   },
   kendoku: {
     tr: { hint: "Çıkarma ve bölmede sıra serbesttir. 2− olan iki kare, aralarında 2 fark olan bir çifttir.", example: "3− yazan iki kare 1 ve 4, ya da 2 ve 5 olabilir." },
@@ -65,16 +65,16 @@ export const HINTS = {
     en: { hint: "Place the piece that fits a corner first. Rotate it if you need to.", example: "The plus shape sits near the middle. It does not fit a corner." },
   },
   metaforms: {
-    tr: { hint: "Renge değil, şeklin kendisine bak. Dördü aynı, biri farklıdır.", example: "Dört üçgen ve bir kare varsa kare aykırı olandır." },
-    en: { hint: "Ignore the color. Four shapes match and one does not.", example: "Four triangles and one square means the square is the odd one." },
+    tr: { hint: "Önce tek kareye kilitlenen parçayı koy. Sonra satır ve sütun işaretlerine bak.", example: "Kırmızı daire yalnızca üst satırdaysa o satırdaki boş karelerden birine girer." },
+    en: { hint: "Place a piece that is locked to one cell first. Then read the row and column marks.", example: "If the red circle is only in the top row, it goes in one of those empty cells." },
   },
   numbers: {
-    tr: { hint: "1’i bul, sonra 2, sonra 3. Ekranda sırayı gözünle takip et.", example: "1 sol üstteyse bakışını oradan sağa ve aşağı kaydır." },
-    en: { hint: "Find 1, then 2, then 3. Let your eyes follow the order.", example: "If 1 is in the top left, scan right and down from there." },
+    tr: { hint: "Verilen sayıdan başla. İki yıldızın toplamı belliyse boş olanı çıkar.", example: "Biri 4 ve toplam 11 ise diğeri 7’dir." },
+    en: { hint: "Start from a given number. If two stars add up to a total, subtract to find the blank.", example: "If one star is 4 and the sum is 11, the other is 7." },
   },
   colours: {
-    tr: { hint: "Kelimeyi okuma. Mürekkebin rengine bas.", example: "Mavi yazıyla KIRMIZI yazıyorsa mavi düğmeye bas." },
-    en: { hint: "Do not read the word. Press the ink color.", example: "If RED is written in blue ink, press blue." },
+    tr: { hint: "Önce parçası çizili kareye o parçayı koy. Çarpılı kare boş kalır.", example: "Kırmızı daire bir karede gösteriliyorsa başka kareye gitmez." },
+    en: { hint: "Put a drawn piece in the cell that shows it. A crossed cell stays empty.", example: "If the red circle is shown in one cell, it does not go anywhere else." },
   },
 };
 

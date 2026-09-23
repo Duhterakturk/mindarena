@@ -105,16 +105,16 @@
     "sihirli-piramit": "Number Pyramid",
     "patika": "Number Trail",
     "abc-baglama": "Letter Paths",
-    "islem-karesi": "Sum-Product Grid",
+    "islem-karesi": "Operation Grid",
     "kendoku": "Mixed Cages",
     "yildiz-savaslari": "Star Placement",
     "kare-karalamaca": "Shade Grid",
     "carpmaca": "Times Table",
     "futoshiki": "Inequality Grid",
     "pentominolar": "Five-Square",
-    "metaforms": "Odd Shape",
-    "numbers": "Count Up",
-    "colours": "Ink Color"
+    "metaforms": "Piece Logic",
+    "numbers": "Number Clues",
+    "colours": "Color Clues"
   },
   "gameRules": {
     "kakuro": "Digits in each white run are different and add up to the clue above or to the left.",
@@ -126,15 +126,15 @@
     "sihirli-piramit": "Each stone is the sum of the two stones directly below it. Finish the pyramid from the given stones.",
     "patika": "Join the numbered dots with a continuous path of horizontal and vertical steps.",
     "abc-baglama": "Join matching letters with horizontal and vertical lines that do not cross.",
-    "islem-karesi": "Each row and column contains 1–{{n}} once. Every cage is a sum or a product.",
+    "islem-karesi": "Each row and each column reaches the result on the right or below, using the signs between the numbers. Multiply and divide before you add or subtract. Use 1–9, each once.",
     "kendoku": "Each row and column contains 1–{{n}} once. Cages use addition, subtraction, multiplication, or division.",
     "yildiz-savaslari": "Place one star in each row, column, and colored region. Stars cannot touch, even diagonally.",
     "kare-karalamaca": "Row and column numbers are the lengths of consecutive shaded groups.",
     "carpmaca": "Write the product of the row header and the column header in each cell.",
     "futoshiki": "Each row and column contains 1–{{n}} once. The < and > signs order neighboring cells.",
     "pentominolar": "Tile the outlined area with the given five-square pieces, with no gaps or overlaps. Select a piece, rotate it, then place it.",
-    "metaforms": "Find the shape that is different from the others.",
-    "numbers": "Tap the numbers from 1 to {{total}} in order, as fast as you can.",
-    "colours": "Ignore the word. Press the button for the ink color."
+    "metaforms": "Each shape and each color is used once. A green mark means the piece goes in a highlighted cell. A red mark means it stays out. A shape alone means any piece of that shape. A color alone means any piece of that color.",
+    "numbers": "Starred cells fill the equation underneath, left to right and top to bottom. A/B = C/D reads four stars in that same order. Every cell is a number from 1 to 9.",
+    "colours": "Place each palette piece once. The other cells stay empty. A check or a question mark means filled. A cross means empty. A card with a slash is a picture that does not occur."
   }
 }

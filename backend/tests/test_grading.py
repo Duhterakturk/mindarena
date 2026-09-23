@@ -20,6 +20,18 @@ def test_tampered_answer_is_rejected(client, student, app):
     assert resp.status_code == 400
 
 
+def test_metaforms_rejects_a_swapped_piece():
+    assert GAME_CATALOG[16]["slug"] == "metaforms"
+    puzzle, answer = reference(17)
+    grid = answer["grid"]
+    grid[0][0], grid[0][1] = grid[0][1], grid[0][0]
+    try:
+        grade("metaforms", "easy", puzzle, answer, 10)
+    except GradeError:
+        return
+    raise AssertionError("yerleri değişen parçalar kabul edildi")
+
+
 def test_grade_rejects_empty_sudoku():
     try:
         grade("sudoku", "easy", {"givens": [[0] * 9 for _ in range(9)]}, [[1] * 9 for _ in range(9)], 10)

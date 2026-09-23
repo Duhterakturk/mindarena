@@ -41,11 +41,16 @@ function describe(hint, tr) {
   if (hint.kind === "spot") {
     return tr ? "1 burada." : "1 is here.";
   }
+  if (hint.kind === "form") {
+    const shape = { circle: ["daire", "circle"], square: ["kare", "square"], triangle: ["üçgen", "triangle"] }[hint.shape];
+    const color = { red: ["Kırmızı", "Red"], yellow: ["Sarı", "Yellow"], blue: ["Mavi", "Blue"] }[hint.color];
+    if (shape && color) {
+      return tr ? `${color[0]} ${shape[0]} bu kareye konur.` : `The ${color[1].toLowerCase()} ${shape[1]} belongs in this cell.`;
+    }
+    return tr ? "Bu parça bu kareye konur." : "This piece belongs in this cell.";
+  }
   if (hint.kind === "choice" && hint.value) {
     return tr ? "Doğru renk işaretlendi." : "The right color is marked.";
-  }
-  if (hint.kind === "choice") {
-    return tr ? "Aykırı şekil işaretlendi." : "The odd shape is marked.";
   }
   return "";
 }

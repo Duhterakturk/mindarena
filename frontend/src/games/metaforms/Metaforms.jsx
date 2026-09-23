@@ -1,79 +1,131 @@
 import { useEffect, useRef, useState } from "react";
-import { submitScore } from "../../api/games";
+import { checkPuzzle, submitScore } from "../../api/games";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
-import { publishHintFocus, useApplyCellHint } from "../common/cellHint";
+import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
+import { COLORS, SHAPES } from "./puzzles";
 
-function oddIndexOf(shapes) {
-  const freq = {};
-  shapes.forEach((shape) => {
-    freq[shape] = (freq[shape] || 0) + 1;
-  });
-  const odd = Object.keys(freq).find((shape) => freq[shape] === 1);
-  return shapes.indexOf(odd);
+const INK = {
+  red: "#e11d48",
+  yellow: "#eab308",
+  blue: "#2461f7",
+};
+
+function samePiece(a, b) {
+  return Boolean(a && b && a.shape === b.shape && a.color === b.color);
 }
 
-function Shape({ type }) {
-  const base = "w-14 h-14 bg-brand-500";
-  if (type === "circle") return <div className={`${base} rounded-full`} />;
-  if (type === "square") return <div className={base} />;
-  if (type === "diamond") return <div className={`${base} rotate-45`} />;
-  if (type === "triangle")
-    return <div className="w-0 h-0 border-l-[28px] border-r-[28px] border-b-[48px] border-l-transparent border-r-transparent border-b-brand-500" />;
-  return null;
+function Glyph({ shape, color, size = 28 }) {
+  const fill = color ? INK[color] : "none";
+  const stroke = color ? INK[color] : "#1e1a16";
+  if (!shape) {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="12" fill={fill} />
+      </svg>
+    );
+  }
+  if (shape === "square") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="5" y="5" width="22" height="22" rx="2" fill={fill} stroke={stroke} strokeWidth="2.5" />
+      </svg>
+    );
+  }
+  if (shape === "triangle") {
+    return (
+      <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+        <polygon points="16,4 29,28 3,28" fill={fill} stroke={stroke} strokeWidth="2.5" strokeLinejoin="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <circle cx="16" cy="16" r="11" fill={fill} stroke={stroke} strokeWidth="2.5" />
+    </svg>
+  );
 }
 
-const GRID_COLS = { 4: 2, 6: 3, 9: 3 };
+function ClueCard({ clue }) {
+  const yes = clue.sign === "yes";
+  const region = new Set(clue.cells || []);
+  const points = [...region].map((key) => key.split("-").map(Number));
+  const minRow = Math.min(...points.map((point) => point[0]));
+  const maxRow = Math.max(...points.map((point) => point[0]));
+  const minCol = Math.min(...points.map((point) => point[1]));
+  const maxCol = Math.max(...points.map((point) => point[1]));
+  const rows = maxRow - minRow + 1;
+  const cols = maxCol - minCol + 1;
+  return (
+    <div className={`flex items-center gap-1.5 rounded-lg border bg-white px-2 py-1.5 ${yes ? "border-emerald-500" : "border-rose-400"}`}>
+      <Glyph shape={clue.shape} color={clue.color} size={26} />
+      <span className={`text-sm font-bold leading-none ${yes ? "text-emerald-600" : "text-rose-500"}`}>{yes ? "✓" : "✕"}</span>
+      <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${cols}, 0.7rem)` }}>
+        {Array.from({ length: rows * cols }, (_, index) => {
+          const key = `${minRow + Math.floor(index / cols)}-${minCol + (index % cols)}`;
+          const on = region.has(key);
+          return (
+            <div
+              key={key}
+              className={`w-2.5 h-2.5 border border-slate-300 ${on ? (yes ? "bg-emerald-400" : "bg-rose-400") : "bg-white"}`}
+            />
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function emptyBoard() {
+  return [0, 1, 2].map(() => [null, null, null]);
+}
 
 export default function Metaforms() {
   const copy = useGameText("metaforms");
   const play = usePlayCopy();
   const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("metaforms", difficulty);
-  const rounds = issue?.puzzle?.rounds || [];
+  const clues = issue?.puzzle?.clues || [];
   const attemptId = issue?.id;
-  const [roundIndex, setRoundIndex] = useState(0);
-  const [correctCount, setCorrectCount] = useState(0);
-  const [feedback, setFeedback] = useState(null);
-  const [reveal, setReveal] = useState(null);
+  const [board, setBoard] = useState(emptyBoard);
+  const [selected, setSelected] = useState(null);
+  const [hintCell, setHintCell] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
-  const choicesRef = useRef([]);
 
   useEffect(() => {
     if (!attemptId) return undefined;
-    choicesRef.current = [];
-    setRoundIndex(0);
-    setCorrectCount(0);
-    setFeedback(null);
-    setReveal(null);
+    setBoard(emptyBoard());
+    setSelected(null);
+    setHintCell(null);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    timerRef.current = setInterval(() => setSeconds((value) => value + 1), 1000);
     return () => clearInterval(timerRef.current);
   }, [attemptId]);
 
-  useEffect(() => {
-    publishHintFocus(roundIndex);
-  }, [roundIndex]);
-
-  function clearBoard() {
-    choicesRef.current = [];
-    setRoundIndex(0);
-    setCorrectCount(0);
-    setFeedback(null);
-    setReveal(null);
-    setStatus("playing");
-  }
-
   useApplyCellHint(attemptId, (hint) => {
-    if (hint.kind === "choice") setReveal(hint);
+    if (hint.kind !== "form" || !hint.shape || !hint.color) return;
+    const piece = { shape: hint.shape, color: hint.color };
+    setBoard((prev) => {
+      const next = prev.map((row) => row.slice());
+      for (let row = 0; row < 3; row += 1) {
+        for (let col = 0; col < 3; col += 1) {
+          if (samePiece(next[row][col], piece)) next[row][col] = null;
+        }
+      }
+      next[hint.row][hint.col] = piece;
+      return next;
+    });
+    setSelected(null);
+    setHintCell(`${hint.row}-${hint.col}`);
+    setStatus("playing");
   });
 
   function newGame(nextDifficulty) {
@@ -81,99 +133,145 @@ export default function Metaforms() {
     else reload();
   }
 
-  function handleAnswer(index) {
-    if (status !== "playing" || feedback) return;
-    const round = rounds[roundIndex];
-    const isRight = index === oddIndexOf(round.shapes);
-    choicesRef.current = [...choicesRef.current, index];
-    setFeedback(isRight ? "right" : "wrong");
-    if (isRight) setCorrectCount((c) => c + 1);
+  function clearBoard() {
+    setBoard(emptyBoard());
+    setSelected(null);
+    setHintCell(null);
+    setStatus("playing");
+  }
 
-    setTimeout(() => {
-      setFeedback(null);
-      if (roundIndex + 1 >= rounds.length) {
-        setStatus("finished");
-        clearInterval(timerRef.current);
-      } else {
-        setRoundIndex((i) => i + 1);
+  function place(row, col) {
+    if (status === "correct" || status === "submitted") return;
+    const next = board.map((line) => line.slice());
+    const current = next[row][col];
+    if (!selected) {
+      if (!current) return;
+      next[row][col] = null;
+      setSelected(current);
+      setBoard(next);
+      setStatus("playing");
+      return;
+    }
+    for (let r = 0; r < 3; r += 1) {
+      for (let c = 0; c < 3; c += 1) {
+        if (samePiece(next[r][c], selected)) next[r][c] = null;
       }
-    }, 500);
+    }
+    const displaced = current && !samePiece(current, selected) ? current : null;
+    next[row][col] = selected;
+    setSelected(displaced);
+    setBoard(next);
+    setStatus("playing");
+  }
+
+  async function checkSolution() {
+    if (!attemptId) return;
+    try {
+      const correct = await checkPuzzle(attemptId, { grid: board });
+      setStatus(correct ? "correct" : "incorrect");
+      if (correct) clearInterval(timerRef.current);
+    } catch {
+      setStatus("rejected");
+    }
   }
 
   async function handleSubmitScore() {
     if (!attemptId) return;
     try {
-      await submitScore({ attempt_id: attemptId, answer: { choices: choicesRef.current } });
+      await submitScore({ attempt_id: attemptId, answer: { grid: board } });
       setStatus("submitted");
     } catch {
       setStatus("rejected");
     }
   }
 
-  if (phase !== "ready" || rounds.length === 0) return <PuzzlePending phase={phase} />;
+  if (phase !== "ready") return <PuzzlePending phase={phase} />;
+  if (clues.length === 0) return <PuzzlePending phase="error" />;
 
-  const round = rounds[roundIndex];
-  const gridCols = round ? GRID_COLS[round.shapes.length] || 3 : 2;
+  const placed = new Set(board.flat().filter(Boolean).map((piece) => `${piece.shape}:${piece.color}`));
+  const tray = SHAPES.flatMap((shape) => COLORS.map((color) => ({ shape, color })));
 
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="metaforms" value={difficulty} onChange={newGame} />
       <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
-      <p className="text-slate-500 text-sm mb-4">
-        {play.clock(seconds)} — {play.round(Math.min(roundIndex + 1, rounds.length), rounds.length)}
-      </p>
+      <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
-      {status === "playing" && round && (
-        <>
-          <div
-            className="inline-grid gap-4 mb-4"
-            style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+      <div className="flex flex-wrap justify-center gap-2 max-w-xl mb-4">
+        {clues.map((clue, index) => (
+          <ClueCard key={`${clue.sign}-${clue.shape}-${clue.color}-${index}`} clue={clue} />
+        ))}
+      </div>
+
+      <div className="inline-grid grid-cols-3 gap-1 bg-slate-300 p-1 rounded-lg mb-4">
+        {board.map((row, rowIndex) => row.map((piece, colIndex) => {
+          const key = `${rowIndex}-${colIndex}`;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => place(rowIndex, colIndex)}
+              className={`w-16 h-16 sm:w-20 sm:h-20 bg-white border border-slate-300 flex items-center justify-center ${hintCell === key ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
+            >
+              {piece ? <Glyph shape={piece.shape} color={piece.color} size={40} /> : null}
+            </button>
+          );
+        }))}
+      </div>
+
+      <p className="text-xs font-semibold text-slate-500 mb-2">{play.pieces}</p>
+      <div className="flex flex-wrap justify-center gap-2 max-w-md mb-2">
+        {tray.map((piece) => {
+          const used = placed.has(`${piece.shape}:${piece.color}`);
+          const active = samePiece(selected, piece);
+          return (
+            <button
+              key={`${piece.shape}-${piece.color}`}
+              type="button"
+              disabled={used}
+              onClick={() => setSelected(active ? null : piece)}
+              className={[
+                "w-12 h-12 rounded-lg border bg-white flex items-center justify-center",
+                used ? "opacity-30" : "",
+                active ? "border-[#2461f7] ring-2 ring-[#2461f7]" : "border-slate-300",
+              ].join(" ")}
+            >
+              <Glyph shape={piece.shape} color={piece.color} size={28} />
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-3 mt-4">
+        <button
+          type="button"
+          onClick={checkSolution}
+          className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
+        >
+          {play.check}
+        </button>
+        <ClearBoardButton onClick={clearBoard} />
+        <button
+          type="button"
+          onClick={() => newGame()}
+          className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
+        >
+          {play.newPuzzle}
+        </button>
+        {status === "correct" && (
+          <button
+            type="button"
+            onClick={handleSubmitScore}
+            className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
           >
-            {round.shapes.map((shape, i) => (
-              <button
-                key={i}
-                onClick={() => handleAnswer(i)}
-                className={[
-                  "w-20 h-20 flex items-center justify-center border border-slate-200 rounded-lg bg-white hover:bg-brand-50",
-                  reveal && roundIndex === reveal.round && i === reveal.index ? "ring-4 ring-[#2461f7]" : "",
-                ].join(" ")}
-              >
-                <Shape type={shape} />
-              </button>
-            ))}
-          </div>
-          {feedback && (
-            <p className={feedback === "right" ? "text-emerald-600" : "text-red-500"}>
-              {feedback === "right" ? play.right : play.wrong}
-            </p>
-          )}
-          <div className="mt-6">
-            <ClearBoardButton onClick={clearBoard} />
-          </div>
-        </>
-      )}
+            {play.save}
+          </button>
+        )}
+      </div>
 
-      {status === "finished" && (
-        <>
-          <p className="text-lg font-semibold mb-3">{play.result(correctCount, rounds.length)}</p>
-          <div className="flex gap-3">
-            <button
-              onClick={handleSubmitScore}
-              className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
-            >
-              {play.save}
-            </button>
-            <ClearBoardButton onClick={clearBoard} />
-            <button
-              onClick={() => newGame()}
-              className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold hover:bg-slate-300"
-            >
-              {play.newPuzzle}
-            </button>
-          </div>
-        </>
-      )}
+      {status === "correct" && <p className="play-correct text-emerald-600 mt-3">{play.correct}</p>}
+      {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
     </div>

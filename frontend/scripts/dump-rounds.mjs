@@ -15,8 +15,9 @@ import { generate as kare } from "../src/games/kare-karalamaca/puzzles.js";
 import { generate as carpmaca } from "../src/games/carpmaca/puzzles.js";
 import { generate as futoshiki } from "../src/games/futoshiki/puzzles.js";
 import { generate as pentomino } from "../src/games/pentominolar/puzzles.js";
-import { generateRounds as metaRounds } from "../src/games/metaforms/rounds.js";
-import { generateRounds as colourRounds } from "../src/games/colours/rounds.js";
+import { generate as metaforms } from "../src/games/metaforms/puzzles.js";
+import { generate as numbers } from "../src/games/numbers/puzzles.js";
+import { generate as colours } from "../src/games/colours/puzzles.js";
 
 const rounds = {
   kakuro: (() => {
@@ -59,7 +60,10 @@ const rounds = {
   })(),
   "islem-karesi": (() => {
     const puzzle = islem("easy");
-    return { puzzle: { cageId: puzzle.cageId, cageClues: puzzle.cageClues }, answer: puzzle.solution };
+    return {
+      puzzle: { givens: puzzle.givens, across: puzzle.across, down: puzzle.down, rowResults: puzzle.rowResults, colResults: puzzle.colResults },
+      answer: puzzle.solution,
+    };
   })(),
   kendoku: (() => {
     const puzzle = kendoku("easy");
@@ -86,13 +90,16 @@ const rounds = {
     return { puzzle: { pieces: puzzle.pieces, region: puzzle.region }, answer: { placements: puzzle.solutionPlacements } };
   })(),
   metaforms: (() => {
-    const rounds = metaRounds("easy");
-    return { puzzle: { rounds: rounds.map(({ shapes }) => ({ shapes })) }, answer: { choices: rounds.map((round) => round.oddIndex) } };
+    const puzzle = metaforms("easy");
+    return { puzzle: { clues: puzzle.clues }, answer: { grid: puzzle.solution } };
   })(),
-  numbers: { puzzle: { values: [3, 1, 8, 12, 5, 16, 9, 2, 14, 7, 4, 11, 6, 15, 10, 13] }, answer: { done: true } },
+  numbers: (() => {
+    const puzzle = numbers("easy");
+    return { puzzle: { givens: puzzle.givens, clues: puzzle.clues }, answer: puzzle.solution };
+  })(),
   colours: (() => {
-    const rounds = colourRounds("easy");
-    return { puzzle: { rounds }, answer: { choices: rounds.map((round) => round.inkId) } };
+    const puzzle = colours("easy");
+    return { puzzle: { pieces: puzzle.pieces, clues: puzzle.clues }, answer: puzzle.solution };
   })(),
 };
 

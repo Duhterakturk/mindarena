@@ -56,7 +56,7 @@ def test_cit_hint_is_one_edge(client, student):
     assert "vertical" not in revealed.get_json()
 
 
-def test_numbers_hint_marks_where_one_sits(client, student, app):
+def test_numbers_hint_fills_one_blank(client, student, app):
     opened = _open(client, student["token"], "numbers")
     assert opened.status_code == 201
     body = opened.get_json()
@@ -65,7 +65,11 @@ def test_numbers_hint_marks_where_one_sits(client, student, app):
     revealed = client.post(f"/api/puzzles/{attempt_id}/cell", headers=headers)
     assert revealed.status_code == 200, revealed.get_json()
     hint = revealed.get_json()["hint"]
-    assert hint == {"kind": "spot", "index": body["puzzle"]["values"].index(1), "value": 1}
+    assert hint["kind"] == "fill"
+    assert body["puzzle"]["givens"][hint["row"]][hint["col"]] == 0
+    with app.app_context():
+        solution = json.loads(db.session.get(PuzzleAttempt, attempt_id).proof_json)["solution"]
+    assert solution[hint["row"]][hint["col"]] == hint["value"]
 
 
 def test_pentomino_hint_places_the_first_piece(client, student, app):
@@ -103,18 +107,20 @@ def test_abc_hint_draws_the_first_letter():
     assert hint == {"kind": "marks", "cells": ["0-1", "0-2"], "label": "A"}
 
 
-def test_colour_hint_follows_the_current_round(client, student, app):
+def test_colour_hint_places_one_piece(client, student, app):
     opened = _open(client, student["token"], "colours")
     assert opened.status_code == 201
-    body = opened.get_json()
-    attempt_id = body["id"]
-    with app.app_context():
-        row = db.session.get(PuzzleAttempt, attempt_id)
-        choices = json.loads(row.proof_json)["solution"]["choices"]
+    attempt_id = opened.get_json()["id"]
     headers = {"Authorization": f"Bearer {student['token']}"}
-    revealed = client.post(f"/api/puzzles/{attempt_id}/cell", json={"round": 1}, headers=headers)
+    revealed = client.post(f"/api/puzzles/{attempt_id}/cell", headers=headers)
     assert revealed.status_code == 200, revealed.get_json()
-    assert revealed.get_json()["hint"] == {"kind": "choice", "round": 1, "value": choices[1]}
+    hint = revealed.get_json()["hint"]
+    assert hint["kind"] == "form"
+    with app.app_context():
+        solution = json.loads(db.session.get(PuzzleAttempt, attempt_id).proof_json)["solution"]
+    piece = solution[hint["row"]][hint["col"]]
+    assert piece["shape"] == hint["shape"]
+    assert piece["color"] == hint["color"]
 
 
 def test_kakuro_hint_points_at_an_inner_cell():
@@ -126,6 +132,23 @@ def test_kakuro_hint_points_at_an_inner_cell():
     assert public["givens"][hint["row"]][hint["col"]] == 0
     inner = [row[1:] for row in solution[1:]]
     assert inner[hint["row"]][hint["col"]] == hint["value"]
+
+
+def test_metaforms_hint_places_one_piece():
+    from app.services.cell_hint import pick_hint
+
+    grid = [
+        [{"shape": "circle", "color": "red"}, {"shape": "square", "color": "yellow"}, {"shape": "triangle", "color": "blue"}],
+        [{"shape": "square", "color": "blue"}, {"shape": "triangle", "color": "red"}, {"shape": "circle", "color": "yellow"}],
+        [{"shape": "triangle", "color": "yellow"}, {"shape": "circle", "color": "blue"}, {"shape": "square", "color": "red"}],
+    ]
+    public = {"clues": [{"sign": "yes", "shape": "circle", "color": "red", "cells": ["0-0"]}]}
+    hint = pick_hint("metaforms", public, {"solution": {"grid": grid}})
+    assert hint["kind"] == "form"
+    assert (hint["row"], hint["col"]) != (0, 0)
+    piece = grid[hint["row"]][hint["col"]]
+    assert hint["shape"] == piece["shape"]
+    assert hint["color"] == piece["color"]
 
 
 def test_other_student_cannot_open_the_cell(client, student):

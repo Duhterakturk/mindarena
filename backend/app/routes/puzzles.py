@@ -11,7 +11,7 @@ from app.services.difficulty import compute_unlocked_difficulties
 from app.services.grading import GradeError, accepts
 from app.services.issuer import IssueError, issue
 
-_HINT_KEYS = {"kind", "row", "col", "value", "axis", "index", "round", "note", "label", "name", "cells"}
+_HINT_KEYS = {"kind", "row", "col", "value", "axis", "index", "round", "note", "label", "name", "cells", "shape", "color"}
 
 puzzles_bp = Blueprint("puzzles", __name__, url_prefix="/api/puzzles")
 

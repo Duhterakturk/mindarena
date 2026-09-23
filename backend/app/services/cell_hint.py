@@ -15,6 +15,7 @@ _FILL = {
     "carpmaca",
     "futoshiki",
     "sihirli-piramit",
+    "numbers",
 }
 _MARK_NOTE = {
     "amiral-batti": "ship",
@@ -39,12 +40,10 @@ def pick_hint(slug, public, proof, focus=None):
         return _piece(solution)
     if slug in _MARK_NOTE:
         return _mark(public, solution, _MARK_NOTE[slug])
-    if slug == "numbers":
-        return _spot(public)
     if slug == "colours":
-        return _colour(public, solution, focus)
+        return _palette(solution)
     if slug == "metaforms":
-        return _odd_shape(solution, focus)
+        return _form(public, solution)
     raise HintError("Bu bulmacada ipucu yok")
 
 
@@ -194,37 +193,49 @@ def _cells(solution):
     return cells
 
 
-def _spot(public):
-    values = public.get("values") or []
-    try:
-        index = list(values).index(1)
-    except ValueError as exc:
-        raise HintError("İpucu verilecek kare kalmadı") from exc
-    return {"kind": "spot", "index": index, "value": 1}
-
-
-def _colour(public, solution, focus):
-    choices = solution.get("choices") if isinstance(solution, dict) else None
-    if not choices:
-        rounds = public.get("rounds") or []
-        choices = [row.get("inkId") for row in rounds if isinstance(row, dict) and "inkId" in row]
-    index = _focus(focus, len(choices or []))
-    if index is None:
+def _palette(solution):
+    grid = solution.get("grid") if isinstance(solution, dict) else solution
+    if not isinstance(grid, list):
         raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
-    return {"kind": "choice", "round": index, "value": choices[index]}
+    spots = []
+    for row_index, row in enumerate(grid):
+        if not isinstance(row, list):
+            continue
+        for col_index, cell in enumerate(row):
+            if isinstance(cell, dict) and cell.get("shape") and cell.get("color"):
+                spots.append((row_index, col_index, cell))
+    if not spots:
+        raise HintError("İpucu verilecek parça kalmadı")
+    row_index, col_index, cell = random.choice(spots)
+    return {"kind": "form", "row": row_index, "col": col_index, "shape": cell["shape"], "color": cell["color"]}
 
 
-def _odd_shape(solution, focus):
-    choices = solution.get("choices") if isinstance(solution, dict) else None
-    index = _focus(focus, len(choices or []))
-    if index is None:
+def _form(public, solution):
+    grid = solution.get("grid") if isinstance(solution, dict) else None
+    if not isinstance(grid, list) or len(grid) != 3:
         raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
-    return {"kind": "choice", "round": index, "index": choices[index]}
-
-
-def _focus(focus, length):
-    if length <= 0:
-        return None
-    if isinstance(focus, int) and not isinstance(focus, bool) and 0 <= focus < length:
-        return focus
-    return 0
+    pinned = set()
+    for clue in (public or {}).get("clues") or []:
+        if not isinstance(clue, dict):
+            continue
+        cells = clue.get("cells") or []
+        if clue.get("sign") == "yes" and clue.get("shape") and clue.get("color") and len(cells) == 1:
+            pinned.add(cells[0])
+    spots = []
+    for row_index, row in enumerate(grid):
+        if not isinstance(row, list):
+            continue
+        for col_index, cell in enumerate(row):
+            if not isinstance(cell, dict):
+                continue
+            if f"{row_index}-{col_index}" in pinned:
+                continue
+            spots.append((row_index, col_index, cell))
+    if not spots:
+        for row_index, row in enumerate(grid):
+            for col_index, cell in enumerate(row):
+                spots.append((row_index, col_index, cell))
+    if not spots:
+        raise HintError("İpucu verilecek boş kare kalmadı")
+    row_index, col_index, cell = random.choice(spots)
+    return {"kind": "form", "row": row_index, "col": col_index, "shape": cell.get("shape"), "color": cell.get("color")}

@@ -14,11 +14,9 @@ import { generate as kare } from "../src/games/kare-karalamaca/puzzles.js";
 import { generate as carpmaca } from "../src/games/carpmaca/puzzles.js";
 import { generate as futoshiki } from "../src/games/futoshiki/puzzles.js";
 import { generate as pentomino } from "../src/games/pentominolar/puzzles.js";
-import { generateRounds as metaRounds } from "../src/games/metaforms/rounds.js";
-import { generateRounds as colourRounds } from "../src/games/colours/rounds.js";
-import { shuffle } from "../src/games/common/latinSquare.js";
-
-const SIZE = { easy: 4, medium: 5, hard: 6 };
+import { generate as metaforms } from "../src/games/metaforms/puzzles.js";
+import { generate as numbers } from "../src/games/numbers/puzzles.js";
+import { generate as colours } from "../src/games/colours/puzzles.js";
 
 function sealed(publicPuzzle, proofBase, solution) {
   return { public: publicPuzzle, proof: { ...proofBase, solution } };
@@ -76,9 +74,19 @@ function open(slug, difficulty) {
       const pub = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
       return sealed(pub, pub, { cells: puzzle.solutionSet });
     }
-    case "islem-karesi":
+    case "islem-karesi": {
+      const puzzle = islem(difficulty);
+      const pub = {
+        givens: puzzle.givens,
+        across: puzzle.across,
+        down: puzzle.down,
+        rowResults: puzzle.rowResults,
+        colResults: puzzle.colResults,
+      };
+      return sealed(pub, pub, puzzle.solution);
+    }
     case "kendoku": {
-      const puzzle = (slug === "islem-karesi" ? islem : kendoku)(difficulty);
+      const puzzle = kendoku(difficulty);
       const proof = { cageId: puzzle.cageId, cageClues: puzzle.cageClues };
       const pub = { givens: puzzle.puzzle, cageId: puzzle.cageId, cageAnchor: puzzle.cageAnchor, cageClues: puzzle.cageClues };
       return sealed(pub, proof, puzzle.solution);
@@ -114,18 +122,18 @@ function open(slug, difficulty) {
       );
     }
     case "metaforms": {
-      const generated = metaRounds(difficulty);
-      const rounds = generated.map(({ shapes }) => ({ shapes }));
-      return sealed({ rounds }, { rounds }, { choices: generated.map((round) => round.oddIndex) });
+      const puzzle = metaforms(difficulty);
+      return sealed({ clues: puzzle.clues }, { clues: puzzle.clues }, { grid: puzzle.solution });
     }
     case "numbers": {
-      const n = SIZE[difficulty] || 4;
-      const values = shuffle(Array.from({ length: n * n }, (_, i) => i + 1));
-      return { public: { values }, proof: { values } };
+      const puzzle = numbers(difficulty);
+      const pub = { givens: puzzle.givens, clues: puzzle.clues };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "colours": {
-      const rounds = colourRounds(difficulty);
-      return sealed({ rounds }, { rounds }, { choices: rounds.map((round) => round.inkId) });
+      const puzzle = colours(difficulty);
+      const pub = { pieces: puzzle.pieces, clues: puzzle.clues };
+      return sealed(pub, { pieces: puzzle.pieces, clues: puzzle.clues }, puzzle.solution);
     }
     default:
       throw new Error(`Bilinmeyen oyun: ${slug}`);
