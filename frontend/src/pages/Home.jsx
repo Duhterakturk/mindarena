@@ -93,7 +93,7 @@ export default function Home() {
 
   return (
     <div className="home-desk">
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div className="home-marks pointer-events-none absolute inset-0" aria-hidden="true">
         {MARKS.map((mark, index) => (
           <span
             key={index}
