@@ -9,9 +9,14 @@
     "logout": "Log Out"
   },
   "home": {
-    "title": "A puzzle for today.",
-    "subtitle": "Pick one. Start easy.",
-    "cta": "See the games"
+    "title": "Nineteen puzzles, three kinds.",
+    "subtitle": "Number games, marking games, and look-and-choose games sit apart. Easy is open to everyone. Finish five easy puzzles of one game and medium opens. Finish five medium and hard opens.",
+    "numbers": "Write the number",
+    "numbers_help": "Put the right digit in the square.",
+    "mark": "Mark the square",
+    "mark_help": "Mark the right cell, line, or shape.",
+    "look": "Look and choose",
+    "look_help": "Short rounds. Find the right one."
   },
   "auth": {
     "email": "Email",
