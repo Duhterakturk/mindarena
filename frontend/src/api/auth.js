@@ -23,6 +23,19 @@ export async function changePassword(currentPassword, newPassword) {
   return data;
 }
 
+export async function recoverPassword(email, reminder, password) {
+  const { data } = await apiClient.post("/auth/recover", { email, reminder, password });
+  return data;
+}
+
+export async function saveReminder(currentPassword, reminder) {
+  const { data } = await apiClient.post("/auth/reminder", {
+    current_password: currentPassword,
+    reminder,
+  });
+  return data;
+}
+
 export async function forgotPassword(email) {
   const { data } = await apiClient.post("/auth/forgot", { email });
   return data;

@@ -15,6 +15,7 @@ from app.extensions import db, limiter
 from app.models import User, UserRole
 from app.models.password_reset import PasswordReset, fresh_expiry, hash_token
 from app.services.mail import send_password_reset
+from app.services.reminder import MIN_REMINDER_LENGTH, normalize_reminder
 
 auth_bp = Blueprint("auth", __name__, url_prefix="/api/auth")
 
@@ -47,11 +48,16 @@ def register():
     if role not in (UserRole.STUDENT.value, UserRole.TEACHER.value):
         return jsonify({"error": "Geçersiz rol"}), 400
 
+    reminder = data.get("reminder") or ""
+    if len(normalize_reminder(reminder)) < MIN_REMINDER_LENGTH:
+        return jsonify({"error": "Hatırlatma kelimesi en az 3 karakter olmalıdır"}), 400
+
     if User.query.filter_by(email=email).first():
         return jsonify({"error": "Bu e-posta zaten kayıtlı"}), 409
 
     user = User(email=email, full_name=full_name, role=UserRole(role), grade_level=grade_level)
     user.set_password(password)
+    user.set_reminder(reminder)
     db.session.add(user)
     db.session.commit()
 
@@ -116,6 +122,26 @@ def change_password():
     return jsonify({"ok": True})
 
 
+@auth_bp.post("/reminder")
+@jwt_required()
+@limiter.limit("10 per minute")
+def set_reminder():
+    data = request.get_json(force=True) or {}
+    current_password = data.get("current_password") or ""
+    reminder = data.get("reminder") or ""
+
+    user = db.session.get(User, get_jwt_identity())
+    if not user or not user.check_password(current_password):
+        return jsonify({"error": "Mevcut şifre hatalı"}), 400
+    if len(normalize_reminder(reminder)) < MIN_REMINDER_LENGTH:
+        return jsonify({"error": "Hatırlatma kelimesi en az 3 karakter olmalıdır"}), 400
+
+    user.set_reminder(reminder)
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+RECOVER_ERROR = "E-posta veya hatırlatma kelimesi uymadı."
 FORGOT_MESSAGE = "Bu e-posta kayıtlıysa şifre bağlantısı gönderildi."
 
 
@@ -145,6 +171,25 @@ def forgot_password():
             send_password_reset(user.email, f"{base}/reset?token={raw}")
 
     return jsonify({"message": FORGOT_MESSAGE})
+
+
+@auth_bp.post("/recover")
+@limiter.limit("5 per minute")
+def recover_password():
+    data = request.get_json(force=True) or {}
+    email = (data.get("email") or "").strip().lower()
+    reminder = data.get("reminder") or ""
+    new_password = data.get("password") or ""
+    if len(new_password) < MIN_PASSWORD_LENGTH:
+        return jsonify({"error": f"Şifre en az {MIN_PASSWORD_LENGTH} karakter olmalıdır"}), 400
+
+    user = User.query.filter_by(email=email).first() if email else None
+    if not user or not user.check_reminder(reminder):
+        return jsonify({"error": RECOVER_ERROR}), 400
+
+    user.set_password(new_password)
+    db.session.commit()
+    return jsonify({"ok": True})
 
 
 @auth_bp.post("/reset")

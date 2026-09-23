@@ -14,6 +14,7 @@ export default function Register() {
     full_name: "",
     role: "student",
     grade_level: "",
+    reminder: "",
   });
   const [error, setError] = useState(null);
 
@@ -62,6 +63,20 @@ export default function Register() {
           value={form.password}
           onChange={(e) => setForm({ ...form, password: e.target.value })}
         />
+
+        <div>
+          <input
+            type="text"
+            placeholder={t("auth.reminder_label")}
+            required
+            minLength={3}
+            autoComplete="off"
+            className="w-full border border-slate-200 rounded-lg px-3 py-2"
+            value={form.reminder}
+            onChange={(e) => setForm({ ...form, reminder: e.target.value })}
+          />
+          <p className="text-xs text-slate-500 mt-1">{t("auth.reminder_help")}</p>
+        </div>
 
         <select
           className="w-full border border-slate-200 rounded-lg px-3 py-2"

@@ -19,6 +19,7 @@ class User(db.Model):
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
+    reminder_hash = db.Column(db.String(255), nullable=True)
     full_name = db.Column(db.String(255), nullable=False)
     role = db.Column(db.Enum(UserRole), nullable=False, default=UserRole.STUDENT)
     grade_level = db.Column(db.Integer, nullable=True)
@@ -41,6 +42,18 @@ class User(db.Model):
     def check_password(self, password: str) -> bool:
         return check_password_hash(self.password_hash, password)
 
+    def set_reminder(self, reminder: str) -> None:
+        from app.services.reminder import normalize_reminder
+
+        self.reminder_hash = generate_password_hash(normalize_reminder(reminder))
+
+    def check_reminder(self, reminder: str) -> bool:
+        from app.services.reminder import normalize_reminder
+
+        if not self.reminder_hash:
+            return False
+        return check_password_hash(self.reminder_hash, normalize_reminder(reminder))
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
@@ -50,5 +63,6 @@ class User(db.Model):
             "grade_level": self.grade_level,
             "parent_id": self.parent_id,
             "classroom_id": self.classroom_id,
+            "has_reminder": bool(self.reminder_hash),
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

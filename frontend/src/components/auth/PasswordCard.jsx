@@ -1,13 +1,19 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { changePassword } from "../../api/auth";
+import { changePassword, saveReminder } from "../../api/auth";
+import { useAuth } from "../../context/AuthContext";
 
 export default function PasswordCard() {
   const { t } = useTranslation();
+  const { refreshUser } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [message, setMessage] = useState(null);
   const [error, setError] = useState(null);
+  const [reminderPassword, setReminderPassword] = useState("");
+  const [reminder, setReminder] = useState("");
+  const [reminderMessage, setReminderMessage] = useState(null);
+  const [reminderError, setReminderError] = useState(null);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -20,6 +26,21 @@ export default function PasswordCard() {
       setMessage(t("auth.password_changed"));
     } catch (err) {
       setError(err.response?.data?.error || "Şifre değişmedi");
+    }
+  }
+
+  async function handleReminder(e) {
+    e.preventDefault();
+    setReminderError(null);
+    setReminderMessage(null);
+    try {
+      await saveReminder(reminderPassword, reminder);
+      setReminderPassword("");
+      setReminder("");
+      setReminderMessage(t("auth.reminder_saved"));
+      await refreshUser();
+    } catch (err) {
+      setReminderError(err.response?.data?.error || "Kelime kaydedilmedi");
     }
   }
 
@@ -51,6 +72,37 @@ export default function PasswordCard() {
           className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
         >
           {t("auth.save_password")}
+        </button>
+      </form>
+
+      <form onSubmit={handleReminder} className="space-y-3 max-w-sm mt-6 pt-6 border-t border-slate-100">
+        <h3 className="font-semibold">{t("auth.reminder_label")}</h3>
+        <p className="text-sm text-slate-500">{t("auth.reminder_help")}</p>
+        <input
+          type="password"
+          placeholder={t("auth.current_password")}
+          required
+          className="w-full border border-slate-200 rounded-lg px-3 py-2"
+          value={reminderPassword}
+          onChange={(e) => setReminderPassword(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder={t("auth.reminder_label")}
+          required
+          minLength={3}
+          autoComplete="off"
+          className="w-full border border-slate-200 rounded-lg px-3 py-2"
+          value={reminder}
+          onChange={(e) => setReminder(e.target.value)}
+        />
+        {reminderError && <p className="text-red-500 text-sm">{reminderError}</p>}
+        {reminderMessage && <p className="text-sm text-slate-700">{reminderMessage}</p>}
+        <button
+          type="submit"
+          className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-brand-600"
+        >
+          {t("auth.save_reminder")}
         </button>
       </form>
     </div>

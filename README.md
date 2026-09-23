@@ -201,9 +201,9 @@ kısıtlarını koruduğunu doğrular.
 - **Hesaplar:** Kayıtta yalnız öğrenci ve öğretmen vardır. Veli rolü ve
   e-postayla çocuk bağlama kapalıdır (`/api/users/children`,
   `/api/progress/child/<id>` 403 döner). Giriş yapmış kullanıcı
-  `POST /api/auth/password` ile şifresini değiştirir. `POST /api/auth/forgot`
-  kayıtlı e-postaya bir saatlik bağlantı yazar; `POST /api/auth/reset` yeni
-  şifreyi kaydeder. E-posta SMTP ortam değişkenleriyle gider.
+  `POST /api/auth/password` ile şifresini değiştirir. Kayıtta bir hatırlatma
+  kelimesi alır. `POST /api/auth/recover` bu kelimeyle yeni şifreyi kaydeder.
+  Kelime yoksa giriş yapmış kullanıcı `POST /api/auth/reminder` ile ekler.
   - Öğretmen: `POST /api/classrooms` ile sınıf oluşturur (katılım kodu döner),
     `GET /api/progress/students` **yalnızca kendi sınıflarındaki**
     öğrencilerin özet istatistiğini döner (bkz. aşağıdaki "Sınıf Modeli"

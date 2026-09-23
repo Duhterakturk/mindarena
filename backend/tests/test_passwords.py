@@ -38,34 +38,47 @@ def test_change_password_then_login(client, student):
     assert login.status_code == 200
 
 
-def test_forgot_unknown_email_stays_quiet(client, app):
-    resp = client.post("/api/auth/forgot", json={"email": "yok@example.com"})
-    assert resp.status_code == 200
-    assert app.config.get("LAST_RESET_TOKEN") is None
+def test_recover_rejects_unknown_email_and_wrong_word(client, student):
+    unknown = client.post(
+        "/api/auth/recover",
+        json={"email": "yok@example.com", "reminder": "okul", "password": "YeniSifre1"},
+    )
+    wrong = client.post(
+        "/api/auth/recover",
+        json={"email": "student@example.com", "reminder": "baska", "password": "YeniSifre1"},
+    )
+    assert unknown.status_code == 400
+    assert wrong.status_code == 400
+    assert unknown.get_json()["error"] == wrong.get_json()["error"]
 
 
-def test_reset_link_sets_a_new_password(client, student, app):
-    asked = client.post("/api/auth/forgot", json={"email": "student@example.com"})
-    assert asked.status_code == 200
-    token = app.config["LAST_RESET_TOKEN"]
-
+def test_recover_sets_a_new_password(client, student):
     reset = client.post(
-        "/api/auth/reset",
-        json={"token": token, "password": "YeniSifre1"},
+        "/api/auth/recover",
+        json={"email": "student@example.com", "reminder": "Okul", "password": "YeniSifre1"},
     )
     assert reset.status_code == 200
-
-    again = client.post(
-        "/api/auth/reset",
-        json={"token": token, "password": "BaskaSifre1"},
-    )
-    assert again.status_code == 400
 
     login = client.post(
         "/api/auth/login",
         json={"email": "student@example.com", "password": "YeniSifre1"},
     )
     assert login.status_code == 200
+
+
+def test_logged_in_user_can_save_a_reminder(client, student):
+    saved = client.post(
+        "/api/auth/reminder",
+        json={"current_password": "Test1234", "reminder": "İzmir"},
+        headers=auth_headers(student["token"]),
+    )
+    assert saved.status_code == 200
+
+    reset = client.post(
+        "/api/auth/recover",
+        json={"email": "student@example.com", "reminder": "izmir", "password": "YeniSifre1"},
+    )
+    assert reset.status_code == 200
 
 
 def _class_with_student(client, teacher, student):
