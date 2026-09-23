@@ -16,12 +16,15 @@ def test_get_game_by_slug(client):
 
 def test_display_names_describe_the_puzzle_without_branded_titles(client):
     stars = client.get("/api/games/yildiz-savaslari").get_json()
-    assert stars["name_tr"] == "Yıldız Dizilimi"
-    assert stars["name_en"] == "Star Placement"
+    assert stars["name_tr"] == "Yıldız Yerleşimi"
+    assert stars["name_en"] == "Star Places"
     fleet = client.get("/api/games/amiral-batti").get_json()
-    assert fleet["name_tr"] == "Gizli Filo"
+    assert fleet["name_tr"] == "Gizli Gemiler"
     cages = client.get("/api/games/kendoku").get_json()
-    assert cages["name_tr"] == "Dört İşlem"
+    assert cages["name_tr"] == "İşlem Kafesi"
+    logic = client.get("/api/games/metaforms").get_json()
+    assert logic["name_tr"] == "Mini Mantık"
+    assert "metaform" not in logic["name_tr"].lower()
 
 
 def test_get_unknown_game_returns_404(client):
