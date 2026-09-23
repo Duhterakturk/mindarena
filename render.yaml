@@ -31,9 +31,9 @@ services:
       - key: DATABASE_URL
         sync: false
       - key: CORS_ORIGINS
-        value: https://duhterakturk-mindarena.onrender.com
+        value: https://mindarena-app.onrender.com
       - key: PUBLIC_APP_URL
-        value: https://duhterakturk-mindarena.onrender.com
+        value: https://mindarena-app.onrender.com
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -46,7 +46,7 @@ services:
         sync: false
 
   - type: web
-    name: duhterakturk-mindarena
+    name: mindarena-app
     runtime: static
     rootDir: frontend
     buildCommand: npm install && npm run build

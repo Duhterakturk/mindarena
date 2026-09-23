@@ -281,10 +281,10 @@ kapanır ve skorlar silinir.
 3. [render.com](https://render.com) → **New** → **Blueprint** → bu repo.
    `DATABASE_URL` sorulunca Neon dizesini yapıştır.
 4. Blueprint `duhterakturk-mindarena-api` (Flask + bulmaca üretici) ve
-   `duhterakturk-mindarena` (site) servislerini kurar. İlk açılışta
+   `mindarena-app` (site) servislerini kurar. İlk açılışta
    tablolar ve oyun kataloğu otomatik yüklenir.
 
-Öğretmen ve veli şu adresi açar: `https://duhterakturk-mindarena.onrender.com`
+Öğretmen şu adresi açar: `https://mindarena-app.onrender.com`
 
 Ücretsiz API 15 dakika boş kalınca uyur. Sonraki giriş yaklaşık bir
 dakika sürer. Aynı anda çok kişi yeni bulmaca açarsa ücretsiz makine
