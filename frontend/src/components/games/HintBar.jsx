@@ -102,7 +102,7 @@ export default function HintBar({ slug }) {
           <p className="text-stone-600">{copy.example}</p>
         </div>
       )}
-      {note && <p className="mt-3 text-sm font-semibold text-ink">{note}</p>}
+      {note && <p className="mt-3 text-sm font-semibold">{note}</p>}
     </div>
   );
 }

@@ -16,7 +16,7 @@ export default function GamePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="play-room max-w-4xl mx-auto px-4 py-10">
       <HintBar slug={slug} />
       <Suspense fallback={<p>Yükleniyor...</p>}>
         <GameComponent />

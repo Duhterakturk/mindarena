@@ -3,10 +3,50 @@
 @tailwind utilities;
 
 body {
+  background-color: #0c0c0c;
+  color: #f4efe6;
+}
+
+input,
+select,
+textarea,
+.bg-white,
+.board-card,
+.bg-\[\#fffdf8\] {
+  color: #1e1a16;
+}
+
+.board-mode {
   background-color: #f3eee4;
   color: #1e1a16;
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 255, 255, 0.7), transparent 60%);
+}
+
+.text-slate-500,
+.text-slate-600,
+.text-stone-500,
+.text-stone-600 {
+  color: #d5cfc4;
+}
+
+.bg-white .text-slate-500,
+.bg-white.text-slate-500,
+.bg-white .text-slate-600,
+.bg-white.text-slate-600,
+.bg-white .text-stone-600,
+.board-card .text-slate-500,
+.board-card .text-slate-600,
+.board-card .text-stone-600,
+.bg-\[\#fffdf8\] .text-slate-500,
+.bg-\[\#fffdf8\] .text-slate-600,
+.bg-\[\#fffdf8\] .text-stone-600,
+.board-mode .text-slate-500,
+.board-mode .text-slate-600,
+.board-mode .text-stone-600,
+.bg-slate-50 .text-slate-500,
+.bg-slate-50.text-slate-500,
+.bg-slate-100 .text-slate-400,
+.bg-slate-100.text-slate-400 {
+  color: #57534e;
 }
 
 .page-enter {
@@ -171,35 +211,21 @@ body {
 }
 
 .home-desk {
+  position: relative;
   min-height: calc(100vh - 4rem);
   background: #0c0c0c;
+  overflow: hidden;
 }
 
-.home-shelf {
-  display: inline-block;
-  color: #1e1a16;
-  font-weight: 800;
-  font-size: 1.15rem;
-  padding: 0.35rem 0.9rem;
-  border-radius: 999px;
+.home-mark {
+  position: absolute;
+  animation: drift var(--dur, 12s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
 }
 
-.home-tile {
-  background: #fff;
-  border: 3px solid var(--tile);
-  border-radius: 20px;
-  box-shadow: 0 6px 0 var(--tile-deep);
-  transition: transform 140ms ease, box-shadow 140ms ease;
-}
-
-.home-tile:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 9px 0 var(--tile-deep);
-}
-
-.home-tile:active {
-  transform: translateY(4px);
-  box-shadow: 0 2px 0 var(--tile-deep);
+@keyframes drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(var(--rot, 0deg)); }
+  50% { transform: translate3d(0, -14px, 0) rotate(calc(var(--rot, 0deg) + 7deg)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -213,7 +239,7 @@ body {
   .badge-settle,
   .press-btn,
   .board-card,
-  .home-tile {
+  .home-mark {
     animation: none;
     transition: none;
   }

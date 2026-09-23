@@ -9,14 +9,7 @@
     "logout": "Çıkış Yap"
   },
   "home": {
-    "title": "On dokuz bulmaca, üç çeşit.",
-    "subtitle": "Sayı yazdığın, kare boyadığın ve bakıp seçtiğin oyunlar ayrı durur. Kolay herkese açık. Aynı oyundan beş kolay bitince orta, beş orta bitince zor açılır.",
-    "numbers": "Sayı yaz",
-    "numbers_help": "Kareye doğru rakamı koyarsın.",
-    "mark": "Kareyi boya",
-    "mark_help": "Doğru kareyi, çizgiyi ya da şekli işaretlersin.",
-    "look": "Bak ve seç",
-    "look_help": "Kısa turlarda doğru olanı bulursun."
+    "title": "On dokuz bulmaca."
   },
   "auth": {
     "email": "E-posta",
