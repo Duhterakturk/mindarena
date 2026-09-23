@@ -5,7 +5,7 @@ import { useGameText } from "../common/gameText";
 import { usePlayCopy } from "../common/playCopy";
 import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
-import { PENTOMINOES, orient } from "./shapes";
+import { PENTOMINOES, orient, placementAt } from "./shapes";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
 
 const PIECE_COLOR = ["bg-brand-500", "bg-amber-500", "bg-emerald-500", "bg-rose-500"];
@@ -92,11 +92,9 @@ export default function Pentominolar() {
     const name = pieces[selected];
     if (!name || placements.some((piece) => piece.name === name)) return;
     const shape = orient(PENTOMINOES[name], turns, flipped);
-    const [sr, sc] = shape[0];
-    const cells = shape.map(([rr, cc]) => [rr - sr + r, cc - sc + c]);
     const occupied = new Set(placements.flatMap((piece) => piece.cells.map(([rr, cc]) => `${rr}-${cc}`)));
-    const fits = cells.every(([rr, cc]) => regionSet.has(`${rr}-${cc}`) && !occupied.has(`${rr}-${cc}`));
-    if (!fits) {
+    const cells = placementAt(shape, r, c, regionSet, occupied);
+    if (!cells) {
       setNotice(play.noFit);
       return;
     }
@@ -167,7 +165,7 @@ export default function Pentominolar() {
                   active ? "border-brand-500 bg-brand-50" : "border-slate-200 bg-white",
                 ].join(" ")}
               >
-                <ShapePreview name={name} turns={active ? turns : 0} flipped={active ? flipped : false} anchor={active} />
+                <ShapePreview name={name} turns={active ? turns : 0} flipped={active ? flipped : false} />
                 <span className="text-[10px] font-semibold text-slate-500">{name}</span>
               </button>
             );

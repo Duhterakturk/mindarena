@@ -78,7 +78,7 @@
     "rotate": "Döndür",
     "flip": "Çevir",
     "pieces": "Parçalar",
-    "anchor": "Koyu kare, tıkladığın hücreye oturur. Dolu bir kareye basınca parça kalkar.",
+    "anchor": "Parçayı seç, döndür, sonra oturacağı bir kareye bas. Dolu kareye basınca parça kalkar.",
     "leaderboard": "En iyi skorlar",
     "noScores": "Bu oyunda henüz kayıtlı skor yok.",
     "points": "puan"

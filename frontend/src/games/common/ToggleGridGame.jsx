@@ -3,6 +3,7 @@ import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useApplyCellHint } from "./cellHint";
 import { useGameText } from "./gameText";
+import { pathArms } from "./pathValidation";
 import { usePlayCopy } from "./playCopy";
 
 const REGION_BG = [
@@ -16,6 +17,20 @@ const REGION_BG = [
   "bg-lime-50",
   "bg-fuchsia-50",
 ];
+
+function PathStroke({ row, col, marked, fixedCells }) {
+  const arms = pathArms(row, col, marked, fixedCells);
+  const alone = !arms.up && !arms.down && !arms.left && !arms.right;
+  return (
+    <span className="absolute inset-0">
+      {alone && <span className="absolute left-1/2 top-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white" />}
+      {arms.left && <span className="absolute left-0 top-1/2 h-1.5 w-1/2 -translate-y-1/2 bg-white" />}
+      {arms.right && <span className="absolute right-0 top-1/2 h-1.5 w-1/2 -translate-y-1/2 bg-white" />}
+      {arms.up && <span className="absolute left-1/2 top-0 h-1/2 w-1.5 -translate-x-1/2 bg-white" />}
+      {arms.down && <span className="absolute bottom-0 left-1/2 h-1/2 w-1.5 -translate-x-1/2 bg-white" />}
+    </span>
+  );
+}
 
 function cellSizeClass(gridWidth) {
   if (gridWidth >= 8) return "w-8 h-8 text-sm";
@@ -41,6 +56,7 @@ export default function ToggleGridGame({
   colClues,
   regionGrid,
   markSymbol = "●",
+  flowMarks = false,
   extra,
   onRegenerate,
   difficulty,
@@ -173,11 +189,11 @@ export default function ToggleGridGame({
                   onClick={() => toggleCell(r, c)}
                   className={[
                     cellSize,
-                    "flex items-center justify-center border border-slate-300 text-lg",
+                    "relative flex items-center justify-center border border-slate-300 text-lg",
                     isMarked ? "bg-brand-500 text-white" : `${regionClass} hover:bg-brand-50`,
                   ].join(" ")}
                 >
-                  {isMarked ? markSymbol : ""}
+                  {isMarked ? (flowMarks ? <PathStroke row={r} col={c} marked={marked} fixedCells={fixedCells} /> : markSymbol) : ""}
                 </button>
               );
             })}

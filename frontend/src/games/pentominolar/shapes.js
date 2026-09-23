@@ -38,3 +38,13 @@ export function orient(cells, turns, flipped) {
 export function randomTransform(cells) {
   return orient(cells, Math.floor(Math.random() * 4), Math.random() < 0.5);
 }
+
+// Tıklanan hücre, parçanın herhangi bir karesi olabilir. Sığan ilk yerleşimi döndürür.
+export function placementAt(shape, row, col, regionSet, occupied) {
+  for (const [sr, sc] of shape) {
+    const cells = shape.map(([r, c]) => [r - sr + row, c - sc + col]);
+    const fits = cells.every(([r, c]) => regionSet.has(`${r}-${c}`) && !occupied.has(`${r}-${c}`));
+    if (fits) return cells;
+  }
+  return null;
+}

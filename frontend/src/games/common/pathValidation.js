@@ -9,6 +9,17 @@
 // sayılmıyordu. Bu dosya, üretilen tek yol yerine "geçerli bir yol mu?"
 // sorusunu doğrudan geometriden hesaplayarak çözer.
 
+export function pathArms(row, col, marked, fixedCells) {
+  const nodes = new Set(marked);
+  for (const key of Object.keys(fixedCells)) nodes.add(key);
+  return {
+    up: nodes.has(`${row - 1}-${col}`),
+    down: nodes.has(`${row + 1}-${col}`),
+    left: nodes.has(`${row}-${col - 1}`),
+    right: nodes.has(`${row}-${col + 1}`),
+  };
+}
+
 function neighborsOf(key, nodeSet) {
   const [r, c] = key.split("-").map(Number);
   return [

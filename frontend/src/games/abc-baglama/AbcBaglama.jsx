@@ -17,7 +17,7 @@ export default function AbcBaglama() {
       cols={cols}
       fixedCells={fixedCells}
       validate={isConnectionPuzzleSolved}
-      markSymbol="—"
+      flowMarks
       onRegenerate={reload}
       difficulty={difficulty}
       onDifficultyChange={setDifficulty}

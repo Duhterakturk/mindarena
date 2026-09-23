@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { PENTOMINOES, randomTransform } from "./shapes";
+import { PENTOMINOES, placementAt, randomTransform } from "./shapes";
 
 function isConnected(cells) {
   const set = new Set(cells.map(([r, c]) => `${r}-${c}`));
@@ -30,6 +30,21 @@ describe("PENTOMINOES", () => {
       expect(cells.length).toBe(5);
       expect(isConnected(cells)).toBe(true);
     }
+  });
+});
+
+describe("placementAt", () => {
+  it("places a piece when the click is not the first cell of the shape", () => {
+    const shape = PENTOMINOES.P;
+    const region = new Set(shape.map(([r, c]) => `${r}-${c}`));
+    const cells = placementAt(shape, 2, 0, region, new Set());
+    expect(cells).toEqual(shape);
+  });
+
+  it("rejects a click the current rotation cannot cover", () => {
+    const shape = PENTOMINOES.I;
+    const region = new Set(["0-0", "0-1", "0-2", "0-3", "0-4"]);
+    expect(placementAt(shape, 0, 0, region, new Set())).toBeNull();
   });
 });
 

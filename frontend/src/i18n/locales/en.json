@@ -78,7 +78,7 @@
     "rotate": "Rotate",
     "flip": "Flip",
     "pieces": "Pieces",
-    "anchor": "The dark square lands on the cell you click. Click a filled cell to lift that piece.",
+    "anchor": "Pick a piece, rotate it, then click a cell it should cover. Click a filled cell to lift that piece.",
     "leaderboard": "Best scores",
     "noScores": "No saved scores for this game yet.",
     "points": "points"

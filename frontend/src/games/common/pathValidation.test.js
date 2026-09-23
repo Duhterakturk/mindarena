@@ -1,5 +1,16 @@
 import { describe, it, expect } from "vitest";
-import { isConnectionPuzzleSolved, isSequentialPathSolved } from "./pathValidation";
+import { isConnectionPuzzleSolved, isSequentialPathSolved, pathArms } from "./pathValidation";
+
+describe("pathArms", () => {
+  it("dikine komşuda çizgiyi dik tutar", () => {
+    expect(pathArms(1, 0, new Set(["1-0"]), { "0-0": "A", "2-0": "A" })).toEqual({
+      up: true,
+      down: true,
+      left: false,
+      right: false,
+    });
+  });
+});
 
 describe("isConnectionPuzzleSolved (ABC Bağlama)", () => {
   const fixedCells = { "0-0": "A", "2-2": "A" };
