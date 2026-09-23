@@ -30,6 +30,7 @@ class User(db.Model):
     )
 
     classroom_id = db.Column(db.Integer, db.ForeignKey("classrooms.id"), nullable=True)
+    hint_balance = db.Column(db.Integer, nullable=False, default=3, server_default="3")
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -64,5 +65,6 @@ class User(db.Model):
             "parent_id": self.parent_id,
             "classroom_id": self.classroom_id,
             "has_reminder": bool(self.reminder_hash),
+            "hint_balance": self.hint_balance,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

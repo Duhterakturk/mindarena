@@ -47,6 +47,8 @@
     "title": "Games",
     "play": "Play",
     "min_grade": "Min. Grade",
+    "how": "How to play",
+    "close": "Close",
     "loadError": "Games could not be loaded. Is the backend running?",
     "waking": "The server was asleep and is waking up. On a phone this can take a minute."
   },

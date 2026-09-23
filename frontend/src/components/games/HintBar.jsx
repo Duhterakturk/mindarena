@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { openCellHint } from "../../api/games";
+import HowTo from "./HowTo";
 import { currentHintFocus, publishCellHint } from "../../games/common/cellHint";
 import { hintFor } from "../../games/hints";
 
@@ -62,9 +63,8 @@ export default function HintBar({ slug }) {
   const { i18n } = useTranslation();
   const tr = !i18n.language.startsWith("en");
   const copy = hintFor(slug, tr ? "tr" : "en");
-  const [open, setOpen] = useState(false);
   const [attempt, setAttempt] = useState(null);
-  const [used, setUsed] = useState(false);
+  const [balance, setBalance] = useState(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
 
@@ -72,64 +72,53 @@ export default function HintBar({ slug }) {
     function handle(event) {
       const detail = event.detail;
       setAttempt(detail);
-      setUsed(Boolean(detail?.hint));
+      if (typeof detail?.hint_balance === "number") setBalance(detail.hint_balance);
       setNote(detail?.hint ? describe(detail.hint, tr) : "");
     }
+    function handleBalance(event) {
+      if (typeof event.detail?.balance === "number") setBalance(event.detail.balance);
+    }
     window.addEventListener("mindarena:attempt", handle);
-    return () => window.removeEventListener("mindarena:attempt", handle);
+    window.addEventListener("mindarena:hints", handleBalance);
+    return () => {
+      window.removeEventListener("mindarena:attempt", handle);
+      window.removeEventListener("mindarena:hints", handleBalance);
+    };
   }, [tr]);
 
   async function revealCell() {
-    if (!attempt?.id || used || busy) return;
+    if (!attempt?.id || busy || balance === 0) return;
     setBusy(true);
     try {
       const data = await openCellHint(attempt.id, currentHintFocus());
-      publishCellHint(data.hint);
-      setUsed(true);
+      publishCellHint(data.hint, data.hint_balance);
       setNote(describe(data.hint, tr));
     } catch (error) {
       const body = error.response?.data;
-      if (error.response?.status === 409 && body?.hint) {
-        publishCellHint(body.hint);
-        setUsed(true);
-        setNote(describe(body.hint, tr));
-      } else {
-        setNote(body?.error || (tr ? "İpucu şu an yok." : "A hint is not available just now."));
-      }
+      if (typeof body?.hint_balance === "number") setBalance(body.hint_balance);
+      setNote(body?.error || (tr ? "İpucu şu an yok." : "A hint is not available just now."));
     } finally {
       setBusy(false);
     }
   }
 
   if (!copy) return null;
+  const hintLabel = balance == null ? (tr ? "İpucu" : "Hint") : (tr ? `İpucu · ${balance}` : `Hint · ${balance}`);
 
   return (
     <div className="mb-6">
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          className="press-btn text-sm"
-          style={{ padding: "0.55rem 1.1rem" }}
-        >
-          {open ? (tr ? "Gizle" : "Hide") : (tr ? "Nasıl düşünülür" : "How to think")}
-        </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <HowTo slug={slug} />
         <button
           type="button"
           onClick={revealCell}
-          disabled={!attempt?.id || used || busy}
+          disabled={!attempt?.id || busy || balance === 0}
           className="press-btn text-sm disabled:opacity-50"
           style={{ padding: "0.55rem 1.1rem" }}
         >
-          {used ? (tr ? "İpucu verildi" : "Hint used") : (tr ? "İpucu" : "Hint")}
+          {hintLabel}
         </button>
       </div>
-      {open && (
-        <div className="card-rise mt-3 bg-[#fffdf8] border border-line rounded-2xl p-4 text-sm text-ink">
-          <p className="font-bold mb-1">{copy.hint}</p>
-          <p className="text-stone-600">{copy.example}</p>
-        </div>
-      )}
       {note && <p className="mt-3 text-sm font-semibold">{note}</p>}
     </div>
   );

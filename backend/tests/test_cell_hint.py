@@ -13,11 +13,12 @@ def _open(client, token, slug):
     )
 
 
-def test_one_cell_stays_the_same_cell(client, student, app):
+def test_hints_spend_a_balance_and_a_solve_earns_one(client, student, app):
     opened = _open(client, student["token"], "sudoku")
     assert opened.status_code == 201
     body = opened.get_json()
     assert body["hint"] is None
+    assert body["hint_balance"] == 3
     assert '"solution"' not in json.dumps(body)
     attempt_id = body["id"]
 
@@ -32,14 +33,37 @@ def test_one_cell_stays_the_same_cell(client, student, app):
     first = client.post(f"/api/puzzles/{attempt_id}/cell", headers=headers)
     assert first.status_code == 200, first.get_json()
     hint = first.get_json()["hint"]
+    assert first.get_json()["hint_balance"] == 2
     assert hint["kind"] == "fill"
     assert set(hint) <= {"kind", "row", "col", "value"}
     assert public["givens"][hint["row"]][hint["col"]] == 0
     assert solution[hint["row"]][hint["col"]] == hint["value"]
 
     second = client.post(f"/api/puzzles/{attempt_id}/cell", headers=headers)
-    assert second.status_code == 409
-    assert second.get_json()["hint"] == hint
+    assert second.status_code == 200, second.get_json()
+    assert second.get_json()["hint_balance"] == 1
+    assert (second.get_json()["hint"]["row"], second.get_json()["hint"]["col"]) != (hint["row"], hint["col"])
+
+    third = client.post(f"/api/puzzles/{attempt_id}/cell", headers=headers)
+    assert third.status_code == 200
+    assert third.get_json()["hint_balance"] == 0
+    blocked = client.post(f"/api/puzzles/{attempt_id}/cell", headers=headers)
+    assert blocked.status_code == 409
+
+    checked = client.post(
+        f"/api/puzzles/{attempt_id}/check",
+        headers=headers,
+        json={"answer": solution},
+    )
+    assert checked.status_code == 200
+    assert checked.get_json()["correct"] is True
+    assert checked.get_json()["hint_balance"] == 1
+    again = client.post(
+        f"/api/puzzles/{attempt_id}/check",
+        headers=headers,
+        json={"answer": solution},
+    )
+    assert again.get_json()["hint_balance"] == 1
 
 
 def test_cit_hint_is_one_edge(client, student):

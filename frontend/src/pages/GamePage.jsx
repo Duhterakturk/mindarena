@@ -16,11 +16,13 @@ export default function GamePage() {
   }
 
   return (
-    <div className="play-room max-w-4xl mx-auto px-4 py-10">
-      <HintBar slug={slug} />
-      <Suspense fallback={<p>Yükleniyor...</p>}>
-        <GameComponent />
-      </Suspense>
+    <div className="play-room mx-auto max-w-5xl px-4 py-10">
+      <div className="play-scale">
+        <HintBar slug={slug} />
+        <Suspense fallback={<p>Yükleniyor...</p>}>
+          <GameComponent />
+        </Suspense>
+      </div>
     </div>
   );
 }

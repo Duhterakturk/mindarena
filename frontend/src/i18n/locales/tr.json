@@ -47,6 +47,8 @@
     "title": "Oyunlar",
     "play": "Oyna",
     "min_grade": "Min. Sınıf",
+    "how": "Nasıl oynanır",
+    "close": "Kapat",
     "loadError": "Oyunlar yüklenemedi. Backend çalışıyor mu?",
     "waking": "Sunucu uyuyormuş, şimdi uyanıyor. Telefonda bu bir dakika sürebilir."
   },

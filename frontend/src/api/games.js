@@ -21,8 +21,15 @@ export async function openPuzzle(slug, difficulty = "easy") {
   });
 }
 
+function publishHintBalance(data) {
+  if (typeof data?.hint_balance === "number") {
+    window.dispatchEvent(new CustomEvent("mindarena:hints", { detail: { balance: data.hint_balance } }));
+  }
+}
+
 export async function checkPuzzle(attemptId, answer) {
   const { data } = await apiClient.post(`/puzzles/${attemptId}/check`, { answer });
+  publishHintBalance(data);
   return data.correct;
 }
 
@@ -38,5 +45,6 @@ export async function submitScore(payload) {
     window.dispatchEvent(new CustomEvent(BADGES_EARNED_EVENT, { detail: data.new_badges }));
   }
   window.dispatchEvent(new CustomEvent("mindarena:score-saved"));
+  publishHintBalance(data);
   return data;
 }

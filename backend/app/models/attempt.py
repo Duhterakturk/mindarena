@@ -17,6 +17,7 @@ class PuzzleAttempt(db.Model):
     started_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     consumed_at = db.Column(db.DateTime, nullable=True)
     hint_json = db.Column(db.Text, nullable=True)
+    hint_earned = db.Column(db.Boolean, nullable=False, default=False, server_default="0")
 
     game = db.relationship("Game")
 

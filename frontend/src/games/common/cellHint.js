@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 
 let currentAttempt = null;
 let currentHint = null;
+let currentHints = [];
 let hintFocus = null;
 
 export function publishHintFocus(round) {
@@ -14,26 +15,41 @@ export function currentHintFocus() {
 
 export function publishAttempt(issue) {
   hintFocus = null;
-  currentAttempt = issue ? { id: issue.id, hint: issue.hint || null } : null;
-  currentHint = issue?.hint || null;
+  currentHints = Array.isArray(issue?.hints) ? issue.hints.filter(Boolean) : [];
+  if (!currentHints.length && issue?.hint) currentHints = [issue.hint];
+  currentHint = currentHints[currentHints.length - 1] || null;
+  currentAttempt = issue
+    ? { id: issue.id, hint: currentHint, hints: currentHints, hint_balance: issue.hint_balance ?? null }
+    : null;
   window.dispatchEvent(new CustomEvent("mindarena:attempt", { detail: currentAttempt }));
-  if (currentHint) {
-    window.dispatchEvent(new CustomEvent("mindarena:cell-hint", { detail: currentHint }));
+  if (typeof issue?.hint_balance === "number") {
+    window.dispatchEvent(new CustomEvent("mindarena:hints", { detail: { balance: issue.hint_balance } }));
   }
 }
 
-export function publishCellHint(hint) {
+export function publishCellHint(hint, balance) {
+  if (hint) currentHints = [...currentHints, hint];
   currentHint = hint;
-  if (currentAttempt) currentAttempt = { ...currentAttempt, hint };
+  if (currentAttempt) {
+    currentAttempt = {
+      ...currentAttempt,
+      hint,
+      hints: currentHints,
+      hint_balance: typeof balance === "number" ? balance : currentAttempt.hint_balance,
+    };
+  }
   window.dispatchEvent(new CustomEvent("mindarena:attempt", { detail: currentAttempt }));
-  window.dispatchEvent(new CustomEvent("mindarena:cell-hint", { detail: hint }));
+  if (hint) window.dispatchEvent(new CustomEvent("mindarena:cell-hint", { detail: hint }));
+  if (typeof balance === "number") {
+    window.dispatchEvent(new CustomEvent("mindarena:hints", { detail: { balance } }));
+  }
 }
 
 export function useApplyCellHint(token, apply) {
   const ref = useRef(apply);
   ref.current = apply;
   useEffect(() => {
-    if (currentHint) ref.current(currentHint);
+    currentHints.forEach((hint) => ref.current(hint));
     function handle(event) {
       if (event.detail) ref.current(event.detail);
     }

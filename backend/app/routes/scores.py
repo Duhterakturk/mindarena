@@ -7,6 +7,7 @@ from app.extensions import db
 from app.models import Score, Game, PuzzleAttempt, User, UserRole, Classroom
 from app.services.badges import check_and_award_badges
 from app.services.grading import GradeError, grade
+from app.services.hint_bank import balance_of, earn_once
 
 scores_bp = Blueprint("scores", __name__, url_prefix="/api/scores")
 
@@ -54,6 +55,7 @@ def submit_score():
         )
     attempt.consumed_at = datetime.utcnow()
     db.session.add(score)
+    hint_balance = earn_once(attempt) if score.completed else balance_of(user_id)
     db.session.commit()
 
     new_badges = check_and_award_badges(user_id) if score.completed else []
@@ -61,6 +63,7 @@ def submit_score():
     return jsonify({
         "score": score.to_dict(),
         "new_badges": [b.to_dict() for b in new_badges],
+        "hint_balance": hint_balance,
     }), 201
 
 
