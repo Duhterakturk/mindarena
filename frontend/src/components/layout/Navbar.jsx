@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
 
@@ -7,6 +7,7 @@ export default function Navbar() {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const onHome = useLocation().pathname === "/";
   const [menuOpen, setMenuOpen] = useState(false);
 
   function toggleLanguage() {
@@ -60,7 +61,7 @@ export default function Navbar() {
 
       <button
         onClick={toggleLanguage}
-        className="border border-slate-200 rounded-lg px-2 py-1 text-xs uppercase mt-1 sm:mt-0 w-full sm:w-auto"
+        className={`border rounded-lg px-2 py-1 text-xs uppercase mt-1 sm:mt-0 w-full sm:w-auto ${onHome ? "border-white/30" : "border-slate-200"}`}
       >
         {i18n.language === "tr" ? "EN" : "TR"}
       </button>
@@ -68,9 +69,9 @@ export default function Navbar() {
   );
 
   return (
-    <nav className="bg-paper/90 backdrop-blur sticky top-0 z-10 border-b border-line">
+    <nav className={onHome ? "bg-black sticky top-0 z-10 border-b border-white/10 text-white" : "bg-paper/90 backdrop-blur sticky top-0 z-10 border-b border-line"}>
       <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-        <Link to="/" className="font-display text-2xl font-semibold text-ink" onClick={() => setMenuOpen(false)}>
+        <Link to="/" className={`font-display text-2xl font-semibold ${onHome ? "text-white" : "text-ink"}`} onClick={() => setMenuOpen(false)}>
           {t("app.name")}
         </Link>
 
@@ -83,7 +84,7 @@ export default function Navbar() {
           onClick={() => setMenuOpen((open) => !open)}
           aria-label="Menüyü aç/kapat"
           aria-expanded={menuOpen}
-          className="sm:hidden p-2 -mr-2 text-slate-600"
+          className={`sm:hidden p-2 -mr-2 ${onHome ? "text-white" : "text-slate-600"}`}
         >
           {menuOpen ? (
             <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">

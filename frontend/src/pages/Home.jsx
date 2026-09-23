@@ -53,10 +53,10 @@ export default function Home() {
   return (
     <div className="home-desk">
       <section className="max-w-3xl mx-auto px-4 pt-12 pb-2 text-center">
-        <h1 className="font-display text-4xl sm:text-6xl font-semibold text-ink leading-[1.05] mb-4 text-balance">
+        <h1 className="font-display text-4xl sm:text-6xl font-semibold text-white leading-[1.05] mb-4 text-balance">
           {t("home.title")}
         </h1>
-        <p className="text-base sm:text-lg text-ink/80 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-white/80 max-w-2xl mx-auto leading-relaxed">
           {t("home.subtitle")}
         </p>
       </section>
@@ -70,7 +70,7 @@ export default function Home() {
             >
               {t(`home.${shelf.id}`)}
             </h2>
-            <p className="text-ink/80 font-semibold mt-3 mb-4">{t(`home.${shelf.id}_help`)}</p>
+            <p className="text-white/80 font-semibold mt-3 mb-4">{t(`home.${shelf.id}_help`)}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
               {shelf.slugs.map((slug, index) => {
                 const visual = getGameVisual(slug);

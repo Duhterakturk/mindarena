@@ -172,11 +172,7 @@ body {
 
 .home-desk {
   min-height: calc(100vh - 4rem);
-  background:
-    radial-gradient(1100px 560px at -8% -12%, #2eb0ff 0%, transparent 62%),
-    radial-gradient(980px 520px at 108% -8%, #ffd000 0%, transparent 60%),
-    radial-gradient(860px 520px at 88% 112%, #ff4f9a 0%, transparent 58%),
-    #ffe14a;
+  background: #0c0c0c;
 }
 
 .home-shelf {
