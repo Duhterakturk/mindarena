@@ -1445,28 +1445,62 @@ def _grade_metaforms(_difficulty, puzzle, answer):
             raise GradeError("İpucu tutmuyor")
 
 
+def _form_code(shape, color):
+    color_code = {"red": "R", "blue": "B", "yellow": "Y"}.get(color)
+    shape_code = {"square": "S", "triangle": "T", "circle": "C"}.get(shape)
+    if not color_code or not shape_code:
+        return None
+    return color_code + shape_code
+
+
+def _form_matches(code, subject):
+    if not code or not isinstance(subject, str) or len(subject) != 2:
+        return False
+    if subject.startswith("?"):
+        return code[1] == subject[1]
+    if subject.endswith("?"):
+        return code[0] == subject[0]
+    return code == subject
+
+
 def _form_clue_ok(placed, clue):
-    if not isinstance(clue, dict) or clue.get("sign") not in ("yes", "no"):
+    if not isinstance(clue, dict):
         return False
-    shape, color = clue.get("shape"), clue.get("color")
-    cells = clue.get("cells")
-    if shape is not None and shape not in FORM_SHAPES:
+    subject = clue.get("subject")
+    pattern = clue.get("pattern")
+    if not isinstance(subject, str) or not isinstance(pattern, list) or not pattern:
         return False
-    if color is not None and color not in FORM_COLORS:
-        return False
-    if shape is None and color is None:
-        return False
-    if not isinstance(cells, list) or not cells:
-        return False
-    region = set()
-    for cell in cells:
-        if cell not in FORM_CELLS:
+    grid = {(cell): _form_code(shape, color) for shape, color, cell in placed}
+    height = len(pattern)
+    width = max((len(row) if isinstance(row, list) else 0) for row in pattern)
+    cells = []
+    for row_index, row in enumerate(pattern):
+        if not isinstance(row, list):
             return False
-        region.add(cell)
-    matches = [cell for piece_shape, piece_color, cell in placed if (shape is None or piece_shape == shape) and (color is None or piece_color == color)]
-    inside = sum(1 for cell in matches if cell in region)
-    if shape and color:
-        return inside == (1 if clue["sign"] == "yes" else 0)
-    if clue["sign"] == "yes":
-        return inside >= 1
-    return inside == 0
+        for col_index, token in enumerate(row):
+            if token != "-":
+                cells.append((row_index, col_index, token))
+    if height > 3 or width > 3 or not cells:
+        return False
+    positive = any(token == "#" for _row, _col, token in cells)
+
+    def piece_at(origin_row, origin_col, row, col):
+        return grid.get(f"{origin_row + row}-{origin_col + col}")
+
+    if positive:
+        for origin_row in range(4 - height):
+            for origin_col in range(4 - width):
+                if all(
+                    token in (".", "X") or _form_matches(piece_at(origin_row, origin_col, row, col), subject if token == "#" else token)
+                    for row, col, token in cells
+                ):
+                    return True
+        return False
+    for origin_row in range(4 - height):
+        for origin_col in range(4 - width):
+            symbols = [(row, col, token) for row, col, token in cells if token not in (".", "X", "#")]
+            if not all(_form_matches(piece_at(origin_row, origin_col, row, col), token) for row, col, token in symbols):
+                continue
+            if any(token == "X" and _form_matches(piece_at(origin_row, origin_col, row, col), subject) for row, col, token in cells):
+                return False
+    return True

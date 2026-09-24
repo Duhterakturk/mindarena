@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { checkPuzzle, submitScore } from "../../api/games";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
@@ -7,7 +7,7 @@ import { usePlayCopy } from "../common/playCopy";
 import { useApplyCellHint } from "../common/cellHint";
 import { PuzzlePending, useIssuedPuzzle } from "../common/useIssuedPuzzle";
 import { useStartingDifficulty } from "../common/useStartingDifficulty";
-import { COLORS, SHAPES } from "./puzzles";
+import { COLORS, SHAPES, clueStatus, isValid, pieceCode, solve } from "./puzzles";
 
 const INK = {
   red: "#e11d48",
@@ -50,24 +50,51 @@ function Glyph({ shape, color, size = 28 }) {
   );
 }
 
-function ClueCard({ clue }) {
-  const yes = clue.sign === "yes";
-  const region = new Set(clue.cells || []);
-  const inside = yes && region.size === 1;
+function SubjectMark({ subject, size = 26 }) {
+  if (!subject) return null;
+  if (subject.endsWith("?")) return <Pencil color={subject[0]} size={size} />;
+  if (subject.startsWith("?")) return <Glyph shape={SHAPE_OF[subject[1]]} size={size} />;
+  return <Glyph shape={SHAPE_OF[subject[1]]} color={COLOR_OF[subject[0]]} size={size} />;
+}
+
+function Pencil({ color, size }) {
+  const ink = color === "R" ? INK.red : color === "B" ? INK.blue : INK.yellow;
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <polygon points="16,3 20,10 12,10" fill={ink} />
+      <rect x="12" y="10" width="8" height="14" fill={ink} />
+      <rect x="12" y="24" width="8" height="4" fill="#1e1a16" />
+    </svg>
+  );
+}
+
+const COLOR_OF = { R: "red", B: "blue", Y: "yellow" };
+const SHAPE_OF = { S: "square", T: "triangle", C: "circle" };
+
+function PatternCell({ token }) {
+  if (token === "-") return <div className="h-4 w-4" />;
+  if (token === "#") return <div className="h-4 w-4 clue-hatch" />;
+  if (token === ".") return <div className="h-4 w-4 border border-slate-300 bg-white" />;
+  if (token === "X") {
+    return <div className="flex h-4 w-4 items-center justify-center border border-slate-300 bg-white text-[11px] font-bold leading-none text-rose-600">✕</div>;
+  }
+  return (
+    <div className="flex h-4 w-4 items-center justify-center border border-slate-300 bg-white">
+      <SubjectMark subject={token} size={12} />
+    </div>
+  );
+}
+
+function ClueCard({ clue, status }) {
+  const mark = status === "ok" ? "bg-emerald-500" : status === "bad" ? "bg-rose-500" : "bg-slate-300";
   return (
     <div className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 py-1.5">
-      {!inside && <Glyph shape={clue.shape} color={clue.color} size={26} />}
-      <div className="grid grid-cols-3 gap-px bg-slate-300 p-px">
-        {Array.from({ length: 9 }, (_, index) => {
-          const key = `${Math.floor(index / 3)}-${index % 3}`;
-          const on = region.has(key);
-          return (
-            <div key={key} className={`relative flex h-4 w-4 items-center justify-center ${yes && on && !inside ? "clue-hatch" : "bg-white"}`}>
-              {inside && on ? <Glyph shape={clue.shape} color={clue.color} size={14} /> : null}
-              {on && !yes ? <span className="text-[11px] font-bold leading-none text-rose-600">✕</span> : null}
-            </div>
-          );
-        })}
+      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${mark}`} />
+      <SubjectMark subject={clue.subject} />
+      <div className="grid gap-px" style={{ gridTemplateColumns: `repeat(${Math.max(...clue.pattern.map((row) => row.length))}, 1rem)` }}>
+        {clue.pattern.flatMap((row, rowIndex) => row.map((token, colIndex) => (
+          <PatternCell key={`${rowIndex}-${colIndex}`} token={token} />
+        )))}
       </div>
     </div>
   );
@@ -84,7 +111,9 @@ function PieceTray({ pieces, placed, selected, setSelected, label }) {
           <button
             key={`${piece.shape}-${piece.color}`}
             type="button"
+            draggable={!used}
             disabled={used}
+            onDragStart={() => { dragPiece.current = piece; setSelected(piece); }}
             onClick={() => setSelected(active ? null : piece)}
             className={[
               "flex h-11 w-11 items-center justify-center rounded-lg border bg-white",
@@ -113,6 +142,7 @@ export default function Metaforms() {
   const attemptId = issue?.id;
   const [board, setBoard] = useState(emptyBoard);
   const [selected, setSelected] = useState(null);
+  const dragPiece = useRef(null);
   const [hintCell, setHintCell] = useState(null);
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
@@ -164,7 +194,8 @@ export default function Metaforms() {
     if (status === "correct" || status === "submitted") return;
     const next = board.map((line) => line.slice());
     const current = next[row][col];
-    if (!selected) {
+    const piece = selected || dragPiece.current;
+    if (!piece) {
       if (!current) return;
       next[row][col] = null;
       setSelected(current);
@@ -174,11 +205,12 @@ export default function Metaforms() {
     }
     for (let r = 0; r < 3; r += 1) {
       for (let c = 0; c < 3; c += 1) {
-        if (samePiece(next[r][c], selected)) next[r][c] = null;
+        if (samePiece(next[r][c], piece)) next[r][c] = null;
       }
     }
-    const displaced = current && !samePiece(current, selected) ? current : null;
-    next[row][col] = selected;
+    const displaced = current && !samePiece(current, piece) ? current : null;
+    next[row][col] = piece;
+    dragPiece.current = null;
     setSelected(displaced);
     setBoard(next);
     setStatus("playing");
@@ -205,11 +237,16 @@ export default function Metaforms() {
     }
   }
 
+  const solutions = useMemo(() => (clues.length ? solve(clues) : []), [clues]);
+
   if (phase !== "ready") return <PuzzlePending phase={phase} />;
   if (clues.length === 0) return <PuzzlePending phase="error" />;
 
   const placed = new Set(board.flat().filter(Boolean).map((piece) => `${piece.shape}:${piece.color}`));
   const tray = SHAPES.flatMap((shape) => COLORS.map((color) => ({ shape, color })));
+  const codes = board.map((row) => row.map((piece) => pieceCode(piece)));
+  const marks = clues.map((clue) => clueStatus(codes, clue));
+  const solved = board.flat().filter(Boolean).length === 9 && isValid(codes, clues);
 
   return (
     <div className="flex flex-col items-center">
@@ -220,7 +257,7 @@ export default function Metaforms() {
 
       <div className="mb-4 flex w-full max-w-3xl flex-wrap justify-center gap-2">
         {clues.map((clue, index) => (
-          <ClueCard key={`${clue.sign}-${clue.shape}-${clue.color}-${index}`} clue={clue} />
+          <ClueCard key={`${clue.subject}-${index}`} clue={clue} status={marks[index]} />
         ))}
       </div>
 
@@ -233,6 +270,17 @@ export default function Metaforms() {
               <button
                 key={key}
                 type="button"
+                draggable={Boolean(piece)}
+                onDragStart={(event) => {
+                  event.dataTransfer.setData("text/plain", key);
+                  dragPiece.current = piece;
+                  setSelected(piece);
+                }}
+                onDragOver={(event) => event.preventDefault()}
+                onDrop={(event) => {
+                  event.preventDefault();
+                  place(rowIndex, colIndex);
+                }}
                 onClick={() => place(rowIndex, colIndex)}
                 className={`flex h-14 w-14 items-center justify-center border border-slate-300 bg-white sm:h-16 sm:w-16 ${hintCell === key ? "ring-4 ring-[#2461f7] ring-inset" : ""}`}
               >
@@ -271,6 +319,8 @@ export default function Metaforms() {
         )}
       </div>
 
+      {solutions.length !== 1 && <p className="text-rose-600 mt-3">Geliştirici uyarısı: bu bulmacanın {solutions.length} çözümü var.</p>}
+      {solved && <p className="play-correct text-emerald-600 mt-3 text-lg font-semibold">Tebrikler</p>}
       {status === "correct" && <p className="play-correct text-emerald-600 mt-3">{play.correct}</p>}
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
