@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
@@ -79,6 +79,64 @@ function traverse(fromKey, toKey) {
   return steps;
 }
 
+const HitGrid = memo(function HitGrid({ size, cell, fixed, shake, downRef }) {
+  return (
+    <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)`, gridTemplateRows: `repeat(${size}, ${cell}px)` }}>
+      {Array.from({ length: size * size }, (_, index) => {
+        const row = Math.floor(index / size);
+        const col = index % size;
+        const key = `${row}-${col}`;
+        return (
+          <button
+            key={key}
+            type="button"
+            data-cell={key}
+            aria-label={fixed[key] || key}
+            onPointerDown={(event) => downRef.current?.(event, key)}
+            className="border border-slate-300 bg-transparent touch-none"
+            style={{ width: cell, height: cell, animation: shake === key ? "abc-shake 180ms linear" : undefined }}
+          />
+        );
+      })}
+    </div>
+  );
+});
+
+const LetterGrid = memo(function LetterGrid({ size, cell, fixed, selected }) {
+  const mark = Math.round(cell * 0.7);
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 z-20 grid"
+      style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)`, gridTemplateRows: `repeat(${size}, ${cell}px)` }}
+    >
+      {Array.from({ length: size * size }, (_, index) => {
+        const key = `${Math.floor(index / size)}-${index % size}`;
+        const letter = fixed[key];
+        const active = letter && selected === letter;
+        return (
+          <div key={index} className="flex items-center justify-center" style={{ width: cell, height: cell }}>
+            {letter && (
+              <span
+                data-mark={key}
+                className="flex items-center justify-center rounded-full text-sm font-bold text-white"
+                style={{
+                  width: mark,
+                  height: mark,
+                  background: COLOR[letter],
+                  transform: active ? "scale(1.15)" : undefined,
+                  boxShadow: active ? `0 0 0 3px #fff, 0 0 0 5px ${COLOR[letter]}` : undefined,
+                }}
+              >
+                {letter}
+              </span>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+});
+
 function cellSize(boardSize) {
   if (!boardSize || typeof window === "undefined") return 44;
   return Math.floor(Math.min(56, (window.innerWidth - 32) / boardSize));
@@ -105,11 +163,21 @@ export default function AbcBaglama() {
   const pointer = useRef(null);
   const pathsRef = useRef(paths);
   const boardRef = useRef(null);
-  pathsRef.current = paths;
+  const rubberRef = useRef(null);
+  const downRef = useRef(null);
+  const frameRef = useRef(0);
+  const queuedRef = useRef(null);
+  const checkedSig = useRef("");
+  const sizeRef = useRef(0);
+  const cellRef = useRef(44);
+  const fixedRef = useRef({});
 
   const fixed = puzzle?.fixedCells || {};
   const size = puzzle?.rows || 0;
-  const letters = [...new Set(Object.values(fixed))].sort();
+  const letters = useMemo(() => [...new Set(Object.values(fixed))].sort(), [fixed]);
+  sizeRef.current = size;
+  cellRef.current = cell;
+  fixedRef.current = fixed;
 
   useEffect(() => {
     if (!size) return undefined;
@@ -121,7 +189,9 @@ export default function AbcBaglama() {
 
   useEffect(() => {
     if (!attemptId) return undefined;
+    pathsRef.current = {};
     setPaths({});
+    checkedSig.current = "";
     setSelected(null);
     setInk(null);
     setStatus("playing");
@@ -134,36 +204,65 @@ export default function AbcBaglama() {
 
   useApplyCellHint(attemptId, (hint) => {
     if (hint.kind !== "marks" || !hint.label || !Array.isArray(hint.cells)) return;
-    setPaths((prev) => ({ ...prev, [hint.label]: hint.cells.map(String) }));
+    const next = { ...pathsRef.current, [hint.label]: hint.cells.map(String) };
+    pathsRef.current = next;
+    setPaths(next);
     setStatus("playing");
     setNote("");
   });
 
-  function endsOf(letter) {
-    return Object.entries(fixed).filter(([, value]) => value === letter).map(([key]) => key);
-  }
+  const ends = useMemo(() => {
+    const map = {};
+    for (const [key, letter] of Object.entries(fixed)) (map[letter] ||= []).push(key);
+    return map;
+  }, [fixed]);
 
-  function linkedCount() {
-    return letters.filter((letter) => {
-      const path = paths[letter] || [];
-      const ends = endsOf(letter);
-      return path.length >= 2 && ends.includes(path[0]) && ends.includes(path[path.length - 1]) && path[0] !== path[path.length - 1];
-    }).length;
-  }
+  const owners = useMemo(() => {
+    const map = new Map();
+    for (const [letter, path] of Object.entries(paths)) {
+      path.forEach((key, index) => map.set(key, { letter, index }));
+    }
+    return map;
+  }, [paths]);
 
-  function filledCount() {
-    return new Set(Object.values(paths).flat()).size;
-  }
+  const linked = useMemo(() => letters.filter((letter) => {
+    const path = paths[letter] || [];
+    const pair = ends[letter] || [];
+    return path.length >= 2 && pair.includes(path[0]) && pair.includes(path[path.length - 1]) && path[0] !== path[path.length - 1];
+  }).length, [letters, paths, ends]);
+
+  const filled = useMemo(() => new Set(Object.values(paths).flat()).size, [paths]);
 
   function reachedMate(letter, path) {
     if (!path || path.length < 2) return false;
-    const ends = endsOf(letter);
-    return ends.includes(path[0]) && ends.includes(path[path.length - 1]) && path[0] !== path[path.length - 1];
+    const pair = ends[letter] || [];
+    return pair.includes(path[0]) && pair.includes(path[path.length - 1]) && path[0] !== path[path.length - 1];
   }
 
   function writePaths(next) {
     pathsRef.current = next;
+    if (pointer.current?.drawing) {
+      queuedRef.current = next;
+      if (frameRef.current) return;
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = 0;
+        setPaths(queuedRef.current);
+      });
+      return;
+    }
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+    }
     setPaths(next);
+  }
+
+  function flushPaths() {
+    if (frameRef.current) {
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
+    }
+    setPaths(pathsRef.current);
   }
 
   function clickCell(key) {
@@ -201,7 +300,7 @@ export default function AbcBaglama() {
       return;
     }
 
-    const occupied = ownerOf(current, key);
+    const occupied = owners.get(key) || ownerOf(current, key);
     if (occupied && occupied.index === (current[occupied.letter] || []).length - 1 && occupied.index > 0) {
       setSelected(occupied.letter);
       return;
@@ -212,61 +311,49 @@ export default function AbcBaglama() {
     setSelected(null);
   }
 
-  function cellUnder(event) {
-    const hit = document.elementFromPoint(event.clientX, event.clientY);
-    return hit?.closest?.("[data-cell]")?.getAttribute("data-cell") || null;
+  function boardMetrics() {
+    const board = boardRef.current;
+    const cellPx = cellRef.current;
+    const n = sizeRef.current;
+    if (!board || !cellPx || !n) return null;
+    const rect = board.getBoundingClientRect();
+    const zoom = rect.width / (n * cellPx) || 1;
+    return { rect, zoom, cellPx, n };
   }
 
-  function onPointerDown(event, key) {
-    if (status === "correct") return;
-    event.preventDefault();
-    boardRef.current?.setPointerCapture?.(event.pointerId);
-    const letterHere = fixed[key];
-    const occupied = ownerOf(pathsRef.current, key);
-    const occupiedPath = occupied ? pathsRef.current[occupied.letter] || [] : [];
-    const isTip = Boolean(occupied && occupied.index === occupiedPath.length - 1 && occupied.index > 0);
-    if (!letterHere && !isTip) {
-      pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false, drawing: false };
-      drag.current = null;
-      return;
-    }
-    const letter = letterHere || occupied.letter;
-    const existing = pathsRef.current[letter] || [];
-    const tip = existing[existing.length - 1];
-    const completing = letterHere && selected === letter && tip && key !== tip && neighbors(tip, key);
-    if (completing) {
-      const stepped = applyStep(pathsRef.current, letter, key, fixed);
-      if (stepped !== pathsRef.current) writePaths(stepped);
-      const finished = reachedMate(letter, (stepped[letter] || existing));
-      if (finished) setSelected(null);
-      pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false, drawing: false, done: finished };
-      drag.current = null;
-      return;
-    }
-    const alreadyTip = tip === key && existing.length > 0;
-    if (letterHere) {
-      if (reachedMate(letter, existing) || existing.length === 0 || !existing.includes(key)) {
-        writePaths({ ...pathsRef.current, [letter]: [key] });
-      } else if (existing[0] === key && tip !== key) {
-        writePaths({ ...pathsRef.current, [letter]: [...existing].reverse() });
-      }
-    }
-    drag.current = { letter };
-    pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false, drawing: true, alreadyTip, letter, done: false };
-    setSelected(letter);
-    setInk(letter);
+  function cellAt(clientX, clientY, metrics) {
+    const x = (clientX - metrics.rect.left) / metrics.zoom;
+    const y = (clientY - metrics.rect.top) / metrics.zoom;
+    const col = Math.floor(x / metrics.cellPx);
+    const row = Math.floor(y / metrics.cellPx);
+    if (row < 0 || col < 0 || row >= metrics.n || col >= metrics.n) return null;
+    return `${row}-${col}`;
   }
 
-  function onPointerMove(event) {
+  function hideRubber() {
+    rubberRef.current?.setAttribute("visibility", "hidden");
+  }
+
+  function placeRubber(clientX, clientY, metrics) {
+    const line = rubberRef.current;
     const active = pointer.current;
-    if (!active || active.done) return;
-    if (!active.drawing) {
-      if (Math.hypot(event.clientX - active.x, event.clientY - active.y) >= 8) active.dragged = true;
+    const tip = active?.letter ? (pathsRef.current[active.letter] || []).at(-1) : null;
+    if (!line || !active?.drawing || !tip || !metrics) {
+      hideRubber();
       return;
     }
-    active.dragged = true;
-    const key = cellUnder(event);
-    if (!key) return;
+    const [row, col] = tip.split("-").map(Number);
+    line.setAttribute("x1", String(col * metrics.cellPx + metrics.cellPx / 2));
+    line.setAttribute("y1", String(row * metrics.cellPx + metrics.cellPx / 2));
+    line.setAttribute("x2", String((clientX - metrics.rect.left) / metrics.zoom));
+    line.setAttribute("y2", String((clientY - metrics.rect.top) / metrics.zoom));
+    line.setAttribute("stroke", COLOR[active.letter]);
+    line.setAttribute("visibility", "visible");
+  }
+
+  function absorb(key) {
+    const active = pointer.current;
+    if (!active?.drawing || active.done || !key) return;
     const letter = active.letter;
     let base = pathsRef.current;
     const path = base[letter] || [];
@@ -275,10 +362,10 @@ export default function AbcBaglama() {
       if (at < path.length - 1) writePaths({ ...base, [letter]: path.slice(0, at + 1) });
       return;
     }
-    const tip = (pathsRef.current[letter] || []).at(-1);
+    const tip = path.at(-1);
     if (!tip) return;
     for (const step of traverse(tip, key)) {
-      const next = applyStep(base, letter, step, fixed);
+      const next = applyStep(base, letter, step, fixedRef.current);
       if (next === base) break;
       base = next;
       if (reachedMate(letter, base[letter])) {
@@ -290,17 +377,99 @@ export default function AbcBaglama() {
     if (base !== pathsRef.current) writePaths(base);
   }
 
+  function onPointerDown(event, key) {
+    if (status === "correct" || status === "submitted") return;
+    event.preventDefault();
+    boardRef.current?.setPointerCapture?.(event.pointerId);
+    const letterHere = fixed[key];
+    const occupied = ownerOf(pathsRef.current, key);
+    const occupiedPath = occupied ? pathsRef.current[occupied.letter] || [] : [];
+    const linkedHere = Boolean(occupied && reachedMate(occupied.letter, occupiedPath));
+    const isTip = Boolean(occupied && occupied.index === occupiedPath.length - 1 && occupied.index > 0);
+    if (!letterHere && !isTip && !linkedHere) {
+      pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false, drawing: false };
+      drag.current = null;
+      return;
+    }
+    const letter = letterHere || occupied.letter;
+    let existing = pathsRef.current[letter] || [];
+    const tip = existing[existing.length - 1];
+    const completing = letterHere && selected === letter && tip && key !== tip && neighbors(tip, key) && !reachedMate(letter, existing);
+    if (completing) {
+      const stepped = applyStep(pathsRef.current, letter, key, fixed);
+      if (stepped !== pathsRef.current) writePaths(stepped);
+      const finished = reachedMate(letter, (stepped[letter] || existing));
+      if (finished) setSelected(null);
+      pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false, drawing: false, done: finished };
+      drag.current = null;
+      return;
+    }
+    const alreadyTip = tip === key && existing.length > 0;
+    if (linkedHere && existing.includes(key)) {
+      const at = existing.indexOf(key);
+      if (at < existing.length - 1) {
+        existing = existing.slice(0, at + 1);
+        writePaths({ ...pathsRef.current, [letter]: existing });
+      }
+    } else if (letterHere) {
+      if (existing.length === 0 || !existing.includes(key)) {
+        writePaths({ ...pathsRef.current, [letter]: [key] });
+      } else if (existing[0] === key && tip !== key) {
+        writePaths({ ...pathsRef.current, [letter]: [...existing].reverse() });
+      }
+    }
+    drag.current = { letter };
+    pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false, drawing: true, alreadyTip, letter, done: false };
+    boardRef.current?.classList.add("abc-dragging");
+    if (window.__abcMeasure) window.__abcDragStart = performance.now();
+    setSelected(letter);
+    setInk(letter);
+  }
+  downRef.current = onPointerDown;
+
+  function onPointerMove(event) {
+    const started = window.__abcMeasure ? performance.now() : 0;
+    const active = pointer.current;
+    if (!active || active.done) return;
+    const samples = typeof event.getCoalescedEvents === "function" ? event.getCoalescedEvents() : [];
+    const points = samples.length ? samples : [event];
+    const last = points[points.length - 1];
+    if (!active.drawing) {
+      if (Math.hypot(last.clientX - active.x, last.clientY - active.y) >= 8) active.dragged = true;
+      return;
+    }
+    active.dragged = true;
+    const metrics = boardMetrics();
+    if (!metrics) return;
+    let previous = (pathsRef.current[active.letter] || []).at(-1);
+    for (const sample of points) {
+      const key = cellAt(sample.clientX, sample.clientY, metrics);
+      if (!key || key === previous) continue;
+      absorb(key);
+      previous = (pathsRef.current[active.letter] || []).at(-1);
+    }
+    placeRubber(last.clientX, last.clientY, metrics);
+    if (window.__abcMeasure) {
+      window.__abcMoveMs = window.__abcMoveMs || [];
+      window.__abcMoveMs.push(performance.now() - started);
+    }
+  }
+
   function onPointerUp() {
     const active = pointer.current;
     pointer.current = null;
     drag.current = null;
+    boardRef.current?.classList.remove("abc-dragging");
+    hideRubber();
+    flushPaths();
     setInk(null);
+    if (window.__abcMeasure && window.__abcDragStart) window.__abcDragMs = performance.now() - window.__abcDragStart;
     if (active && !active.dragged && !active.drawing) clickCell(active.key);
     else if (active && !active.dragged && active.alreadyTip) clickCell(active.key);
   }
 
   function localProblem() {
-    if (filledCount() < size * size) return t("play.emptyCell");
+    if (filled < size * size) return t("play.emptyCell");
     const open = letters.find((letter) => !reachedMate(letter, paths[letter]));
     return open ? t("play.letterOpen", { letter: open }) : "";
   }
@@ -336,6 +505,42 @@ export default function AbcBaglama() {
     }
   }
 
+  useEffect(() => {
+    if (!attemptId || !size) return undefined;
+    if (status === "correct" || status === "submitted") return undefined;
+    if (filled !== size * size || linked !== letters.length) return undefined;
+    const signature = JSON.stringify(paths);
+    if (checkedSig.current === signature) return undefined;
+    checkedSig.current = signature;
+    const token = attemptId;
+    const answer = paths;
+    (async () => {
+      try {
+        const correct = await checkPuzzle(token, { paths: answer });
+        if (token !== attemptId) return;
+        if (!correct) {
+          setStatus("incorrect");
+          setNote(play.incorrect);
+          return;
+        }
+        clearInterval(timerRef.current);
+        setStatus("correct");
+        setNote(play.correct);
+        if (!localStorage.getItem("mindarena_access_token")) return;
+        try {
+          await submitScore({ attempt_id: token, answer: { paths: answer } });
+          setNote(`${play.correct} ${play.saved}`);
+        } catch {
+          setNote(play.rejected);
+        }
+      } catch {
+        setStatus("rejected");
+        setNote(play.rejected);
+      }
+    })();
+    return undefined;
+  }, [filled, linked, letters.length, paths, attemptId, size, status, play]);
+
   if (phase !== "ready" || !size) return <PuzzlePending phase={phase} />;
 
   const width = size * cell;
@@ -351,36 +556,19 @@ export default function AbcBaglama() {
         <span key={letter} hidden data-testid={`path-${letter}`} data-length={(paths[letter] || []).length} />
       ))}
       <p className="text-sm font-semibold text-slate-700 mb-3" data-testid="link-progress">
-        {t("play.linked", { linked: linkedCount(), pairs: letters.length, filled: filledCount(), total: size * size })}
+        {t("play.linked", { linked, pairs: letters.length, filled, total: size * size })}
       </p>
 
       <div
         ref={boardRef}
-        className="relative select-none bg-white"
+        className={`relative select-none bg-white${ink ? " abc-dragging" : ""}`}
         style={{ width, height: width, touchAction: "none" }}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <style>{`@keyframes abc-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }`}</style>
-        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)`, gridTemplateRows: `repeat(${size}, ${cell}px)` }}>
-          {Array.from({ length: size * size }, (_, index) => {
-            const row = Math.floor(index / size);
-            const col = index % size;
-            const key = `${row}-${col}`;
-            return (
-              <button
-                key={key}
-                type="button"
-                data-cell={key}
-                aria-label={fixed[key] || key}
-                onPointerDown={(event) => onPointerDown(event, key)}
-                className="border border-slate-300 bg-transparent touch-none"
-                style={{ width: cell, height: cell, animation: shake === key ? "abc-shake 180ms linear" : undefined }}
-              />
-            );
-          })}
-        </div>
+        <style>{`@keyframes abc-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } } .abc-dragging, .abc-dragging * { transition: none !important; animation: none !important; }`}</style>
+        <HitGrid size={size} cell={cell} fixed={fixed} shake={shake} downRef={downRef} />
         <svg className="absolute inset-0 z-10 pointer-events-none" width={width} height={width}>
           {letters.map((letter) => {
             const path = paths[letter] || [];
@@ -415,42 +603,14 @@ export default function AbcBaglama() {
               />
             );
           })()}
+          <line ref={rubberRef} data-testid="rubber-line" strokeWidth="4" strokeLinecap="round" opacity="0.45" visibility="hidden" />
         </svg>
-        <div
-          className="pointer-events-none absolute inset-0 z-20 grid"
-          style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)`, gridTemplateRows: `repeat(${size}, ${cell}px)` }}
-        >
-          {Array.from({ length: size * size }, (_, index) => {
-            const key = `${Math.floor(index / size)}-${index % size}`;
-            const letter = fixed[key];
-            const active = letter && selected === letter;
-            const mark = Math.round(cell * 0.7);
-            return (
-              <div key={index} className="flex items-center justify-center" style={{ width: cell, height: cell }}>
-                {letter && (
-                  <span
-                    data-mark={key}
-                    className="flex items-center justify-center rounded-full text-sm font-bold text-white"
-                    style={{
-                      width: mark,
-                      height: mark,
-                      background: COLOR[letter],
-                      transform: active ? "scale(1.15)" : undefined,
-                      boxShadow: active ? `0 0 0 3px #fff, 0 0 0 5px ${COLOR[letter]}` : undefined,
-                    }}
-                  >
-                    {letter}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <LetterGrid size={size} cell={cell} fixed={fixed} selected={selected} />
       </div>
 
       <div className="flex flex-wrap justify-center gap-3 mt-4">
         <button type="button" onClick={checkSolution} className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold">{play.check}</button>
-        <ClearBoardButton onClick={() => { setPaths({}); setSelected(null); setStatus("playing"); setNote(""); }} />
+        <ClearBoardButton onClick={() => { pathsRef.current = {}; setPaths({}); checkedSig.current = ""; setSelected(null); setStatus("playing"); setNote(""); }} />
         <button type="button" onClick={reload} className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold">{play.newPuzzle}</button>
         {status === "correct" && (
           <button type="button" onClick={handleSubmitScore} className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold">{play.save}</button>

@@ -115,6 +115,63 @@ test("dragging back shortens the line to that cell", async ({ page }) => {
   await expect(page.getByTestId("link-progress")).toContainText("Bağlanan: 0/2");
 });
 
+function snake(length) {
+  const cells = [];
+  let row = 0;
+  let col = 0;
+  let dir = 1;
+  while (cells.length < length) {
+    cells.push(`${row}-${col}`);
+    const next = col + dir;
+    if (next < 0 || next > 6) {
+      row += 1;
+      dir *= -1;
+    } else {
+      col = next;
+    }
+  }
+  return cells;
+}
+
+test("a 40-cell drag stays under 8ms per move", async ({ page }) => {
+  const path = snake(40);
+  const wide = {
+    ...puzzle,
+    puzzle: {
+      rows: 7,
+      cols: 7,
+      fixedCells: {
+        [path[0]]: "A",
+        [path[path.length - 1]]: "A",
+        "6-0": "B",
+        "6-6": "B",
+      },
+    },
+  };
+  await boot(page, wide);
+  await page.evaluate(() => {
+    window.__abcMeasure = true;
+    window.__abcMoveMs = [];
+  });
+  if (test.info().project.name === "mobile") {
+    const session = await page.context().newCDPSession(page);
+    await session.send("Emulation.setCPUThrottlingRate", { rate: 4 });
+  }
+  await stroke(page, path);
+  await expect(page.getByTestId("path-A")).toHaveAttribute("data-length", "40");
+  const timing = await page.evaluate(() => {
+    const moves = window.__abcMoveMs || [];
+    const avg = moves.reduce((sum, ms) => sum + ms, 0) / moves.length;
+    return { avg, total: window.__abcDragMs || 0, count: moves.length };
+  });
+  expect(timing.count).toBeGreaterThan(0);
+  expect(timing.avg).toBeLessThan(8);
+  await test.info().attach("drag-timing.txt", {
+    body: `avg ${timing.avg.toFixed(3)} ms, total ${timing.total.toFixed(1)} ms, moves ${timing.count}`,
+    contentType: "text/plain",
+  });
+});
+
 test("letter marks sit on their cells", async ({ page }, testInfo) => {
   await boot(page);
   for (const key of ["0-0", "0-2", "1-0", "1-2"]) {
