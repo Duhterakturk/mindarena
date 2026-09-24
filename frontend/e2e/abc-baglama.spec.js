@@ -47,3 +47,16 @@ test("drag links A and clicks link B", async ({ page }) => {
   await page.locator('[data-cell="1-2"]').click();
   await expect(page.getByTestId("link-progress")).toContainText("Bağlanan: 2/2");
 });
+
+test("letter marks sit on their cells", async ({ page }, testInfo) => {
+  await boot(page);
+  for (const key of ["0-0", "0-2", "1-0", "1-2"]) {
+    const cellBox = await page.locator(`[data-cell="${key}"]`).boundingBox();
+    const markBox = await page.locator(`[data-mark="${key}"]`).boundingBox();
+    const dx = Math.abs(cellBox.x + cellBox.width / 2 - (markBox.x + markBox.width / 2));
+    const dy = Math.abs(cellBox.y + cellBox.height / 2 - (markBox.y + markBox.height / 2));
+    expect(dx).toBeLessThanOrEqual(2);
+    expect(dy).toBeLessThanOrEqual(2);
+  }
+  await page.screenshot({ path: testInfo.outputPath("board.png") });
+});

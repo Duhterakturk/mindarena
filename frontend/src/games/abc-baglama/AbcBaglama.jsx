@@ -305,7 +305,7 @@ export default function AbcBaglama() {
         onPointerCancel={onPointerUp}
       >
         <style>{`@keyframes abc-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }`}</style>
-        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)` }}>
+        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)`, gridTemplateRows: `repeat(${size}, ${cell}px)` }}>
           {Array.from({ length: size * size }, (_, index) => {
             const row = Math.floor(index / size);
             const col = index % size;
@@ -344,16 +344,24 @@ export default function AbcBaglama() {
             );
           })}
         </svg>
-        <div className="pointer-events-none absolute inset-0 z-20 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)` }}>
+        <div
+          className="pointer-events-none absolute inset-0 z-20 grid"
+          style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)`, gridTemplateRows: `repeat(${size}, ${cell}px)` }}
+        >
           {Array.from({ length: size * size }, (_, index) => {
-            const letter = fixed[`${Math.floor(index / size)}-${index % size}`];
+            const key = `${Math.floor(index / size)}-${index % size}`;
+            const letter = fixed[key];
             const active = letter && selected === letter;
+            const mark = Math.round(cell * 0.7);
             return (
-              <div key={index} className="flex items-center justify-center">
+              <div key={index} className="flex items-center justify-center" style={{ width: cell, height: cell }}>
                 {letter && (
                   <span
-                    className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
+                    data-mark={key}
+                    className="flex items-center justify-center rounded-full text-sm font-bold text-white"
                     style={{
+                      width: mark,
+                      height: mark,
                       background: COLOR[letter],
                       transform: active ? "scale(1.15)" : undefined,
                       boxShadow: active ? `0 0 0 3px #fff, 0 0 0 5px ${COLOR[letter]}` : undefined,
