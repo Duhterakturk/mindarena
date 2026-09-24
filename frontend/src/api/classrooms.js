@@ -40,5 +40,5 @@ export async function setStudentPassword(classroomId, studentId, password) {
 
 export async function fetchMyAssignment() {
   const { data } = await apiClient.get("/assignments/mine");
-  return data.assignment;
+  return data;
 }

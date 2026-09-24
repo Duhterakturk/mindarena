@@ -31,23 +31,28 @@ def assignment_payload(assignment, done_count=None):
     }
 
 
-def board(assignment):
-    students = assignment.classroom.students.order_by(User.full_name).all()
+def board(assignments):
+    if not isinstance(assignments, list):
+        assignments = [assignments]
+    classroom = assignments[0].classroom
+    students = classroom.students.order_by(User.full_name).all()
     finished = []
     total = 0
     for student in students:
-        count = completed_count(assignment, student.id)
-        total += count
-        if count >= assignment.target_count:
-            finished.append({"full_name": student.full_name, "count": count})
+        counts = [completed_count(item, student.id) for item in assignments]
+        total += sum(counts)
+        if all(count >= item.target_count for count, item in zip(counts, assignments)):
+            finished.append({"full_name": student.full_name, "count": sum(counts)})
     finished.sort(key=lambda row: row["full_name"])
     pending = len(students) - len(finished)
     sentence = (
-        f"{assignment.classroom.name} bu hafta {total} bulmacayı tamamladı. "
+        f"{classroom.name} bu hafta {total} bulmacayı tamamladı. "
         f"Ödevi süren {pending} kişi kaldı."
     )
+    payloads = [assignment_payload(item) for item in assignments]
     return {
-        "assignment": assignment_payload(assignment),
+        "assignment": payloads[0],
+        "assignments": payloads,
         "finished": finished,
         "pending_count": pending,
         "class_total": total,

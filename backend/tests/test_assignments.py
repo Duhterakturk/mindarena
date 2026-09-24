@@ -96,6 +96,28 @@ def test_homework_counts_only_matching_completed_scores_after_it_starts(client, 
     assert board["sentence"] == "3-A bu hafta 2 bulmacayı tamamladı. Ödevi süren 0 kişi kaldı."
 
 
+def test_one_drop_can_include_several_games(client, teacher, student, app):
+    classroom = _classroom(client, teacher)
+    _join(client, student, classroom)
+    created = _assign(client, teacher, classroom, slugs=["cit", "sudoku"], target_count=1)
+    assert created.status_code == 201
+    names = [item["name_tr"] for item in created.get_json()["assignments"]]
+    assert names == ["Çit", "Rakam Yerleştirme"]
+
+    _score(app, student["user"]["id"], "cit")
+    mine = client.get("/api/assignments/mine", headers=auth_headers(student["token"])).get_json()
+    assert mine["finished"] is False
+    assert [item["finished"] for item in mine["assignments"]] == [True, False]
+
+    _score(app, student["user"]["id"], "sudoku")
+    board = client.get(
+        f"/api/classrooms/{classroom['id']}/assignment",
+        headers=auth_headers(teacher["token"]),
+    ).get_json()
+    assert board["pending_count"] == 0
+    assert board["class_total"] == 2
+
+
 def test_board_does_not_name_students_who_are_still_short(client, teacher, student, app):
     classroom = _classroom(client, teacher)
     _join(client, student, classroom)

@@ -1,3 +1,6 @@
+import uuid
+from datetime import datetime
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity
 
@@ -26,6 +29,19 @@ def _latest(classroom_id):
     )
 
 
+def _current(classroom_id):
+    latest = _latest(classroom_id)
+    if latest is None:
+        return []
+    if not latest.batch_id:
+        return [latest]
+    return (
+        Assignment.query.filter_by(classroom_id=classroom_id, batch_id=latest.batch_id)
+        .order_by(Assignment.id.asc())
+        .all()
+    )
+
+
 @assignments_bp.post("/classrooms/<int:classroom_id>/assignment")
 @jwt_required()
 def create_assignment(classroom_id):
@@ -34,30 +50,47 @@ def create_assignment(classroom_id):
         return error
 
     data = request.get_json(force=True) or {}
-    slug = (data.get("slug") or "").strip()
+    slugs = data.get("slugs")
+    if not slugs:
+        single = (data.get("slug") or "").strip()
+        slugs = [single] if single else []
+    slugs = list(dict.fromkeys(str(item).strip() for item in slugs if str(item).strip()))
     difficulty = (data.get("difficulty") or "").strip()
     try:
         target_count = int(data.get("target_count"))
     except (TypeError, ValueError):
         target_count = 0
 
-    game = Game.query.filter_by(slug=slug, is_active=True).first()
-    if not game:
-        return jsonify({"error": "Oyun bulunamadı"}), 404
+    if not slugs:
+        return jsonify({"error": "En az bir oyun seçilir"}), 400
     if difficulty not in DIFFICULTY_LABELS:
         return jsonify({"error": "Geçersiz zorluk"}), 400
     if target_count < 1 or target_count > 10:
         return jsonify({"error": "Hedef 1 ile 10 arasında olmalıdır"}), 400
 
-    assignment = Assignment(
-        classroom_id=classroom.id,
-        game_id=game.id,
-        difficulty=difficulty,
-        target_count=target_count,
-    )
-    db.session.add(assignment)
+    games = []
+    for slug in slugs:
+        game = Game.query.filter_by(slug=slug, is_active=True).first()
+        if not game:
+            return jsonify({"error": "Oyun bulunamadı"}), 404
+        games.append(game)
+
+    stamp = datetime.utcnow()
+    batch_id = str(uuid.uuid4())
+    rows = []
+    for game in games:
+        row = Assignment(
+            classroom_id=classroom.id,
+            game_id=game.id,
+            difficulty=difficulty,
+            target_count=target_count,
+            batch_id=batch_id,
+            created_at=stamp,
+        )
+        db.session.add(row)
+        rows.append(row)
     db.session.commit()
-    return jsonify(board(assignment)), 201
+    return jsonify(board(rows)), 201
 
 
 @assignments_bp.get("/classrooms/<int:classroom_id>/assignment")
@@ -66,10 +99,17 @@ def current_assignment(classroom_id):
     _, error = _teacher_classroom(classroom_id)
     if error:
         return error
-    assignment = _latest(classroom_id)
-    if assignment is None:
-        return jsonify({"assignment": None, "finished": [], "pending_count": 0, "class_total": 0, "sentence": ""})
-    return jsonify(board(assignment))
+    rows = _current(classroom_id)
+    if not rows:
+        return jsonify({
+            "assignment": None,
+            "assignments": [],
+            "finished": [],
+            "pending_count": 0,
+            "class_total": 0,
+            "sentence": "",
+        })
+    return jsonify(board(rows))
 
 
 @assignments_bp.get("/assignments/mine")
@@ -79,11 +119,18 @@ def my_assignment():
     if not student or student.role != UserRole.STUDENT:
         return jsonify({"error": "Bu uç nokta yalnızca öğrenci rolü içindir"}), 403
     if not student.classroom_id:
-        return jsonify({"assignment": None})
-    assignment = _latest(student.classroom_id)
-    if assignment is None:
-        return jsonify({"assignment": None})
-    done = completed_count(assignment, student.id)
-    payload = assignment_payload(assignment, done)
-    payload["finished"] = done >= assignment.target_count
-    return jsonify({"assignment": payload})
+        return jsonify({"assignment": None, "assignments": []})
+    rows = _current(student.classroom_id)
+    if not rows:
+        return jsonify({"assignment": None, "assignments": []})
+    payloads = []
+    for item in rows:
+        done = completed_count(item, student.id)
+        payload = assignment_payload(item, done)
+        payload["finished"] = done >= item.target_count
+        payloads.append(payload)
+    return jsonify({
+        "assignment": payloads[0],
+        "assignments": payloads,
+        "finished": all(item["finished"] for item in payloads),
+    })

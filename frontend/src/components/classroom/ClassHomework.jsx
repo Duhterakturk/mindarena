@@ -18,7 +18,7 @@ async function copyText(text) {
 
 export function ClassHomework({ classroomId, classroomName }) {
   const [games, setGames] = useState([]);
-  const [form, setForm] = useState({ slug: "cit", difficulty: "easy", target_count: 3 });
+  const [form, setForm] = useState({ slugs: [], difficulty: "easy", target_count: 3 });
   const [board, setBoard] = useState(null);
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -37,7 +37,8 @@ export function ClassHomework({ classroomId, classroomName }) {
     setError(null);
     try {
       const next = await createAssignment(classroomId, {
-        ...form,
+        slugs: form.slugs,
+        difficulty: form.difficulty,
         target_count: Number(form.target_count),
       });
       setBoard(next);
@@ -53,25 +54,41 @@ export function ClassHomework({ classroomId, classroomName }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const assignment = board?.assignment;
+  const assignments = board?.assignments?.length ? board.assignments : board?.assignment ? [board.assignment] : [];
+
+  function toggleSlug(slug) {
+    setForm((current) => ({
+      ...current,
+      slugs: current.slugs.includes(slug)
+        ? current.slugs.filter((item) => item !== slug)
+        : [...current.slugs, slug],
+    }));
+  }
 
   return (
     <section className="bg-[#fffdf8] rounded-2xl border border-line p-6 mb-6">
       <h2 className="font-display text-2xl text-ink mb-1">Bu haftanın ödevi</h2>
       <p className="text-sm text-stone-500 mb-4">
-        {classroomName} için bir oyun seçilir. Sayım, ödevin bırakıldığı andan başlar. Kolay kademe herkese açıktır.
+        {classroomName} için bir veya birkaç oyun seçilir. Sayı her oyun için geçerlidir. Sayım, ödevin bırakıldığı andan başlar. Kolay kademe herkese açıktır.
       </p>
 
-      <form onSubmit={handleCreate} className="flex flex-wrap gap-2 mb-5">
-        <select
-          className="border border-line rounded-lg px-3 py-2 text-sm bg-white"
-          value={form.slug}
-          onChange={(e) => setForm({ ...form, slug: e.target.value })}
-        >
-          {games.map((game) => (
-            <option key={game.slug} value={game.slug}>{game.name_tr}</option>
-          ))}
-        </select>
+      <form onSubmit={handleCreate} className="mb-5">
+        <div className="flex flex-wrap gap-2 mb-3">
+          {games.map((game) => {
+            const on = form.slugs.includes(game.slug);
+            return (
+              <button
+                key={game.slug}
+                type="button"
+                onClick={() => toggleSlug(game.slug)}
+                className={`rounded-full border px-3 py-1 text-sm ${on ? "border-brand-500 bg-brand-500 text-white" : "border-line bg-white text-ink"}`}
+              >
+                {game.name_tr}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex flex-wrap gap-2">
         <select
           className="border border-line rounded-lg px-3 py-2 text-sm bg-white"
           value={form.difficulty}
@@ -90,17 +107,25 @@ export function ClassHomework({ classroomId, classroomName }) {
           onChange={(e) => setForm({ ...form, target_count: e.target.value })}
           className="w-20 border border-line rounded-lg px-3 py-2 text-sm bg-white"
         />
-        <button type="submit" className="press-btn !px-4 !py-2 text-sm">Ödevi bırak</button>
+        <button type="submit" className="press-btn !px-4 !py-2 text-sm" disabled={form.slugs.length === 0}>Ödevi bırak</button>
+        </div>
       </form>
       {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
 
-      {!assignment ? (
+      {assignments.length === 0 ? (
         <p className="text-sm text-stone-500">Bu hafta henüz bir ödev yok.</p>
       ) : (
         <div>
-          <p className="text-sm text-stone-600 mb-4">
-            Hedef: {assignment.target_count} {assignment.difficulty_label.toLowerCase()} {assignment.name_tr}
-          </p>
+          <ul className="mb-4 space-y-2">
+            {assignments.map((item) => (
+              <li key={item.id} className="flex flex-wrap items-center justify-between gap-2 text-sm text-stone-600">
+                <span>Hedef: {item.target_count} {item.difficulty_label.toLowerCase()} {item.name_tr}</span>
+                <Link to={`/board/${item.slug}?difficulty=${item.difficulty}`} className="font-bold text-brand-700">
+                  Tahtada aç
+                </Link>
+              </li>
+            ))}
+          </ul>
           <p className="font-display text-5xl text-ink leading-none">{board.class_total}</p>
           <p className="text-sm text-stone-500 mb-4">bu hafta biten bulmaca</p>
 
@@ -116,12 +141,6 @@ export function ClassHomework({ classroomId, classroomName }) {
           <p className="text-sm text-stone-600 mb-4">Ödevi süren {board.pending_count} kişi kaldı.</p>
           <p className="bg-white border border-line rounded-xl px-4 py-3 text-sm mb-3">{board.sentence}</p>
           <div className="flex flex-wrap items-center gap-4">
-            <Link
-              to={`/board/${assignment.slug}?difficulty=${assignment.difficulty}`}
-              className="press-btn !px-4 !py-2 text-sm"
-            >
-              Tahtada aç
-            </Link>
             <button type="button" onClick={handleCopy} className="text-sm font-bold text-brand-700">
               {copied ? "Alındı" : "Metni al"}
             </button>
@@ -133,32 +152,40 @@ export function ClassHomework({ classroomId, classroomName }) {
 }
 
 export function StudentHomework() {
-  const [assignment, setAssignment] = useState(undefined);
+  const [pack, setPack] = useState(undefined);
 
   useEffect(() => {
-    fetchMyAssignment().then(setAssignment).catch(() => setAssignment(null));
+    fetchMyAssignment().then(setPack).catch(() => setPack(null));
   }, []);
 
-  if (!assignment) return null;
+  const assignments = pack?.assignments?.length ? pack.assignments : pack?.assignment ? [pack.assignment] : [];
+  if (!assignments.length) return null;
+  const finished = assignments.every((item) => item.finished);
 
   return (
     <section className="bg-[#fffdf8] rounded-2xl border border-line p-6 mb-6">
-      <h2 className="font-display text-2xl text-ink mb-1">Bu haftanın ödevi</h2>
-      <p className="text-stone-600 mb-3">
-        {assignment.target_count} {assignment.difficulty_label.toLowerCase()} {assignment.name_tr}
+      <h2 className="font-display text-2xl text-ink mb-3">Bu haftanın ödevi</h2>
+      <ul className="space-y-4">
+        {assignments.map((item) => (
+          <li key={item.id}>
+            <p className="text-stone-600 mb-1">
+              {item.target_count} {item.difficulty_label.toLowerCase()} {item.name_tr}
+            </p>
+            <p className="font-display text-4xl text-ink">
+              {Math.min(item.done_count, item.target_count)}
+              <span className="text-2xl text-stone-400"> / {item.target_count}</span>
+            </p>
+            {!item.finished && (
+              <Link to={`/games/${item.slug}`} className="press-btn mt-2 !px-4 !py-2 text-sm">
+                Bulmacaya geç
+              </Link>
+            )}
+          </li>
+        ))}
+      </ul>
+      <p className="text-sm text-stone-500 mt-4">
+        {finished ? "Ödev tamam." : "Tamamlandığında burada görünür."}
       </p>
-      <p className="font-display text-4xl text-ink">
-        {Math.min(assignment.done_count, assignment.target_count)}
-        <span className="text-2xl text-stone-400"> / {assignment.target_count}</span>
-      </p>
-      <p className="text-sm text-stone-500 mt-1 mb-4">
-        {assignment.finished ? "Ödev tamam." : "Tamamlandığında burada görünür."}
-      </p>
-      {!assignment.finished && (
-        <Link to={`/games/${assignment.slug}`} className="press-btn !px-4 !py-2 text-sm">
-          Bulmacaya geç
-        </Link>
-      )}
     </section>
   );
 }
