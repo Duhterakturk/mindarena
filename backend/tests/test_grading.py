@@ -1,3 +1,9 @@
+import copy
+import json
+import subprocess
+import time
+from pathlib import Path
+
 from app.models.game import GAME_CATALOG
 from app.services.grading import GradeError, grade
 from tests.helpers import auth_headers
@@ -112,6 +118,83 @@ def test_pyramid_rejects_a_repeated_digit():
     except GradeError:
         return
     raise AssertionError("tekrarlayan sayılı yol kabul edildi")
+
+
+def _client_answer(slug, proof):
+    solution = proof["solution"]
+    if slug == "kakuro" and isinstance(solution, list) and len(solution) == len(proof["rowSums"]) + 1:
+        return [row[1:] for row in solution[1:]]
+    return solution
+
+
+def _spoil(answer):
+    data = copy.deepcopy(answer)
+    if isinstance(data, list) and data and isinstance(data[0], list):
+        cell = data[0][0]
+        if isinstance(cell, int):
+            data[0][0] = cell - 1 if cell > 1 else cell + 1
+        else:
+            data[0][0] = 1 if cell is None else None
+        return data
+    if isinstance(data, dict):
+        if isinstance(data.get("cells"), list):
+            data["cells"] = data["cells"][1:] if data["cells"] else ["0-0"]
+            return data
+        if isinstance(data.get("paths"), dict) and data["paths"]:
+            letter = next(iter(data["paths"]))
+            data["paths"][letter] = data["paths"][letter][:-1]
+            return data
+        if isinstance(data.get("edges"), list) and data["edges"]:
+            data["edges"] = data["edges"][:-1]
+            return data
+        if isinstance(data.get("path"), list):
+            data["path"] = [0, 0, 0]
+            return data
+        if isinstance(data.get("horizontal"), list):
+            data["horizontal"][0][0] = not data["horizontal"][0][0]
+            return data
+        if isinstance(data.get("placements"), list) and data["placements"]:
+            data["placements"][0]["cells"] = (data["placements"][0].get("cells") or [])[:-1]
+            return data
+        if isinstance(data.get("grid"), list) and data["grid"] and isinstance(data["grid"][0], list):
+            data["grid"][0][0] = None if data["grid"][0][0] is not None else 0
+            return data
+    raise AssertionError("çözüm bozulamadı")
+
+
+def test_generated_solutions_grade_by_rules():
+    root = Path(__file__).resolve().parents[2]
+    frontend = root / "frontend"
+    slugs = [entry["slug"] for entry in GAME_CATALOG]
+    lines = [f"{slug} {difficulty}" for slug in slugs for difficulty in ("easy", "medium", "hard") for _ in range(5)]
+    completed = subprocess.run(
+            "npx vite-node scripts/open-puzzle.mjs",
+            input="\n".join(lines) + "\n",
+            text=True,
+            capture_output=True,
+            cwd=frontend,
+            timeout=600,
+            check=False,
+            shell=True,
+            encoding="utf-8",
+        )
+    assert completed.returncode == 0, completed.stderr
+    issued = [json.loads(line) for line in completed.stdout.splitlines() if line.strip()]
+    assert len(issued) == len(lines)
+    for request, puzzle in zip(lines, issued):
+        slug, difficulty = request.split()
+        assert "error" not in puzzle, f"{slug} {difficulty} üretilemedi"
+        proof = puzzle["proof"]
+        answer = _client_answer(slug, proof)
+        puzzle_body = {key: value for key, value in proof.items() if key != "solution"}
+        started = time.perf_counter()
+        grade(slug, difficulty, puzzle_body, answer, 12)
+        assert time.perf_counter() - started < 0.5, f"{slug} {difficulty} yavaş"
+        try:
+            grade(slug, difficulty, puzzle_body, _spoil(answer), 12)
+        except GradeError:
+            continue
+        raise AssertionError(f"{slug} {difficulty} bozuk çözüm kabul edildi")
 
 
 def test_grade_rejects_empty_sudoku():

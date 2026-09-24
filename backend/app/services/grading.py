@@ -267,8 +267,6 @@ def _grade_sudoku(_difficulty, puzzle, answer):
         for c in range(9):
             if givens[r][c] and givens[r][c] != solved[r][c]:
                 raise GradeError("Verilen rakam değiştirilmiş")
-    if _count_sudoku(givens) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _latin_boxes(grid):
@@ -307,8 +305,6 @@ def _grade_kakuro(difficulty, puzzle, answer):
         column = [solved[r][c] for r in range(n)]
         if sum(column) != int(col_sums[c]) or len(set(column)) != n:
             raise GradeError("Çözüm kurallara uymuyor")
-    if _count_kakuro(row_sums, col_sums, givens) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _count_kakuro(row_sums, col_sums, givens, limit=2):
@@ -370,16 +366,6 @@ def _grade_region(difficulty, puzzle, answer):
             if givens[r][c] and givens[r][c] != solved[r][c]:
                 raise GradeError("Verilen rakam değiştirilmiş")
 
-    def regions_ok(grid):
-        for label in ("A", "B", "C", "D"):
-            seen = [grid[r][c] for r in range(4) for c in range(4) if REGIONS[r][c] == label]
-            if len(set(seen)) != 4:
-                return False
-        return True
-
-    if _count_latin(givens, regions_ok) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
-
 
 def _visible(sequence):
     count = 0
@@ -415,16 +401,6 @@ def _grade_apartman(difficulty, puzzle, answer):
         if list(clues.get(side) or []) != values:
             raise GradeError("Çözüm kurallara uymuyor")
 
-    def respects(grid):
-        return all(
-            _visible([grid[r][c] for r in range(4)]) == expected["top"][c]
-            and _visible([grid[r][c] for r in range(3, -1, -1)]) == expected["bottom"][c]
-            for c in range(4)
-        ) and [_visible(row) for row in grid] == expected["left"] and [_visible(list(reversed(row))) for row in grid] == expected["right"]
-
-    if _count_latin(givens, respects) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
-
 
 def _grade_cit(difficulty, puzzle, answer):
     n = CIT_SIZE[difficulty]
@@ -444,8 +420,6 @@ def _grade_cit(difficulty, puzzle, answer):
         raise GradeError("Çözüm kurallara uymuyor")
     if not _fence_matches(parsed, horizontal, vertical) or not _fence_is_loop(horizontal, vertical, n):
         raise GradeError("Çözüm kurallara uymuyor")
-    if _count_fences(parsed) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _bool_grid(value, rows, cols):
@@ -580,9 +554,6 @@ def _grade_fleet(difficulty, puzzle, answer):
     cells = set((answer or {}).get("cells") or [])
     if not _fleet_ok(cells, rows, cols, ships, row_clues, col_clues):
         raise GradeError("Çözüm kurallara uymuyor")
-    factor = _ship_factor(ships)
-    if _count_fleets(row_clues, col_clues, ships, limit=factor + 1) != factor:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _fleet_ok(cells, rows, cols, ships, row_clues, col_clues):
@@ -942,17 +913,6 @@ def _grade_cages(difficulty, puzzle, answer):
     for key, values in groups.items():
         if not _clue_ok(clues.get(key, clues.get(int(key) if key.isdigit() else key)), values):
             raise GradeError("Çözüm kurallara uymuyor")
-    empty = [[0] * n for _ in range(n)]
-
-    def cages_ok(grid):
-        grouped = {}
-        for r in range(n):
-            for c in range(n):
-                grouped.setdefault(str(cage_id[r][c]), []).append(grid[r][c])
-        return all(_clue_ok(clues.get(key, clues.get(int(key) if str(key).isdigit() else key)), values) for key, values in grouped.items())
-
-    if _count_latin(empty, cages_ok) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _grade_stars(difficulty, puzzle, answer):
@@ -963,8 +923,6 @@ def _grade_stars(difficulty, puzzle, answer):
     cells = set((answer or {}).get("cells") or [])
     if not _stars_ok(cells, region, n):
         raise GradeError("Çözüm kurallara uymuyor")
-    if _count_stars(region, n) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _stars_ok(cells, region, n):
@@ -1044,8 +1002,6 @@ def _grade_nonogram(difficulty, puzzle, answer):
         raise GradeError("Çözüm kurallara uymuyor")
     if [_runs([grid[r][c] for r in range(n)]) for c in range(n)] != [list(map(int, runs)) for runs in col_clues]:
         raise GradeError("Çözüm kurallara uymuyor")
-    if _count_nonogram(row_clues, col_clues) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _runs(bits):
@@ -1158,8 +1114,6 @@ def _grade_futoshiki(difficulty, puzzle, answer):
                 raise GradeError("Verilen rakam değiştirilmiş")
     if not _signs_ok(solved, horizontal, vertical):
         raise GradeError("Çözüm kurallara uymuyor")
-    if _count_latin(givens, lambda grid: _signs_ok(grid, horizontal, vertical)) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _signs_ok(grid, horizontal, vertical):
@@ -1210,8 +1164,6 @@ def _grade_pentomino(difficulty, puzzle, answer):
     placements = answer.get("placements") or []
     if not _pentomino_cover(names, region, placements):
         raise GradeError("Çözüm kurallara uymuyor")
-    if _distinct_tilings(names, region) != 1:
-        raise GradeError("Bulmacanın tek çözümü yok")
 
 
 def _pentomino_cover(names, region, placements):

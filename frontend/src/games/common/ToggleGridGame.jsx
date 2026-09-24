@@ -72,12 +72,14 @@ export default function ToggleGridGame({
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
+  const doneSig = useRef("");
 
   useEffect(() => {
     setMarked(new Set());
     setCrossed(new Set());
     setStatus("playing");
     setSeconds(0);
+    doneSig.current = "";
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timerRef.current);
@@ -156,12 +158,90 @@ export default function ToggleGridGame({
     }
   }
 
+  const book = slug === "kare-karalamaca";
   const hasClues = rowClues || colClues;
   const gridCols = cols + (hasClues ? 1 : 0);
-  const cellSize = cellSizeClass(gridCols);
-  const clueCell = `${cellSize} flex items-center justify-center text-xs font-bold text-brand-700 text-center leading-tight`;
+  const cellSize = book ? "" : cellSizeClass(gridCols);
+  const bookCell = book ? { width: `min(2.5rem, calc((100vw - 2rem) / ${gridCols}))`, height: `min(2.5rem, calc((100vw - 2rem) / ${gridCols}))` } : undefined;
+  const clueCell = book
+    ? "flex items-center justify-center text-xs font-bold text-center leading-tight bg-violet-100 text-violet-900"
+    : `${cellSize} flex items-center justify-center text-xs font-bold text-brand-700 text-center leading-tight`;
 
-  function renderClue(value) {
+  function toneClass(tone) {
+    if (tone === "done") return "text-violet-300";
+    if (tone === "over") return "text-red-600";
+    return "";
+  }
+
+  const rowFlags = Array.from({ length: rows }, (_, r) => Array.from({ length: cols }, (_, c) => marked.has(`${r}-${c}`)));
+  const colFlags = Array.from({ length: cols }, (_, c) => Array.from({ length: rows }, (_, r) => marked.has(`${r}-${c}`)));
+  const boardFull = book && rowFlags.every((row, r) => row.every((_, c) => marked.has(`${r}-${c}`) || crossed.has(`${r}-${c}`)));
+  const cluesHold = book && boardFull
+    && rowClues.every((clue, r) => clueTone(clue, rowFlags[r]) === "done")
+    && colClues.every((clue, c) => clueTone(clue, colFlags[c]) === "done");
+
+  useEffect(() => {
+    if (!cluesHold || !attemptId || status === "correct" || status === "submitted") return undefined;
+    const signature = [...marked].sort().join("|");
+    if (doneSig.current === signature) return undefined;
+    doneSig.current = signature;
+    const answer = answerFrom ? answerFrom(marked) : { cells: [...marked] };
+    const token = attemptId;
+    (async () => {
+      try {
+        const correct = await checkPuzzle(token, answer);
+        if (!correct) {
+          setStatus("incorrect");
+          return;
+        }
+        clearInterval(timerRef.current);
+        setStatus("correct");
+        if (!localStorage.getItem("mindarena_access_token")) return;
+        try {
+          await submitScore({ attempt_id: token, answer });
+          setStatus("submitted");
+        } catch {
+          setStatus("rejected");
+        }
+      } catch {
+        setStatus("rejected");
+      }
+    })();
+    return undefined;
+  }, [cluesHold, attemptId, status, marked, answerFrom]);
+
+  function runsOf(flags) {
+    const runs = [];
+    let count = 0;
+    for (const bit of flags) {
+      if (bit) count += 1;
+      else if (count) {
+        runs.push(count);
+        count = 0;
+      }
+    }
+    if (count) runs.push(count);
+    return runs.length ? runs : [0];
+  }
+
+  function clueTone(expected, flags) {
+    if (!book || !Array.isArray(expected)) return "open";
+    const actual = runsOf(flags);
+    const want = expected.map(Number);
+    if (actual.length === want.length && actual.every((value, index) => value === want[index])) return "done";
+    const wanted = want.length === 1 && want[0] === 0 ? 0 : want.reduce((sum, value) => sum + value, 0);
+    if (flags.filter(Boolean).length > wanted) return "over";
+    return "open";
+  }
+
+  function renderClue(value, stacked) {
+    if (Array.isArray(value) && stacked) {
+      return (
+        <span className="flex flex-col items-center justify-end leading-none gap-0.5">
+          {value.map((part, index) => <span key={index}>{part}</span>)}
+        </span>
+      );
+    }
     if (Array.isArray(value)) return value.join(" ");
     return value;
   }
@@ -179,15 +259,22 @@ export default function ToggleGridGame({
       {extra}
 
       <div
-        className="inline-grid max-w-full overflow-x-auto"
+        data-testid="shade-board"
+        className="inline-grid max-w-full"
         style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
       >
-        {hasClues && <div className={clueCell} />}
-        {hasClues && colClues.map((v, i) => <div key={`cc-${i}`} className={clueCell}>{renderClue(v)}</div>)}
+        {hasClues && <div className={clueCell} style={bookCell} />}
+        {hasClues && colClues.map((v, i) => (
+          <div key={`cc-${i}`} className={`${clueCell} ${book ? "items-end" : ""} ${toneClass(clueTone(v, colFlags[i]))}`} style={book ? { width: bookCell.width, minHeight: bookCell.height } : undefined}>{renderClue(v, book)}</div>
+        ))}
 
         {Array.from({ length: rows }).map((_, r) => (
           <Fragment key={r}>
-            {hasClues && <div key={`rc-${r}`} className={clueCell}>{rowClues ? renderClue(rowClues[r]) : ""}</div>}
+            {hasClues && (
+              <div key={`rc-${r}`} className={`${clueCell} ${toneClass(clueTone(rowClues?.[r], rowFlags[r]))}`} style={bookCell}>
+                {rowClues ? renderClue(rowClues[r], false) : ""}
+              </div>
+            )}
             {Array.from({ length: cols }).map((_, c) => {
               const key = `${r}-${c}`;
               const fixedLabel = fixedCells[key];
@@ -199,6 +286,7 @@ export default function ToggleGridGame({
                   <div
                     key={key}
                     className={`${cellSize} flex items-center justify-center border border-slate-300 bg-slate-800 text-white font-bold text-sm`}
+                    style={bookCell}
                   >
                     {fixedLabel}
                   </div>
@@ -209,16 +297,21 @@ export default function ToggleGridGame({
                   key={key}
                   type="button"
                   onClick={() => toggleCell(r, c)}
+                  style={bookCell}
                   className={[
                     cellSize,
                     "relative flex items-center justify-center border border-slate-300 text-lg",
-                    isMarked ? "bg-brand-500 text-white" : isCrossed ? `${regionClass} text-slate-500` : `${regionClass} hover:bg-brand-50`,
+                    isMarked
+                      ? (book ? "bg-slate-900 text-slate-900" : "bg-brand-500 text-white")
+                      : isCrossed
+                        ? `${book ? "bg-white text-slate-400 text-xs" : `${regionClass} text-slate-500`}`
+                        : `${regionClass} hover:bg-brand-50`,
                   ].join(" ")}
                 >
                   {isMarked
                     ? flowMarks
                       ? <PathStroke row={r} col={c} marked={marked} fixedCells={fixedCells} />
-                      : markSymbol
+                      : (book ? "" : markSymbol)
                     : isCrossed
                       ? "×"
                       : ""}
