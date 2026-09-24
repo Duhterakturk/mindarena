@@ -127,7 +127,7 @@ function open(slug, difficulty) {
     }
     case "numbers": {
       const puzzle = numbers(difficulty);
-      const pub = { givens: puzzle.givens, clues: puzzle.clues };
+      const pub = { clues: puzzle.clues };
       return sealed(pub, pub, puzzle.solution);
     }
     case "colours": {

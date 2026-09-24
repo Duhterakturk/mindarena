@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clueHolds, countGrids, generate, holds, solve } from "./puzzles";
+import { generate, holds, solve } from "./puzzles";
 
 function mulberry32(seed) {
   let state = seed;
@@ -13,12 +13,15 @@ function mulberry32(seed) {
 }
 
 describe("numbers", () => {
-  it("builds one starred grid for each difficulty", () => {
-    ["easy", "medium", "hard"].forEach((difficulty, index) => {
-      const puzzle = generate(difficulty, mulberry32(21 + index));
-      expect(puzzle.solution).toHaveLength(difficulty === "easy" ? 3 : 4);
-      expect(puzzle.clues.every((clue) => clueHolds(puzzle.solution, clue))).toBe(true);
-      expect(countGrids(puzzle.clues, puzzle.givens, 2)).toBe(1);
+  it("deals a unique 3×3 for each difficulty", () => {
+    ["easy", "medium", "hard"].forEach((difficulty) => {
+      for (let round = 0; round < 20; round += 1) {
+        const puzzle = generate(difficulty, mulberry32(40 + round + difficulty.length * 20));
+        const flat = puzzle.solution.flat();
+        expect(flat).toHaveLength(9);
+        expect(new Set(flat)).toEqual(new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]));
+        expect(solve(puzzle.clues)).toEqual([puzzle.solution]);
+      }
     });
   });
 

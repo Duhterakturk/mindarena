@@ -3,7 +3,8 @@
 // Çok yıldızlı harf işlemi harflerle okunur. Sonuçlu yıldız toplamı veya çarpımı sayıya eşittir.
 // Sonuçsuz ★+★=★ ve ★×★=★ sırasızdır: herhangi ikisi üçüncüsünü verir. Bölme tam bölünür.
 
-const SIZE = { easy: 3, medium: 4, hard: 4 };
+const LETTERS = "ABCDEFGHI";
+const EXTRA = { easy: 2, medium: 1, hard: 0 };
 
 function shuffle(list, random) {
   const copy = list.slice();
@@ -13,29 +14,6 @@ function shuffle(list, random) {
   }
   return copy;
 }
-
-function key(row, col) {
-  return `${row}-${col}`;
-}
-
-function read(grid, cells) {
-  return cells.map((cell) => {
-    const [row, col] = cell.split("-").map(Number);
-    return grid[row][col];
-  });
-}
-
-export function clueHolds(grid, clue) {
-  const values = read(grid, clue.cells);
-  if (values.some((value) => !value)) return false;
-  if (clue.op === "sum") return values.reduce((total, value) => total + value, 0) === clue.target;
-  if (clue.op === "product") return values.reduce((total, value) => total * value, 1) === clue.target;
-  if (clue.op === "diff") return values[0] - values[1] === clue.target;
-  if (clue.op === "ratio") return values[1] && values[3] && values[0] % values[1] === 0 && values[2] % values[3] === 0 && values[0] / values[1] === values[2] / values[3];
-  return false;
-}
-
-const LETTERS = "ABCDEFGHI";
 
 function cellValue(grid, letter) {
   const index = LETTERS.indexOf(letter);
@@ -85,6 +63,7 @@ export function solve(clues) {
 
   function place(index) {
     if (found.length > 1) return;
+    if (clues.some((clue) => lettersIn(clue).every((letter) => cellValue(grid, letter)) && !holds(grid, clue))) return;
     if (index === 9) {
       if (clues.every((clue) => holds(grid, clue))) found.push(grid.map((row) => row.slice()));
       return;
@@ -106,87 +85,97 @@ export function solve(clues) {
   return found;
 }
 
-function textFor(clue) {
-  if (clue.op === "sum") return `${clue.cells.map(() => "★").join("+")}=${clue.target}`;
-  if (clue.op === "product") return "★×★=" + clue.target;
-  if (clue.op === "diff") return `★−★=${clue.target}`;
-  return "A/B = C/D";
+function lettersIn(clue) {
+  if (clue.kind === "equation") return `${clue.left}${clue.right}`.match(/[A-I]/g) || [];
+  return clue.cells || [];
 }
 
-function makeClue(op, cells, grid) {
-  const values = read(grid, cells);
-  const clue = { op, cells: cells.slice() };
-  if (op === "sum") clue.target = values.reduce((total, value) => total + value, 0);
-  if (op === "product") clue.target = values[0] * values[1];
-  if (op === "diff") clue.target = values[0] - values[1];
-  clue.text = textFor(clue);
-  return clue;
+function at(grid, letter) {
+  return cellValue(grid, letter);
 }
 
-function propagate(size, clues, givens) {
-  const domains = {};
-  for (let row = 0; row < size; row += 1) {
-    for (let col = 0; col < size; col += 1) {
-      const cell = key(row, col);
-      domains[cell] = givens[row][col] ? new Set([givens[row][col]]) : new Set([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-    }
+function cluePool(grid) {
+  const clues = [];
+  const seen = new Set();
+  function add(clue) {
+    const signature = JSON.stringify(clue);
+    if (seen.has(signature) || !holds(grid, clue)) return;
+    seen.add(signature);
+    clues.push(clue);
   }
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const clue of clues) {
-      if (clue.op === "ratio") continue;
-      const unknown = clue.cells.filter((cell) => domains[cell].size !== 1);
-      if (unknown.length !== 1) continue;
-      const known = clue.cells.filter((cell) => cell !== unknown[0]).map((cell) => [...domains[cell]][0]);
-      let required = null;
-      if (clue.op === "sum") required = clue.target - known.reduce((total, value) => total + value, 0);
-      if (clue.op === "product") {
-        const product = known.reduce((total, value) => total * value, 1);
-        if (product && clue.target % product === 0) required = clue.target / product;
-      }
-      if (clue.op === "diff") {
-        required = clue.cells[0] === unknown[0] ? clue.target + known[0] : known[0] - clue.target;
-      }
-      const domain = domains[unknown[0]];
-      if (!Number.isInteger(required) || !domain.has(required)) return 0;
-      if (domain.size !== 1) {
-        domains[unknown[0]] = new Set([required]);
-        changed = true;
+
+  for (const left of LETTERS) {
+    for (const first of LETTERS) {
+      if (first === left) continue;
+      for (const second of LETTERS) {
+        if (second === left || second === first) continue;
+        const a = at(grid, first);
+        const b = at(grid, second);
+        if (a + b === at(grid, left)) add({ kind: "equation", left, right: `${first}+${second}` });
+        if (a - b === at(grid, left)) add({ kind: "equation", left, right: `${first}-${second}` });
+        if (a * b === at(grid, left)) add({ kind: "equation", left, right: `${first}*${second}` });
+        if (b && a % b === 0 && a / b === at(grid, left)) add({ kind: "equation", left, right: `${first}/${second}` });
       }
     }
   }
-  return Object.values(domains).every((domain) => domain.size === 1) ? 1 : 2;
-}
 
-export function countGrids(clues, givens, limit = 2) {
-  const size = givens.length;
-  const found = propagate(size, clues, givens);
-  return found === 1 ? 1 : Math.min(limit, 2);
+  for (const a of LETTERS) {
+    for (const b of LETTERS) {
+      if (a === b || !at(grid, b) || at(grid, a) % at(grid, b) !== 0) continue;
+      for (const c of LETTERS) {
+        if (c === a || c === b) continue;
+        for (const d of LETTERS) {
+          if (d === a || d === b || d === c || !at(grid, d) || at(grid, c) % at(grid, d) !== 0) continue;
+          if (`${a}${b}` > `${c}${d}`) continue;
+          if (at(grid, a) / at(grid, b) !== at(grid, c) / at(grid, d)) continue;
+          add({ kind: "equation", left: `${a}/${b}`, right: `${c}/${d}` });
+        }
+      }
+    }
+  }
+
+  const lists = [];
+  for (let i = 0; i < LETTERS.length; i += 1) {
+    for (let j = i + 1; j < LETTERS.length; j += 1) lists.push([LETTERS[i], LETTERS[j]]);
+    for (let j = i + 1; j < LETTERS.length; j += 1) {
+      for (let k = j + 1; k < LETTERS.length; k += 1) lists.push([LETTERS[i], LETTERS[j], LETTERS[k]]);
+    }
+  }
+  lists.forEach((cells) => {
+    const values = cells.map((letter) => at(grid, letter));
+    if (cells.length >= 2) add({ kind: "total", cells, target: values.reduce((sum, value) => sum + value, 0) });
+    if (cells.length === 3 && unordered(values, "+")) add({ kind: "relation", op: "+", cells });
+    if (cells.length === 3 && unordered(values, "*")) add({ kind: "relation", op: "*", cells });
+  });
+  return clues;
 }
 
 export function generate(difficulty = "easy", random = Math.random) {
-  const size = SIZE[difficulty] || 4;
-  const solution = Array.from({ length: size }, () => (
-    Array.from({ length: size }, () => 1 + Math.floor(random() * 9))
-  ));
-  const order = shuffle(
-    Array.from({ length: size }, (_, row) => Array.from({ length: size }, (__, col) => key(row, col))).flat(),
-    random,
-  );
-  const givens = solution.map((row) => row.map(() => 0));
-  const [startRow, startCol] = order[0].split("-").map(Number);
-  givens[startRow][startCol] = solution[startRow][startCol];
-  const clues = [];
-  for (let index = 1; index < order.length; index += 1) {
-    const pair = [order[index - 1], order[index]];
-    const values = read(solution, pair);
-    let op = "sum";
-    if (values[0] > values[1] && random() < 0.35) op = "diff";
-    else if (values[0] * values[1] <= 36 && random() < 0.3) op = "product";
-    const cells = op === "diff" || op === "product" ? pair : pair.slice().sort();
-    clues.push(makeClue(op, cells, solution));
+  const extra = difficulty === "easy" ? 1 + Math.floor(random() * 2) : (EXTRA[difficulty] ?? 0);
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const digits = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], random);
+    const solution = [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6)];
+    const pool = shuffle(cluePool(solution), random);
+    const clues = [];
+    let unique = false;
+    for (const clue of pool) {
+      clues.push(clue);
+      const found = solve(clues);
+      if (found.length === 1) {
+        unique = true;
+        break;
+      }
+      if (found.length === 0) clues.pop();
+    }
+    if (!unique) continue;
+    let added = 0;
+    for (const clue of pool) {
+      if (added >= extra) break;
+      if (clues.includes(clue)) continue;
+      clues.push(clue);
+      added += 1;
+    }
+    return { clues, solution };
   }
-  if (propagate(size, clues, givens) !== 1) throw new Error("Sayı bulmacası üretilemedi");
-  return { givens, clues, solution };
+  throw new Error("Sayı bulmacası üretilemedi");
 }

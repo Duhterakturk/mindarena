@@ -32,6 +32,50 @@ def test_metaforms_rejects_a_swapped_piece():
     raise AssertionError("yerleri değişen parçalar kabul edildi")
 
 
+def test_numbers_book_layouts_pass_and_a_swap_fails():
+    questions = [
+        (
+            [
+                {"kind": "equation", "left": "A/I", "right": "H/D"},
+                {"kind": "equation", "left": "D", "right": "B/F"},
+                {"kind": "relation", "op": "+", "cells": ["C", "D", "G"]},
+                {"kind": "total", "cells": ["A", "C"], "target": 16},
+            ],
+            [[9, 8, 7], [2, 1, 4], [5, 6, 3]],
+        ),
+        (
+            [
+                {"kind": "relation", "op": "*", "cells": ["B", "D", "F"]},
+                {"kind": "equation", "left": "E", "right": "G+B"},
+                {"kind": "total", "cells": ["A", "D", "G"], "target": 6},
+                {"kind": "equation", "left": "H", "right": "C-A"},
+                {"kind": "total", "cells": ["C", "F", "I"], "target": 24},
+            ],
+            [[3, 4, 9], [2, 5, 8], [1, 6, 7]],
+        ),
+        (
+            [
+                {"kind": "relation", "op": "+", "cells": ["E", "F", "I"]},
+                {"kind": "relation", "op": "+", "cells": ["A", "C", "E"]},
+                {"kind": "total", "cells": ["A", "D", "G"], "target": 7},
+                {"kind": "equation", "left": "G", "right": "D-F"},
+                {"kind": "total", "cells": ["B", "E", "H"], "target": 24},
+                {"kind": "relation", "op": "+", "cells": ["D", "F", "H"]},
+            ],
+            [[2, 9, 6], [4, 8, 3], [1, 7, 5]],
+        ),
+    ]
+    for clues, grid in questions:
+        grade("numbers", "easy", {"clues": clues}, grid, 10)
+        swapped = [row[:] for row in grid]
+        swapped[0][0], swapped[0][1] = swapped[0][1], swapped[0][0]
+        try:
+            grade("numbers", "easy", {"clues": clues}, swapped, 10)
+        except GradeError:
+            continue
+        raise AssertionError("yerleri değişen sayılar kabul edildi")
+
+
 def test_pyramid_rejects_a_repeated_digit():
     assert GAME_CATALOG[6]["slug"] == "sihirli-piramit"
     puzzle, answer = reference(7)

@@ -1326,59 +1326,78 @@ def _grade_islem(_difficulty, puzzle, answer):
             raise GradeError("Sütun sonucu tutmuyor")
 
 
-def _number_cells(grid, cells):
-    values = []
-    for cell in cells:
-        if not isinstance(cell, str) or cell.count("-") != 1:
+_NUMBER_LETTERS = "ABCDEFGHI"
+
+
+def _number_at(grid, letter):
+    index = _NUMBER_LETTERS.find(str(letter))
+    if index < 0:
+        return None
+    value = grid[index // 3][index % 3]
+    if isinstance(value, bool) or not isinstance(value, int):
+        return None
+    return value
+
+
+def _number_side(grid, text):
+    raw = str(text).replace(" ", "").replace("×", "*").replace("−", "-")
+    if len(raw) == 1 and raw in _NUMBER_LETTERS:
+        return _number_at(grid, raw)
+    if len(raw) == 3 and raw[0] in _NUMBER_LETTERS and raw[2] in _NUMBER_LETTERS and raw[1] in "+-*/":
+        left = _number_at(grid, raw[0])
+        right = _number_at(grid, raw[2])
+        if left is None or right is None:
             return None
-        row, col = cell.split("-")
-        if not row.isdigit() or not col.isdigit():
+        if raw[1] == "+":
+            return left + right
+        if raw[1] == "-":
+            return left - right
+        if raw[1] == "*":
+            return left * right
+        if right == 0 or left % right != 0:
             return None
-        row, col = int(row), int(col)
-        if row >= len(grid) or col >= len(grid[row]):
-            return None
-        values.append(grid[row][col])
-    return values
+        return left // right
+    return None
+
+
+def _number_holds(grid, clue):
+    kind = clue.get("kind") if isinstance(clue, dict) else None
+    if kind == "equation":
+        left = _number_side(grid, clue.get("left"))
+        right = _number_side(grid, clue.get("right"))
+        return left is not None and left == right
+    cells = clue.get("cells") or []
+    values = [_number_at(grid, cell) for cell in cells]
+    if any(value is None for value in values):
+        return False
+    if kind == "total":
+        return sum(values) == clue.get("target")
+    if kind == "relation" and len(values) == 3:
+        first, second, third = values
+        if clue.get("op") == "*":
+            return first * second == third or first * third == second or second * third == first
+        return first + second == third or first + third == second or second + third == first
+    return False
 
 
 def _grade_numbers(_difficulty, puzzle, answer):
-    givens = (puzzle or {}).get("givens") if isinstance(puzzle, dict) else None
-    clues = (puzzle or {}).get("clues")
+    clues = (puzzle or {}).get("clues") if isinstance(puzzle, dict) else None
     grid = _as_grid(answer)
-    if not isinstance(givens, list) or not isinstance(grid, list) or len(grid) != len(givens):
+    if not isinstance(grid, list) or len(grid) != 3 or not isinstance(clues, list) or not clues:
         raise GradeError("Izgara boyutu uyuşmuyor")
-    for row, given_row in enumerate(givens):
-        if len(grid[row]) != len(given_row):
+    seen = []
+    for row in grid:
+        if not isinstance(row, list) or len(row) != 3:
             raise GradeError("Izgara boyutu uyuşmuyor")
-        for col, given in enumerate(given_row):
-            value = grid[row][col]
-            if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 9:
+        for value in row:
+            if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 9:
                 raise GradeError("Sayı geçersiz")
-            if given and given != value:
-                raise GradeError("Verilen sayı değişmiş")
-    if not isinstance(clues, list) or not clues:
-        raise GradeError("İpucu eksik")
+            seen.append(value)
+    if sorted(seen) != [1, 2, 3, 4, 5, 6, 7, 8, 9]:
+        raise GradeError("Sayı tekrar ediyor")
     for clue in clues:
-        values = _number_cells(grid, clue.get("cells") or [])
-        if not values or not _number_clue(clue, values):
+        if not _number_holds(grid, clue):
             raise GradeError("İşlem tutmuyor")
-
-
-def _number_clue(clue, values):
-    op = clue.get("op")
-    target = clue.get("target")
-    if op == "sum":
-        return sum(values) == target
-    if op == "product":
-        product = 1
-        for value in values:
-            product *= value
-        return product == target
-    if op == "diff" and len(values) == 2:
-        return values[0] - values[1] == target
-    if op == "ratio" and len(values) == 4 and values[1] and values[3]:
-        return values[0] % values[1] == 0 and values[2] % values[3] == 0 and values[0] // values[1] == values[2] // values[3]
-    return False
 
 
 def _grade_colours(_difficulty, puzzle, answer):

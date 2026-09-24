@@ -14,21 +14,34 @@ function clone(grid) {
   return grid.map((row) => row.slice());
 }
 
-function StarCard({ clue, size }) {
-  const marked = new Set(clue.cells);
+const LETTERS = "ABCDEFGHI";
+
+function starLetters(clue) {
+  if (clue.kind === "equation" && /^[A-I]$/.test(clue.left)) return [clue.left];
+  if (clue.kind === "equation") return `${clue.left}${clue.right}`.match(/[A-I]/g) || [];
+  return clue.cells || [];
+}
+
+function clueText(clue) {
+  if (clue.kind === "relation") return clue.op === "*" ? "★×★=★" : "★+★=★";
+  if (clue.kind === "total") return `${clue.cells.map(() => "★").join("+")}=${clue.target}`;
+  const right = String(clue.right).replaceAll("*", "×");
+  if (/^[A-I]$/.test(clue.left)) return right.replace(/([+\-×/])/g, " $1 ");
+  return `${clue.left} = ${right}`;
+}
+
+function StarCard({ clue }) {
+  const marked = new Set(starLetters(clue));
   return (
     <div className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-center">
-      <div className="inline-grid gap-0.5" style={{ gridTemplateColumns: `repeat(${size}, 0.7rem)` }}>
-        {Array.from({ length: size * size }, (_, index) => {
-          const key = `${Math.floor(index / size)}-${index % size}`;
-          return (
-            <div key={key} className="w-2.5 h-2.5 border border-slate-300 bg-white text-[8px] leading-[0.7rem] text-slate-900">
-              {marked.has(key) ? "★" : ""}
-            </div>
-          );
-        })}
+      <div className="inline-grid grid-cols-3 gap-0.5">
+        {LETTERS.split("").map((letter, index) => (
+          <div key={letter} className="flex h-3 w-3 items-center justify-center border border-slate-300 bg-white text-[8px] leading-none text-slate-900">
+            {marked.has(letter) ? "★" : ""}
+          </div>
+        ))}
       </div>
-      <p className="mt-1 text-xs font-bold text-slate-900">{clue.text}</p>
+      <p className="mt-1 text-xs font-bold text-slate-900">{clueText(clue)}</p>
     </div>
   );
 }
@@ -37,7 +50,7 @@ export default function Numbers() {
   const [difficulty, setDifficulty] = useStartingDifficulty();
   const { issue, phase, reload } = useIssuedPuzzle("numbers", difficulty);
   const puzzle = issue?.puzzle;
-  const givens = puzzle?.givens;
+  const clues = puzzle?.clues;
   const copy = useGameText("numbers");
   const play = usePlayCopy();
   const attemptId = issue?.id;
@@ -48,15 +61,15 @@ export default function Numbers() {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    if (!givens) return undefined;
-    setBoard(clone(givens));
+    if (!clues) return undefined;
+    setBoard([[0, 0, 0], [0, 0, 0], [0, 0, 0]]);
     setDigit(1);
     setStatus("playing");
     setSeconds(0);
     clearInterval(timerRef.current);
     timerRef.current = setInterval(() => setSeconds((value) => value + 1), 1000);
     return () => clearInterval(timerRef.current);
-  }, [attemptId, givens]);
+  }, [attemptId, clues]);
 
   useApplyCellHint(attemptId, (hint) => {
     writeFill(setBoard, hint);
@@ -69,7 +82,7 @@ export default function Numbers() {
   }
 
   function write(row, col) {
-    if (!board || givens[row][col] || status === "correct" || status === "submitted") return;
+    if (!board || status === "correct" || status === "submitted") return;
     const next = clone(board);
     next[row][col] = digit || 0;
     setBoard(next);
@@ -97,9 +110,7 @@ export default function Numbers() {
     }
   }
 
-  if (phase !== "ready" || !board || !puzzle?.clues) return <PuzzlePending phase={phase} />;
-
-  const size = board.length;
+  if (phase !== "ready" || !board || !clues) return <PuzzlePending phase={phase} />;
 
   return (
     <div className="flex flex-col items-center">
@@ -109,18 +120,18 @@ export default function Numbers() {
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div className="flex flex-wrap justify-center gap-2 max-w-xl mb-4">
-        {puzzle.clues.map((clue, index) => (
-          <StarCard key={`${clue.text}-${index}`} clue={clue} size={size} />
+        {clues.map((clue, index) => (
+          <StarCard key={`${clue.kind}-${index}`} clue={clue} />
         ))}
       </div>
 
-      <div className="inline-grid gap-1 mb-4" style={{ gridTemplateColumns: `repeat(${size}, 3rem)` }}>
+      <div className="inline-grid grid-cols-3 gap-1 mb-4">
         {board.map((row, rowIndex) => row.map((value, colIndex) => (
           <button
             key={`${rowIndex}-${colIndex}`}
             type="button"
             onClick={() => write(rowIndex, colIndex)}
-            className={`w-12 h-12 border border-slate-400 bg-white text-xl font-bold text-slate-900 ${givens[rowIndex][colIndex] ? "bg-slate-100" : ""}`}
+            className="w-12 h-12 border border-slate-400 bg-white text-xl font-bold text-slate-900"
           >
             {value || ""}
           </button>
@@ -143,7 +154,7 @@ export default function Numbers() {
 
       <div className="flex flex-wrap justify-center gap-3">
         <button type="button" onClick={checkSolution} className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold">{play.check}</button>
-        <ClearBoardButton onClick={() => { setBoard(clone(givens)); setStatus("playing"); }} />
+        <ClearBoardButton onClick={() => { setBoard([[0, 0, 0], [0, 0, 0], [0, 0, 0]]); setStatus("playing"); }} />
         <button type="button" onClick={() => newGame()} className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold">{play.newPuzzle}</button>
         {status === "correct" && (
           <button type="button" onClick={handleSubmitScore} className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold">{play.save}</button>

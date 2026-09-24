@@ -90,7 +90,7 @@ def test_numbers_hint_fills_one_blank(client, student, app):
     assert revealed.status_code == 200, revealed.get_json()
     hint = revealed.get_json()["hint"]
     assert hint["kind"] == "fill"
-    assert body["puzzle"]["givens"][hint["row"]][hint["col"]] == 0
+    assert "givens" not in body["puzzle"]
     with app.app_context():
         solution = json.loads(db.session.get(PuzzleAttempt, attempt_id).proof_json)["solution"]
     assert solution[hint["row"]][hint["col"]] == hint["value"]
