@@ -171,7 +171,8 @@ export default function Pentominolar() {
       <p className="text-slate-500 text-sm mb-1 text-center max-w-md">{play.anchor}</p>
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
-      <div className="mb-4 w-full max-w-md">
+      <div className="mb-4 flex w-full max-w-3xl flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-center">
+      <div className="w-full sm:w-auto sm:max-w-[14rem]">
         <p className="text-xs text-slate-500 mb-2 text-center">{play.pieces}</p>
         <div className="flex flex-wrap justify-center gap-2">
           {pieces.map((name, index) => {
@@ -234,6 +235,7 @@ export default function Pentominolar() {
             />
           );
         })}
+      </div>
       </div>
 
       {notice && status === "playing" && <p className="text-amber-600 text-sm mt-3 text-center max-w-md">{notice}</p>}

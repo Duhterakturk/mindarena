@@ -98,7 +98,13 @@ textarea,
 }
 
 .board-play {
-  zoom: 1.55;
+  zoom: 1.15;
+  width: 100%;
+}
+
+.board-play h1,
+.board-play p.text-sm {
+  display: none;
 }
 
 @media (min-width: 768px) {
@@ -127,7 +133,7 @@ textarea,
 
 @media (min-width: 1024px) {
   .board-play {
-    zoom: 1.85;
+    zoom: 1.28;
   }
 }
 
