@@ -12,6 +12,33 @@ def test_every_catalog_round_grades():
         assert points >= 100
 
 
+def test_abc_accepts_a_cover_and_rejects_a_gap_or_swap():
+    from copy import deepcopy
+
+    assert GAME_CATALOG[8]["slug"] == "abc-baglama"
+    puzzle, answer = reference(9)
+    grade("abc-baglama", "easy", puzzle, answer, 12)
+
+    gapped = deepcopy(answer)
+    letter = next(iter(gapped["paths"]))
+    gapped["paths"][letter] = gapped["paths"][letter][:-1]
+    try:
+        grade("abc-baglama", "easy", puzzle, gapped, 12)
+    except GradeError:
+        pass
+    else:
+        raise AssertionError("boş kare kabul edildi")
+
+    keys = list(answer["paths"])
+    swapped = deepcopy(answer)
+    swapped["paths"][keys[0]], swapped["paths"][keys[1]] = swapped["paths"][keys[1]], swapped["paths"][keys[0]]
+    try:
+        grade("abc-baglama", "easy", puzzle, swapped, 12)
+    except GradeError:
+        return
+    raise AssertionError("yer değiştiren yollar kabul edildi")
+
+
 def test_tampered_answer_is_rejected(client, student, app):
     auth = auth_headers(student["token"])
     _puzzle, answer = reference(2)

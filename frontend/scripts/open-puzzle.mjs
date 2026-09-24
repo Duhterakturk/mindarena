@@ -72,7 +72,7 @@ function open(slug, difficulty) {
     case "abc-baglama": {
       const puzzle = abc(difficulty);
       const pub = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
-      return sealed(pub, pub, { cells: puzzle.solutionSet });
+      return sealed(pub, pub, { paths: puzzle.paths });
     }
     case "islem-karesi": {
       const puzzle = islem(difficulty);

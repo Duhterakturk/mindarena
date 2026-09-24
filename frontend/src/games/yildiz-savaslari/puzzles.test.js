@@ -36,6 +36,14 @@ function isConnected(cells) {
 }
 
 describe("Yıldız Dizilimi generator", () => {
+  it("always deals a puzzle", () => {
+    for (const difficulty of ["easy", "medium", "hard"]) {
+      for (let i = 0; i < 200; i++) {
+        expect(() => generate(difficulty)).not.toThrow();
+      }
+    }
+  }, 180000);
+
   it("places one star per row, column, and region, with no two stars touching", () => {
     for (const difficulty of ["easy", "medium", "hard"]) {
       const n = SIZE_BY_DIFFICULTY[difficulty];

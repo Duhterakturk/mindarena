@@ -125,10 +125,12 @@ def test_patika_hint_is_the_step_after_one():
 def test_abc_hint_draws_the_first_letter():
     from app.services.cell_hint import pick_hint
 
-    public = {"fixedCells": {"0-0": "A", "0-3": "A", "2-0": "B", "2-3": "B"}}
-    solution = {"cells": ["0-0", "0-1", "0-2", "0-3", "2-0", "2-1", "2-2", "2-3"]}
+    public = {"fixedCells": {"0-0": "A", "0-2": "A", "1-0": "B", "1-2": "B"}}
+    solution = {"paths": {"A": ["0-0", "0-1", "0-2"], "B": ["1-0", "1-1", "1-2"]}}
     hint = pick_hint("abc-baglama", public, {"solution": solution})
-    assert hint == {"kind": "marks", "cells": ["0-1", "0-2"], "label": "A"}
+    assert hint["kind"] == "marks"
+    assert hint["cells"] == solution["paths"][hint["label"]][:3]
+    assert hint["label"] in solution["paths"]
 
 
 def test_colour_hint_places_one_piece(client, student, app):

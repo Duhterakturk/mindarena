@@ -1,21 +1,123 @@
-import { generateLatinSquare } from "../common/latinSquare";
-import { buildCageData } from "../common/cages";
-import { countCages } from "../common/solvers";
+import { generateLatinSquare, computeCageClue } from "../common/latinSquare";
+import { cageSolutions } from "../common/solvers";
 
-// Kendoku (KenKen ailesinden): toplama/çıkarma/çarpma/bölme kafesleri.
-// Zorluk, ızgara boyutuyla ölçeklenir.
-const GRID_SIZE_BY_DIFFICULTY = { easy: 4, medium: 6, hard: 8 };
-const ALLOWED_OPS = ["+", "−", "×", "÷"];
+const SIZES = { easy: [4], medium: [5, 4], hard: [6, 5, 4] };
+const MAX_SIZE = { easy: 2, medium: 3, hard: 4 };
 
-export function generate(difficulty = "easy") {
-  const n = GRID_SIZE_BY_DIFFICULTY[difficulty] || 4;
-  for (let attempt = 0; attempt < 40; attempt++) {
+function blank(n) {
+  return Array.from({ length: n }, () => Array(n).fill(0));
+}
+
+function touches(left, right) {
+  return left.some(([row, col]) => right.some(([otherRow, otherCol]) => Math.abs(row - otherRow) + Math.abs(col - otherCol) === 1));
+}
+
+function clueFor(cells, solution, difficulty, random) {
+  const values = cells.map(([row, col]) => solution[row][col]);
+  if (values.length === 1) return String(values[0]);
+  const multiply = difficulty === "hard" ? 0.55 : difficulty === "medium" ? 0.35 : 0.15;
+  let op = "+";
+  if (values.length === 2) {
+    const roll = random();
+    if (roll < multiply) op = "×";
+    else if (roll < multiply + (difficulty === "easy" ? 0.15 : 0.25)) op = "÷";
+    else if (roll < 0.7) op = "−";
+  } else if (random() < multiply) op = "×";
+  return `${computeCageClue(op, values).target}${computeCageClue(op, values).op}`;
+}
+
+function pack(cages, solution, difficulty, random) {
+  const cageId = blank(solution.length).map((row, rowIndex) => row.map((_, colIndex) => 0));
+  const cageAnchor = {};
+  const cageCells = {};
+  const cageClues = {};
+  cages.forEach((cells, index) => {
+    const id = index + 1;
+    const anchor = cells.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1])[0];
+    cells.forEach(([row, col]) => {
+      cageId[row][col] = id;
+    });
+    cageAnchor[id] = anchor;
+    cageCells[id] = cells;
+    cageClues[id] = clueFor(cells, solution, difficulty, random);
+  });
+  return { cageId, cageAnchor, cageCells, cageClues };
+}
+
+function layout(n, solution, difficulty, random) {
+  let cages = [];
+  for (let row = 0; row < n; row += 1) {
+    for (let col = 0; col < n; col += 1) cages.push([[row, col]]);
+  }
+  const maxSize = MAX_SIZE[difficulty] || 2;
+  const goal = difficulty === "hard" ? Math.ceil((n * n) / 3.2) : difficulty === "medium" ? Math.ceil((n * n) / 2.4) : Math.ceil((n * n) / 1.7);
+  let guard = 0;
+  while (cages.length > goal && guard < 300) {
+    guard += 1;
+    const index = Math.floor(random() * cages.length);
+    const neighbors = cages
+      .map((cells, other) => ({ cells, other }))
+      .filter((item) => item.other !== index && cages[index].length + item.cells.length <= maxSize && touches(cages[index], item.cells));
+    if (!neighbors.length) continue;
+    const pick = neighbors[Math.floor(random() * neighbors.length)];
+    cages[index] = cages[index].concat(pick.cells);
+    cages.splice(pick.other, 1);
+  }
+  return pack(cages, solution, difficulty, random);
+}
+
+function pin(body, solution, row, col, difficulty, random) {
+  const id = body.cageId[row][col];
+  const cells = body.cageCells[id].filter(([r, c]) => r !== row || c !== col);
+  const cages = Object.values(body.cageCells)
+    .map((group) => (group.some(([r, c]) => r === row && c === col) ? cells : group))
+    .filter((group) => group.length);
+  cages.push([[row, col]]);
+  return pack(cages, solution, difficulty, random);
+}
+
+function attempt(n, difficulty, random, deadline) {
+  let best = null;
+  while (Date.now() < deadline) {
     const solution = generateLatinSquare(n);
-    const puzzle = solution.map((row) => row.map(() => 0));
-    const cages = buildCageData(n, solution, ALLOWED_OPS);
-    if (countCages(puzzle, cages.cageId, cages.cageClues) === 1) {
-      return { puzzle, solution, ...cages };
+    let body = layout(n, solution, difficulty, random);
+    let found = cageSolutions(blank(n), body.cageId, body.cageClues, 2);
+    let guard = 0;
+    while (found.length > 1 && guard < n * n && Date.now() < deadline) {
+      guard += 1;
+      let row = 0;
+      let col = 0;
+      for (let r = 0; r < n; r += 1) {
+        for (let c = 0; c < n; c += 1) {
+          if (found[0][r][c] !== found[1][r][c]) {
+            row = r;
+            col = c;
+          }
+        }
+      }
+      body = pin(body, solution, row, col, difficulty, random);
+      found = cageSolutions(blank(n), body.cageId, body.cageClues, 2);
+    }
+    if (found.length === 1) {
+      best = { puzzle: blank(n), solution, ...body };
+      return best;
     }
   }
-  throw new Error("Tek çözüm Dört İşlem üretilemedi");
+  return best;
+}
+
+export function generate(difficulty = "easy", random = Math.random) {
+  const deadline = Date.now() + 2800;
+  const sizes = SIZES[difficulty] || SIZES.easy;
+  for (const size of sizes) {
+    const puzzle = attempt(size, difficulty, random, deadline);
+    if (puzzle) return puzzle;
+    if (Date.now() >= deadline) break;
+  }
+  const solution = generateLatinSquare(4);
+  const cages = [];
+  for (let row = 0; row < 4; row += 1) {
+    for (let col = 0; col < 4; col += 1) cages.push([[row, col]]);
+  }
+  return { puzzle: blank(4), solution, ...pack(cages, solution, "easy", random) };
 }

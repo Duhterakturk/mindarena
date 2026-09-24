@@ -87,9 +87,10 @@ function pack(cols, region, n) {
 
 export function generate(difficulty = "easy") {
   const n = SIZE_BY_DIFFICULTY[difficulty] || 5;
-  for (let attempt = 0; attempt < 80; attempt++) {
+  const deadline = Date.now() + 2000;
+  for (let attempt = 0; attempt < 2000 && Date.now() < deadline; attempt++) {
     const cols = placeStars(n);
-    if (!cols) break;
+    if (!cols) continue;
     const region = growRegions(cols, n);
     if (countSolutions(region, n) === 1) return pack(cols, region, n);
   }

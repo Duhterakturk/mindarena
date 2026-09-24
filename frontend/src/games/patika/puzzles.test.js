@@ -12,7 +12,44 @@ function mulberry32(seed) {
   };
 }
 
+function tightRatio(blacks, size) {
+  const blocked = new Set(blacks);
+  let whites = 0;
+  let tight = 0;
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      const cell = `${row}-${col}`;
+      if (blocked.has(cell)) continue;
+      whites += 1;
+      let open = 0;
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dr, dc]) => {
+        const next = `${row + dr}-${col + dc}`;
+        if (row + dr >= 0 && row + dr < size && col + dc >= 0 && col + dc < size && !blocked.has(next)) open += 1;
+      });
+      if (open === 2) tight += 1;
+    }
+  }
+  return tight / whites;
+}
+
 describe("patika loop", () => {
+  it("deals a sparse board with one loop", () => {
+    ["easy", "medium", "hard"].forEach((difficulty) => {
+      for (let round = 0; round < 10; round += 1) {
+        const started = Date.now();
+        const puzzle = generate(difficulty, mulberry32(120 + round * 19 + difficulty.length * 40));
+        expect(Date.now() - started).toBeLessThan(3000);
+        const size = puzzle.rows;
+        const ratio = puzzle.blacks.length / (size * size);
+        expect(ratio).toBeGreaterThanOrEqual(0.12);
+        expect(ratio).toBeLessThanOrEqual(0.28);
+        expect(tightRatio(puzzle.blacks, size)).toBeLessThanOrEqual(0.4);
+        expect(countLoops(puzzle.blacks, size, 2)).toBe(1);
+        expect(loopHolds(puzzle.blacks, size, puzzle.edges)).toBe(true);
+      }
+    });
+  }, 90000);
+
   it("builds one closed loop for each book size", () => {
     ["easy", "medium", "hard"].forEach((difficulty, index) => {
       const puzzle = generate(difficulty, mulberry32(30 + index));

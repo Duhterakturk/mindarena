@@ -1,63 +1,124 @@
-import { shuffle, generateLatinSquare, carvePuzzle } from "../common/latinSquare";
-import { countLatin } from "../common/solvers";
+import { shuffle, generateLatinSquare } from "../common/latinSquare";
 
-// Futoshiki: ızgara boyutu, ipucu (eşitsizlik işareti) sayısı ve verilen
-// hücre sayısı zorlukla ölçeklenir. Daha büyük ızgara + daha az ipucu/verilen
-// hücre = daha zor.
-const CONFIG = {
-  easy: { size: 4, givens: 6, hints: 6 },
-  medium: { size: 5, givens: 6, hints: 5 },
-  hard: { size: 6, givens: 5, hints: 4 },
-};
+const SIZES = { easy: [4], medium: [5, 4], hard: [5, 4] };
+const KEEP = { easy: 0.45, medium: 0.75, hard: 1 };
 
-function randomHintPositions(n, count) {
-  const allHorizontal = [];
-  for (let r = 0; r < n; r++) {
-    for (let c = 0; c < n - 1; c++) allHorizontal.push({ r, c, type: "h" });
-  }
-  const allVertical = [];
-  for (let r = 0; r < n - 1; r++) {
-    for (let c = 0; c < n; c++) allVertical.push({ r, c, type: "v" });
-  }
-  const all = shuffle([...allHorizontal, ...allVertical]).slice(0, count);
-  return {
-    horizontal: all.filter((p) => p.type === "h"),
-    vertical: all.filter((p) => p.type === "v"),
-  };
-}
-
-function signsFrom(solution, horizontal, vertical) {
-  return {
-    horizontal: horizontal.map(({ r, c }) => ({
-      r,
-      c,
-      sign: solution[r][c] < solution[r][c + 1] ? "<" : ">",
-    })),
-    vertical: vertical.map(({ r, c }) => ({
-      r,
-      c,
-      sign: solution[r][c] > solution[r + 1][c] ? "v" : "^",
-    })),
-  };
-}
-
-function respectsSigns(grid, horizontal, vertical) {
-  return (
-    horizontal.every(({ r, c, sign }) => (sign === "<" ? grid[r][c] < grid[r][c + 1] : grid[r][c] > grid[r][c + 1])) &&
-    vertical.every(({ r, c, sign }) => (sign === "v" ? grid[r][c] > grid[r + 1][c] : grid[r][c] < grid[r + 1][c]))
-  );
-}
-
-export function generate(difficulty = "easy") {
-  const { size, givens, hints } = CONFIG[difficulty] || CONFIG.easy;
-  for (let attempt = 0; attempt < 40; attempt++) {
-    const solution = generateLatinSquare(size);
-    const puzzle = carvePuzzle(solution, givens);
-    const positions = randomHintPositions(size, hints);
-    const signed = signsFrom(solution, positions.horizontal, positions.vertical);
-    if (countLatin(puzzle, 2, (grid) => respectsSigns(grid, signed.horizontal, signed.vertical)) === 1) {
-      return { puzzle, solution, ...positions, ...signed, size };
+function signsOf(solution) {
+  const horizontal = [];
+  const vertical = [];
+  const n = solution.length;
+  for (let row = 0; row < n; row += 1) {
+    for (let col = 0; col < n - 1; col += 1) {
+      horizontal.push({ r: row, c: col, sign: solution[row][col] < solution[row][col + 1] ? "<" : ">" });
     }
   }
-  throw new Error("Tek çözüm Büyük Küçük üretilemedi");
+  for (let row = 0; row < n - 1; row += 1) {
+    for (let col = 0; col < n; col += 1) {
+      vertical.push({ r: row, c: col, sign: solution[row][col] > solution[row + 1][col] ? "v" : "^" });
+    }
+  }
+  return { horizontal, vertical };
+}
+
+function countBoards(puzzle, horizontal, vertical, limit = 2) {
+  const n = puzzle.length;
+  const grid = puzzle.map((row) => row.slice());
+  const rows = Array.from({ length: n }, () => Array(n + 1).fill(false));
+  const cols = Array.from({ length: n }, () => Array(n + 1).fill(false));
+  for (let row = 0; row < n; row += 1) {
+    for (let col = 0; col < n; col += 1) {
+      const value = grid[row][col];
+      if (!value) continue;
+      if (rows[row][value] || cols[col][value]) return 0;
+      rows[row][value] = cols[col][value] = true;
+    }
+  }
+  let count = 0;
+  let nodes = 0;
+
+  function broken() {
+    return horizontal.some(({ r, c, sign }) => grid[r][c] && grid[r][c + 1] && (sign === "<" ? grid[r][c] >= grid[r][c + 1] : grid[r][c] <= grid[r][c + 1]))
+      || vertical.some(({ r, c, sign }) => grid[r][c] && grid[r + 1][c] && (sign === "v" ? grid[r][c] <= grid[r + 1][c] : grid[r][c] >= grid[r + 1][c]));
+  }
+
+  function search() {
+    if (count >= limit || nodes > 20000) return;
+    nodes += 1;
+    if (broken()) return;
+    let best = null;
+    let choices = null;
+    for (let row = 0; row < n; row += 1) {
+      for (let col = 0; col < n; col += 1) {
+        if (grid[row][col]) continue;
+        const list = [];
+        for (let value = 1; value <= n; value += 1) if (!rows[row][value] && !cols[col][value]) list.push(value);
+        if (!choices || list.length < choices.length) {
+          best = [row, col];
+          choices = list;
+          if (!list.length) break;
+        }
+      }
+    }
+    if (!best) {
+      count += 1;
+      return;
+    }
+    if (!choices.length) return;
+    const [row, col] = best;
+    choices.forEach((value) => {
+      if (count >= limit) return;
+      rows[row][value] = cols[col][value] = true;
+      grid[row][col] = value;
+      search();
+      grid[row][col] = 0;
+      rows[row][value] = cols[col][value] = false;
+    });
+  }
+
+  search();
+  if (nodes > 20000 && count < limit) return limit;
+  return count;
+}
+
+function simplify(size, difficulty, random, deadline) {
+  const solution = generateLatinSquare(size);
+  const puzzle = solution.map((row) => row.slice());
+  let { horizontal, vertical } = signsOf(solution);
+  const items = [
+    ...horizontal.map((sign) => ({ kind: "h", sign })),
+    ...vertical.map((sign) => ({ kind: "v", sign })),
+    ...puzzle.flatMap((row, r) => row.map((_, c) => ({ kind: "g", r, c }))),
+  ];
+  const stop = Math.floor(items.length * (KEEP[difficulty] ?? 1));
+  let removed = 0;
+  shuffle(items).forEach((item) => {
+    if (removed >= stop || Date.now() >= deadline) return;
+    const previousH = horizontal;
+    const previousV = vertical;
+    const previousValue = item.kind === "g" ? puzzle[item.r][item.c] : 0;
+    if (item.kind === "h") horizontal = horizontal.filter((sign) => sign !== item.sign);
+    else if (item.kind === "v") vertical = vertical.filter((sign) => sign !== item.sign);
+    else puzzle[item.r][item.c] = 0;
+    if (countBoards(puzzle, horizontal, vertical) === 1) removed += 1;
+    else {
+      horizontal = previousH;
+      vertical = previousV;
+      if (item.kind === "g") puzzle[item.r][item.c] = previousValue;
+    }
+  });
+  if (countBoards(puzzle, horizontal, vertical) !== 1) return null;
+  return { puzzle, solution, horizontal, vertical, size };
+}
+
+export function generate(difficulty = "easy", random = Math.random) {
+  const deadline = Date.now() + 2800;
+  const sizes = SIZES[difficulty] || SIZES.easy;
+  for (const size of sizes) {
+    const puzzle = simplify(size, difficulty, random, deadline);
+    if (puzzle) return puzzle;
+    if (Date.now() >= deadline) break;
+  }
+  const solution = generateLatinSquare(4);
+  const signed = signsOf(solution);
+  return { puzzle: solution.map((row) => row.slice()), solution, ...signed, size: 4 };
 }

@@ -159,21 +159,15 @@ def _step(public, solution):
     raise HintError("İpucu verilecek boş kare kalmadı")
 
 
-def _letter_path(public, solution):
-    cells = [str(key) for key in _cells(solution)]
-    fixed = _fixed(public)
-    path = []
-    for key in cells:
-        path.append(key)
-        if len(path) < 2 or key not in fixed or path[0] not in fixed:
-            continue
-        if fixed[path[0]] != fixed[key]:
-            continue
-        middles = [item for item in path if item not in fixed]
-        if middles:
-            return {"kind": "marks", "cells": middles, "label": fixed[path[0]]}
-        path = []
-    raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+def _letter_path(_public, solution):
+    paths = solution.get("paths") if isinstance(solution, dict) else None
+    if not isinstance(paths, dict) or not paths:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    label = random.choice(list(paths))
+    path = [str(cell) for cell in paths[label]]
+    if len(path) < 2:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    return {"kind": "marks", "cells": path[:3], "label": str(label)}
 
 
 def _piece(solution):

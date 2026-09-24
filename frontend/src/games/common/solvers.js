@@ -154,10 +154,11 @@ function cageOk(grid, cageId, clues) {
 }
 
 export function clueSatisfied(clue, values) {
-  const match = String(clue).match(/^(\d+)(.+)$/);
+  const match = String(clue).match(/^(\d+)(.*)$/);
   if (!match) return false;
   const target = Number(match[1]);
   const op = match[2];
+  if (!op) return values.length === 1 && values[0] === target;
   if (op === "+") return values.reduce((a, b) => a + b, 0) === target;
   if (op === "×" || op === "x" || op === "*") return values.reduce((a, b) => a * b, 1) === target;
   if (values.length !== 2) return false;
@@ -171,8 +172,106 @@ export function clueSatisfied(clue, values) {
   return false;
 }
 
+function cageCombos(n, length, clue) {
+  const found = [];
+  const values = Array(length);
+  function fill(index) {
+    if (index === length) {
+      if (clueSatisfied(clue, values)) found.push(values.slice());
+      return;
+    }
+    for (let value = 1; value <= n; value += 1) {
+      values[index] = value;
+      fill(index + 1);
+    }
+  }
+  fill(0);
+  return found;
+}
+
+export function cageSolutions(puzzle, cageId, clues, limit = 2) {
+  const n = puzzle.length;
+  const grid = puzzle.map((row) => row.slice());
+  const cages = [];
+  const byId = new Map();
+  for (let row = 0; row < n; row += 1) {
+    for (let col = 0; col < n; col += 1) {
+      const id = String(cageId[row][col]);
+      let cage = byId.get(id);
+      if (!cage) {
+        cage = { id, cells: [] };
+        byId.set(id, cage);
+        cages.push(cage);
+      }
+      cage.cells.push([row, col]);
+    }
+  }
+  cages.forEach((cage) => {
+    const clue = clues[cage.id] ?? clues[Number(cage.id)];
+    cage.combos = cageCombos(n, cage.cells.length, clue);
+    cage.pos = new Map(cage.cells.map(([row, col], index) => [`${row}-${col}`, index]));
+  });
+  const rows = Array.from({ length: n }, () => Array(n + 1).fill(false));
+  const cols = Array.from({ length: n }, () => Array(n + 1).fill(false));
+  for (let row = 0; row < n; row += 1) {
+    for (let col = 0; col < n; col += 1) {
+      const value = grid[row][col];
+      if (!value) continue;
+      if (value < 1 || value > n || rows[row][value] || cols[col][value]) return [];
+      rows[row][value] = cols[col][value] = true;
+    }
+  }
+  const solutions = [];
+  let nodes = 0;
+
+  function allows(cage, row, col, value) {
+    const at = cage.pos.get(`${row}-${col}`);
+    return cage.combos.some((combo) => combo[at] === value && cage.cells.every(([r, c], index) => !grid[r][c] || grid[r][c] === combo[index]));
+  }
+
+  function search() {
+    if (solutions.length >= limit || nodes > 12000) return;
+    nodes += 1;
+    let best = null;
+    let choices = null;
+    for (let row = 0; row < n && choices?.length !== 0; row += 1) {
+      for (let col = 0; col < n; col += 1) {
+        if (grid[row][col]) continue;
+        const cage = byId.get(String(cageId[row][col]));
+        const list = [];
+        for (let value = 1; value <= n; value += 1) {
+          if (rows[row][value] || cols[col][value]) continue;
+          if (allows(cage, row, col, value)) list.push(value);
+        }
+        if (!choices || list.length < choices.length) {
+          best = [row, col];
+          choices = list;
+          if (list.length <= 1) break;
+        }
+      }
+    }
+    if (!best) {
+      solutions.push(grid.map((row) => row.slice()));
+      return;
+    }
+    if (!choices.length) return;
+    const [row, col] = best;
+    choices.forEach((value) => {
+      if (solutions.length >= limit) return;
+      rows[row][value] = cols[col][value] = true;
+      grid[row][col] = value;
+      search();
+      grid[row][col] = 0;
+      rows[row][value] = cols[col][value] = false;
+    });
+  }
+
+  search();
+  return solutions;
+}
+
 export function countCages(puzzle, cageId, clues, limit = 2) {
-  return countLatin(puzzle, limit, (grid) => cageOk(grid, cageId, clues) && digitsOk(grid, grid.length));
+  return cageSolutions(puzzle, cageId, clues, limit).length;
 }
 
 export function countKakuro(rowSums, colSums, givens, limit = 2) {

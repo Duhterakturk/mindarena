@@ -219,12 +219,9 @@ FLEETS = {
     "hard": (7, 7, (4, 3, 3, 2, 2, 1, 1)),
 }
 PYRAMID_BASE = {"easy": 4, "medium": 5, "hard": 6}
-ABC_CONFIG = {
-    "easy": (5, 2, 5),
-    "medium": (6, 3, 6),
-    "hard": (7, 3, 8),
-}
-CAGE_SIZE = {"easy": 4, "medium": 6, "hard": 8}
+ABC_SIZE = {"easy": 5, "medium": 6, "hard": 7}
+ABC_PAIRS = {"easy": (4, 4), "medium": (5, 5), "hard": (6, 7)}
+CAGE_SIZE = {"easy": 4, "medium": 5, "hard": 6}
 STAR_SIZE = {"easy": 5, "medium": 6, "hard": 7}
 NONOGRAM_SIZE = {"easy": 5, "medium": 6, "hard": 7}
 PRODUCTS = {
@@ -232,11 +229,7 @@ PRODUCTS = {
     "medium": (4, 2, 9, 2),
     "hard": (5, 2, 12, 0),
 }
-FUTOSHIKI = {
-    "easy": (4, 6, 6),
-    "medium": (5, 6, 5),
-    "hard": (6, 5, 4),
-}
+FUTOSHIKI_SIZE = {"easy": 4, "medium": 5, "hard": 5}
 PENTOMINO_COUNT = {"easy": 2, "medium": 3, "hard": 4}
 FORM_SHAPES = {"circle", "square", "triangle"}
 FORM_COLORS = {"red", "yellow", "blue"}
@@ -840,22 +833,44 @@ def _sequential(marked, fixed):
 
 
 def _grade_abc(difficulty, puzzle, answer):
-    size, pairs, length = ABC_CONFIG[difficulty]
+    size = ABC_SIZE[difficulty]
+    low, high = ABC_PAIRS[difficulty]
     if not isinstance(puzzle, dict) or puzzle.get("rows") != size or puzzle.get("cols") != size:
         raise GradeError("Izgara boyutu uyuşmuyor")
-    fixed = {str(k): str(v) for k, v in (puzzle.get("fixedCells") or {}).items()}
-    labels = {}
+    fixed = {str(key): str(value) for key, value in (puzzle.get("fixedCells") or {}).items()}
+    groups = {}
     for key, label in fixed.items():
-        labels.setdefault(label, []).append(key)
-    if len(labels) != pairs or any(len(spots) != 2 for spots in labels.values()):
+        groups.setdefault(label, []).append(key)
+    if not low <= len(groups) <= high or any(len(spots) != 2 for spots in groups.values()):
         raise GradeError("Harf çiftleri eksik")
-    marked = set((answer or {}).get("cells") or [])
-    if not _connection(marked, fixed):
+    paths = (answer or {}).get("paths") if isinstance(answer, dict) else None
+    if not isinstance(paths, dict):
+        raise GradeError("Çözüm eksik")
+    seen = set()
+    for label, ends in groups.items():
+        path = paths.get(label)
+        if not isinstance(path, list) or len(path) < 2:
+            raise GradeError("Çözüm kurallara uymuyor")
+        path = [str(cell) for cell in path]
+        if {path[0], path[-1]} != set(ends):
+            raise GradeError("Çözüm kurallara uymuyor")
+        previous = None
+        for cell in path:
+            if cell in seen or (cell in fixed and fixed[cell] != label):
+                raise GradeError("Çözüm kurallara uymuyor")
+            row, col = (int(part) for part in cell.split("-"))
+            if row < 0 or col < 0 or row >= size or col >= size:
+                raise GradeError("Çözüm kurallara uymuyor")
+            if previous is not None:
+                prow, pcol = (int(part) for part in previous.split("-"))
+                if abs(row - prow) + abs(col - pcol) != 1:
+                    raise GradeError("Çözüm kurallara uymuyor")
+            if cell in fixed and cell not in (path[0], path[-1]):
+                raise GradeError("Çözüm kurallara uymuyor")
+            seen.add(cell)
+            previous = cell
+    if len(seen) != size * size:
         raise GradeError("Çözüm kurallara uymuyor")
-    nodes = marked | set(fixed)
-    for comp in _components(nodes):
-        if len(comp) < length:
-            raise GradeError("Yol çok kısa")
 
 
 def _connection(marked, fixed):
@@ -882,9 +897,11 @@ def _clue_ok(clue, values):
     while text and text[0].isdigit():
         digits += text[0]
         text = text[1:]
-    if not digits or not text:
+    if not digits:
         return False
     target = int(digits)
+    if not text:
+        return len(values) == 1 and values[0] == target
     if text == "+":
         return sum(values) == target
     if text in ("×", "x", "*"):
@@ -1126,16 +1143,12 @@ def _grade_products(difficulty, puzzle, answer):
 
 
 def _grade_futoshiki(difficulty, puzzle, answer):
-    n, given_count, hint_count = FUTOSHIKI[difficulty]
+    n = FUTOSHIKI_SIZE[difficulty]
     if not isinstance(puzzle, dict):
         raise GradeError("Bulmaca eksik")
     givens = _int_grid(puzzle.get("givens"), n, 0, n, "ipucu")
-    if _filled(givens) != given_count:
-        raise GradeError("İpucu sayısı bu zorluğa uymuyor")
     horizontal = puzzle.get("horizontal") or []
     vertical = puzzle.get("vertical") or []
-    if len(horizontal) + len(vertical) != hint_count:
-        raise GradeError("İşaret sayısı bu zorluğa uymuyor")
     solved = _int_grid(answer, n, 1, n)
     if not _latin(solved):
         raise GradeError("Çözüm kurallara uymuyor")
