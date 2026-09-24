@@ -53,26 +53,21 @@ function Glyph({ shape, color, size = 28 }) {
 function ClueCard({ clue }) {
   const yes = clue.sign === "yes";
   const region = new Set(clue.cells || []);
-  const points = [...region].map((key) => key.split("-").map(Number));
-  const minRow = Math.min(...points.map((point) => point[0]));
-  const maxRow = Math.max(...points.map((point) => point[0]));
-  const minCol = Math.min(...points.map((point) => point[1]));
-  const maxCol = Math.max(...points.map((point) => point[1]));
-  const rows = maxRow - minRow + 1;
-  const cols = maxCol - minCol + 1;
   return (
     <div className={`flex items-center gap-1.5 rounded-lg border bg-white px-2 py-1.5 ${yes ? "border-emerald-500" : "border-rose-400"}`}>
       <Glyph shape={clue.shape} color={clue.color} size={26} />
       <span className={`text-sm font-bold leading-none ${yes ? "text-emerald-600" : "text-rose-500"}`}>{yes ? "✓" : "✕"}</span>
-      <div className="grid gap-0.5" style={{ gridTemplateColumns: `repeat(${cols}, 0.7rem)` }}>
-        {Array.from({ length: rows * cols }, (_, index) => {
-          const key = `${minRow + Math.floor(index / cols)}-${minCol + (index % cols)}`;
+      <div className="grid grid-cols-3 gap-0.5">
+        {Array.from({ length: 9 }, (_, index) => {
+          const key = `${Math.floor(index / 3)}-${index % 3}`;
           const on = region.has(key);
           return (
             <div
               key={key}
-              className={`w-2.5 h-2.5 border border-slate-300 ${on ? (yes ? "bg-emerald-400" : "bg-rose-400") : "bg-white"}`}
-            />
+              className={`flex h-3 w-3 items-center justify-center border border-slate-300 text-[8px] font-bold leading-none ${on ? "clue-hatch" : "bg-white"} ${on && !yes ? "text-rose-500" : "text-transparent"}`}
+            >
+              {on && !yes ? "✕" : ""}
+            </div>
           );
         })}
       </div>
@@ -222,7 +217,7 @@ export default function Metaforms() {
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="metaforms" value={difficulty} onChange={newGame} />
-      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="play-rules text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div className="mb-4 flex w-full max-w-3xl flex-wrap justify-center gap-2">
