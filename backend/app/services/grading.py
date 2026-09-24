@@ -1364,7 +1364,7 @@ def _number_clue(clue, values):
     if op == "diff" and len(values) == 2:
         return values[0] - values[1] == target
     if op == "ratio" and len(values) == 4 and values[1] and values[3]:
-        return values[0] * values[3] == values[1] * values[2]
+        return values[0] % values[1] == 0 and values[2] % values[3] == 0 and values[0] // values[1] == values[2] // values[3]
     return False
 
 

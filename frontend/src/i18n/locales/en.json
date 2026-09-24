@@ -137,7 +137,7 @@
     "futoshiki": "Each row and column contains 1–{{n}} once. The < and > signs order neighboring cells.",
     "pentominolar": "The five-square pieces cover the outlined area with no gaps or overlaps. A piece is chosen, turned, and set on the grid.",
     "metaforms": "Each piece is used once. The mark on the left is the subject. A hatched cell is where that subject sits. A cross means the subject is not in that cell. An empty shape is any piece of that shape. A colored pencil is any piece of that color. A blank white cell only shows distance.",
-    "numbers": "Starred cells fill the equation underneath, left to right and top to bottom. A/B = C/D reads four stars in that same order. Every cell is a number from 1 to 9.",
+    "numbers": "Each cell is a number from 1 to 9, used once. A single star means that cell equals the written sum. Several stars mean the equation is read by its letters. A starred sum or product equals the number beside it. ★+★=★ and ★×★=★ have no order: any two add or multiply to the third. Division comes out even.",
     "colours": "Each palette piece is used once. The other cells stay empty. A check or a question mark means filled. A cross means empty. A card with a slash is a picture that does not occur."
   }
 }

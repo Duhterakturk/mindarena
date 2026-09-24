@@ -137,7 +137,7 @@
     "futoshiki": "Her satır ve sütun 1-{{n}} rakamlarını birer kez içerir. < ve > işaretleri komşu hücrelerin sırasını gösterir.",
     "pentominolar": "Beş karelik parçalar çerçeveli alanı boşluksuz ve taşmadan örter. Parça seçilir, döndürülür ve ızgaraya oturur.",
     "metaforms": "Her parça bir kez kullanılır. Soldaki işaret özneyi söyler. Taralı kare öznenin yeridir. Çarpı, öznenin o karede olmadığını söyler. İçi boş şekil o şekildeki herhangi bir parçadır. Renkli kalem o renkteki herhangi bir parçadır. Boş beyaz kare yalnızca uzaklığı gösterir.",
-    "numbers": "Yıldızlı kareler alttaki işleme soldan sağa, yukarıdan aşağı girer. A/B = C/D dört yıldızı aynı sırayla okur. Her kare 1-9 arası bir sayıdır.",
+    "numbers": "Her kareye 1’den 9’a kadar sayılar birer kez girer. Tek yıldızlı harf işleminde yıldızlı kare, yazılan işleme eşittir. Birden çok yıldız varsa denklem harflerle okunur. Yıldızlı toplam ya da çarpım bir sayıya eşitse o yıldızlar bu sayıyı verir. ★+★=★ ve ★×★=★ işaretinde sıra yoktur; herhangi ikisinin toplamı ya da çarpımı üçüncüsüne eşitse yeter. Bölme tam bölünür.",
     "colours": "Paletteki her parçayı bir kez yerleştir, kalan kareler boş kalır. Tik dolu kare, soru işareti de dolu kare, çarpı boş kare demektir. Eğik çizgili kart o görüntünün olmadığını söyler."
   }
 }
