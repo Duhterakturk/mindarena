@@ -26,9 +26,19 @@ describe("metaforms placement", () => {
       swapped[0][1] = first;
       expect(satisfies(swapped, puzzle.clues)).toBe(false);
       const pins = puzzle.clues.filter((clue) => clue.sign === "yes" && clue.shape && clue.color && clue.cells.length === 1);
-      if (difficulty === "easy") expect(pins.length).toBeLessThanOrEqual(2);
-      if (difficulty === "hard") expect(pins.length).toBe(0);
-      expect(puzzle.clues.some((clue) => clue.cells.length > 1 || clue.sign === "no" || !clue.shape || !clue.color)).toBe(true);
+      const blocked = puzzle.clues.filter((clue) => clue.sign === "no");
+      if (difficulty === "easy") {
+        expect(pins.length).toBeGreaterThanOrEqual(3);
+        expect(blocked.length).toBeGreaterThanOrEqual(3);
+      }
+      if (difficulty === "medium") {
+        expect(pins.length).toBeLessThanOrEqual(1);
+        expect(blocked.length).toBeGreaterThanOrEqual(2);
+      }
+      if (difficulty === "hard") {
+        expect(pins.length).toBe(0);
+        expect(blocked.length).toBeGreaterThanOrEqual(2);
+      }
     });
   });
 });

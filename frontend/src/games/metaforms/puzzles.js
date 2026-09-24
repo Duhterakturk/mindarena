@@ -1,15 +1,15 @@
 // 3×3 tahta, 9 parça (3 şekil × 3 renk). Her parça bir kez kullanılır.
-// Yeşil ipucu: tarif edilen parça boyalı karelerden birindedir.
-// Kırmızı ipucu: tarif edilen parça boyalı karelerin hiçbirinde değildir.
-// Yalnızca şekil veya yalnızca renk varsa bu, o türden üç parçanın tümü içindir:
-// yeşil en az birini, kırmızı hiçbirini ister.
+// Evet: parça taralı karelerden birindedir. Tek kareyse oraya yerleşir.
+// Hayır: parça işaretli karelerin hiçbirinde değildir.
+// Yalnızca şekil veya yalnızca renk, o türden üç parçanın tümü içindir.
 
 export const SHAPES = ["circle", "square", "triangle"];
 export const COLORS = ["red", "yellow", "blue"];
 
 const CELL_KEYS = ["0-0", "0-1", "0-2", "1-0", "1-1", "1-2", "2-0", "2-1", "2-2"];
-const MIN_CLUES = { easy: 6, medium: 6, hard: 5 };
-const PROTECT_EXACT = { easy: 2, medium: 1, hard: 0 };
+const MIN_CLUES = { easy: 9, medium: 7, hard: 6 };
+const PROTECT_EXACT = { easy: 3, medium: 1, hard: 0 };
+const MIN_NO = { easy: 3, medium: 2, hard: 2 };
 const ORDER = {
   easy: ["exact", "row", "col", "pair", "neg", "shape-row", "color-col", "shape-no", "color-no"],
   medium: ["row", "col", "pair", "neg", "shape-row", "color-col", "exact", "shape-no", "color-no"],
@@ -244,9 +244,13 @@ function cluePool(ids, random) {
       color,
       cells: [cellKey(index), cellKey(neighbor)].sort(),
     });
-    const other = ids.findIndex((_, cell) => cell !== index);
-    const away = shuffle(ids.map((_, cell) => cell).filter((cell) => cell !== index), random)[0] ?? other;
-    add({ kind: "neg", sign: "no", shape, color, cells: [cellKey(away)] });
+    const away = shuffle(
+      ids.map((_, cell) => cell).filter((cell) => cell !== index),
+      random,
+    ).slice(0, 2);
+    away.forEach((cell) => {
+      add({ kind: "neg", sign: "no", shape, color, cells: [cellKey(cell)] });
+    });
     add({ kind: "shape-row", sign: "yes", shape, color: null, cells: rowCells });
     add({ kind: "color-col", sign: "yes", shape: null, color, cells: colCells });
   });
@@ -282,12 +286,21 @@ function stillUnique(clues) {
   return countSolutions(clues.map(publish), 2) === 1;
 }
 
+function countKind(list, kind) {
+  return list.filter((clue) => clue.kind === kind).length;
+}
+
+function countSign(list, sign) {
+  return list.filter((clue) => clue.sign === sign).length;
+}
+
 export function generate(difficulty = "easy", random = Math.random) {
   const minClues = MIN_CLUES[difficulty] || MIN_CLUES.easy;
   const protect = PROTECT_EXACT[difficulty] ?? PROTECT_EXACT.easy;
+  const minNo = MIN_NO[difficulty] ?? MIN_NO.easy;
   const rank = Object.fromEntries((ORDER[difficulty] || ORDER.easy).map((kind, index) => [kind, index]));
 
-  for (let attempt = 0; attempt < 4; attempt += 1) {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
     const ids = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8], random);
     const pool = cluePool(ids, random);
     const exact = shuffle(pool.filter((clue) => clue.kind === "exact"), random);
@@ -303,10 +316,13 @@ export function generate(difficulty = "easy", random = Math.random) {
     const drop = weaker.slice().sort((a, b) => rank[b.kind] - rank[a.kind]);
     for (const clue of drop) {
       if (chosen.length <= minClues) break;
+      if (clue.sign === "no" && countSign(chosen, "no") <= minNo) continue;
       const next = without(chosen, clue);
       if (stillUnique(next)) chosen = next;
     }
 
+    if (countKind(chosen, "exact") < protect) continue;
+    if (countSign(chosen, "no") < minNo) continue;
     if (!stillUnique(chosen)) continue;
     const ordered = chosen.slice().sort((a, b) => (rank[a.kind] ?? 9) - (rank[b.kind] ?? 9));
     return { clues: ordered.map(publish), solution: rowsOf(ids) };

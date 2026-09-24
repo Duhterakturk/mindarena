@@ -67,9 +67,9 @@ function ClueCard({ clue }) {
           const key = `${Math.floor(index / 3)}-${index % 3}`;
           const on = region.has(key);
           return (
-            <div key={key} className={`relative flex h-4 w-4 items-center justify-center ${on && !inside ? "clue-hatch" : "bg-white"}`}>
+            <div key={key} className={`relative flex h-4 w-4 items-center justify-center ${yes && on && !inside ? "clue-hatch" : "bg-white"}`}>
               {inside && on ? <Glyph shape={clue.shape} color={clue.color} size={14} /> : null}
-              {on && !yes ? <span className="text-[10px] font-bold leading-none text-rose-600">✕</span> : null}
+              {on && !yes ? <span className="text-[11px] font-bold leading-none text-rose-600">✕</span> : null}
             </div>
           );
         })}
