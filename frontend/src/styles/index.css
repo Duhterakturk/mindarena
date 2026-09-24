@@ -111,10 +111,10 @@ textarea,
   background-color: #fff;
   background-image: repeating-linear-gradient(
     -45deg,
-    transparent,
-    transparent 1px,
-    #86efac 1px,
-    #86efac 2px
+    #fff,
+    #fff 1px,
+    #1e1a16 1px,
+    #1e1a16 2px
   );
 }
 

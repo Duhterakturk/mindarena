@@ -53,20 +53,23 @@ function Glyph({ shape, color, size = 28 }) {
 function ClueCard({ clue }) {
   const yes = clue.sign === "yes";
   const region = new Set(clue.cells || []);
+  const inside = yes && region.size === 1;
   return (
-    <div className={`flex items-center gap-1.5 rounded-lg border bg-white px-2 py-1.5 ${yes ? "border-emerald-500" : "border-rose-400"}`}>
-      <Glyph shape={clue.shape} color={clue.color} size={26} />
-      <span className={`text-sm font-bold leading-none ${yes ? "text-emerald-600" : "text-rose-500"}`}>{yes ? "✓" : "✕"}</span>
-      <div className="grid grid-cols-3 gap-0.5">
+    <div className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 py-1.5">
+      {!inside && (
+        <span className="relative inline-flex">
+          <Glyph shape={clue.shape} color={clue.color} size={26} />
+          {!yes && <span className="absolute inset-0 flex items-center justify-center text-lg font-bold leading-none text-rose-600">✕</span>}
+        </span>
+      )}
+      <div className="grid grid-cols-3 gap-px bg-slate-300 p-px">
         {Array.from({ length: 9 }, (_, index) => {
           const key = `${Math.floor(index / 3)}-${index % 3}`;
           const on = region.has(key);
           return (
-            <div
-              key={key}
-              className={`flex h-3 w-3 items-center justify-center border border-slate-300 text-[8px] font-bold leading-none ${on ? "clue-hatch" : "bg-white"} ${on && !yes ? "text-rose-500" : "text-transparent"}`}
-            >
-              {on && !yes ? "✕" : ""}
+            <div key={key} className={`relative flex h-4 w-4 items-center justify-center ${on && !inside ? "clue-hatch" : "bg-white"}`}>
+              {inside && on ? <Glyph shape={clue.shape} color={clue.color} size={14} /> : null}
+              {on && !yes ? <span className="text-[10px] font-bold leading-none text-rose-600">✕</span> : null}
             </div>
           );
         })}

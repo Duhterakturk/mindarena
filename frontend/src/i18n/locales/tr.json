@@ -136,7 +136,7 @@
     "carpmaca": "Her hücre, satır başlığı ile sütun başlığının çarpımıdır.",
     "futoshiki": "Her satır ve sütun 1-{{n}} rakamlarını birer kez içerir. < ve > işaretleri komşu hücrelerin sırasını gösterir.",
     "pentominolar": "Beş karelik parçalar çerçeveli alanı boşluksuz ve taşmadan örter. Parça seçilir, döndürülür ve ızgaraya oturur.",
-    "metaforms": "Her şekil ve her renk birer kez kullanılır. Yeşil işaret parçanın boyalı karelere gireceğini, kırmızı işaret girmeyeceğini söyler. Yalnızca şekil görünüyorsa o şekilden herhangi biri, yalnızca renk görünüyorsa o renkten herhangi biri kastedilir.",
+    "metaforms": "Her şekil ve her renk birer kez kullanılır. Parça tek karede çiziliyse oraya girer. Taralı kareler girebileceği yerdir. Kırmızı çarpı o karelere girmeyeceğini söyler. İçi boş şeklin rengi serbesttir. Yalnızca renk görünüyorsa şekli serbesttir.",
     "numbers": "Yıldızlı kareler alttaki işleme soldan sağa, yukarıdan aşağı girer. A/B = C/D dört yıldızı aynı sırayla okur. Her kare 1-9 arası bir sayıdır.",
     "colours": "Paletteki her parçayı bir kez yerleştir, kalan kareler boş kalır. Tik dolu kare, soru işareti de dolu kare, çarpı boş kare demektir. Eğik çizgili kart o görüntünün olmadığını söyler."
   }

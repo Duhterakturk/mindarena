@@ -136,7 +136,7 @@
     "carpmaca": "Each cell is the product of its row header and column header.",
     "futoshiki": "Each row and column contains 1–{{n}} once. The < and > signs order neighboring cells.",
     "pentominolar": "The five-square pieces cover the outlined area with no gaps or overlaps. A piece is chosen, turned, and set on the grid.",
-    "metaforms": "Each shape and each color is used once. A green mark means the piece goes in a highlighted cell. A red mark means it stays out. A shape alone means any piece of that shape. A color alone means any piece of that color.",
+    "metaforms": "Each shape and each color is used once. A piece drawn in one cell belongs there. Hatched cells are where it may go. A red cross means it stays out of those cells. An empty shape may be any color. A color alone may be any shape.",
     "numbers": "Starred cells fill the equation underneath, left to right and top to bottom. A/B = C/D reads four stars in that same order. Every cell is a number from 1 to 9.",
     "colours": "Each palette piece is used once. The other cells stay empty. A check or a question mark means filled. A cross means empty. A card with a slash is a picture that does not occur."
   }
