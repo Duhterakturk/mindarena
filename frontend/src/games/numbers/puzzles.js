@@ -4,7 +4,6 @@
 // Sonuçsuz ★+★=★ ve ★×★=★ sırasızdır: herhangi ikisi üçüncüsünü verir. Bölme tam bölünür.
 
 const LETTERS = "ABCDEFGHI";
-const EXTRA = { easy: 2, medium: 1, hard: 0 };
 
 function shuffle(list, random) {
   const copy = list.slice();
@@ -56,26 +55,91 @@ export function holds(grid, clue) {
   return false;
 }
 
+function slot(letter) {
+  return letter.charCodeAt(0) - 65;
+}
+
+function sideOf(text) {
+  const raw = String(text).replace(/\s/g, "").replace("×", "*").replace("−", "-");
+  if (/^[A-I]$/.test(raw)) return { kind: "cell", index: slot(raw) };
+  const match = raw.match(/^([A-I])([+\-*/])([A-I])$/);
+  if (!match) return null;
+  return { kind: "op", op: match[2], left: slot(match[1]), right: slot(match[3]) };
+}
+
+function readSide(cells, side) {
+  if (!side) return null;
+  if (side.kind === "cell") return cells[side.index] || null;
+  const left = cells[side.left];
+  const right = cells[side.right];
+  if (!left || !right) return null;
+  if (side.op === "+") return left + right;
+  if (side.op === "-") return left - right;
+  if (side.op === "*") return left * right;
+  if (left % right !== 0) return null;
+  return left / right;
+}
+
+function compiled(clue) {
+  if (clue.kind === "equation") {
+    const left = sideOf(clue.left);
+    const right = sideOf(clue.right);
+    const ready = (cells, side) => {
+      if (!side) return false;
+      if (side.kind === "cell") return Boolean(cells[side.index]);
+      return Boolean(cells[side.left] && cells[side.right]);
+    };
+    return (cells) => {
+      if (!ready(cells, left) || !ready(cells, right)) return true;
+      const a = readSide(cells, left);
+      const b = readSide(cells, right);
+      return a !== null && b !== null && a === b;
+    };
+  }
+  const indexes = (clue.cells || []).map(slot);
+  if (clue.kind === "total") {
+    const target = clue.target;
+    return (cells) => {
+      let sum = 0;
+      for (const index of indexes) {
+        if (!cells[index]) return true;
+        sum += cells[index];
+      }
+      return sum === target;
+    };
+  }
+  if (clue.kind === "relation") {
+    const multiply = clue.op === "*";
+    return (cells) => {
+      const values = indexes.map((index) => cells[index]);
+      if (values.some((value) => !value)) return true;
+      const [a, b, c] = values;
+      if (multiply) return a * b === c || a * c === b || b * c === a;
+      return a + b === c || a + c === b || b + c === a;
+    };
+  }
+  return () => false;
+}
+
 export function solve(clues) {
-  const grid = [0, 0, 0].map(() => [0, 0, 0]);
+  const checks = clues.map(compiled);
+  const cells = Array(9).fill(0);
   const used = Array(10).fill(false);
   const found = [];
 
   function place(index) {
     if (found.length > 1) return;
-    if (clues.some((clue) => lettersIn(clue).every((letter) => cellValue(grid, letter)) && !holds(grid, clue))) return;
+    if (checks.some((check) => !check(cells))) return;
     if (index === 9) {
-      if (clues.every((clue) => holds(grid, clue))) found.push(grid.map((row) => row.slice()));
+      found.push([cells.slice(0, 3), cells.slice(3, 6), cells.slice(6)]);
       return;
     }
-    const row = Math.floor(index / 3);
-    const col = index % 3;
     for (let digit = 1; digit <= 9; digit += 1) {
       if (used[digit]) continue;
       used[digit] = true;
-      grid[row][col] = digit;
+      cells[index] = digit;
       place(index + 1);
-      grid[row][col] = 0;
+      cells[index] = 0;
       used[digit] = false;
       if (found.length > 1) return;
     }
@@ -83,11 +147,6 @@ export function solve(clues) {
 
   place(0);
   return found;
-}
-
-function lettersIn(clue) {
-  if (clue.kind === "equation") return `${clue.left}${clue.right}`.match(/[A-I]/g) || [];
-  return clue.cells || [];
 }
 
 function at(grid, letter) {
@@ -150,9 +209,31 @@ function cluePool(grid) {
   return clues;
 }
 
+function isRatio(clue) {
+  return clue.kind === "equation" && String(clue.left).includes("/") && String(clue.right).includes("/");
+}
+
+function harden(clue) {
+  return clue.kind === "relation" || isRatio(clue);
+}
+
+function trim(clues) {
+  const kept = clues.slice();
+  const dropped = [];
+  for (let index = 0; index < kept.length;) {
+    const next = kept.filter((_, item) => item !== index);
+    if (solve(next).length === 1) {
+      dropped.push(kept[index]);
+      kept.splice(index, 1);
+    } else {
+      index += 1;
+    }
+  }
+  return { kept, dropped };
+}
+
 export function generate(difficulty = "easy", random = Math.random) {
-  const extra = difficulty === "easy" ? 1 + Math.floor(random() * 2) : (EXTRA[difficulty] ?? 0);
-  for (let attempt = 0; attempt < 8; attempt += 1) {
+  for (let attempt = 0; attempt < 24; attempt += 1) {
     const digits = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9], random);
     const solution = [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6)];
     const pool = shuffle(cluePool(solution), random);
@@ -168,14 +249,15 @@ export function generate(difficulty = "easy", random = Math.random) {
       if (found.length === 0) clues.pop();
     }
     if (!unique) continue;
-    let added = 0;
-    for (const clue of pool) {
-      if (added >= extra) break;
-      if (clues.includes(clue)) continue;
-      clues.push(clue);
-      added += 1;
-    }
-    return { clues, solution };
+    const { kept, dropped } = trim(clues);
+    if (difficulty === "hard" && !kept.some(harden)) continue;
+    const spare = difficulty === "easy"
+      ? 2 + Math.floor(random() * 2)
+      : difficulty === "medium" ? 1 : 0;
+    const totals = shuffle(dropped.filter((clue) => clue.kind === "total"), random);
+    const others = shuffle(dropped.filter((clue) => clue.kind !== "total"), random);
+    const back = (difficulty === "easy" ? [...totals, ...others] : shuffle(dropped, random)).slice(0, spare);
+    return { clues: shuffle([...kept, ...back], random), solution };
   }
   throw new Error("Sayı bulmacası üretilemedi");
 }
