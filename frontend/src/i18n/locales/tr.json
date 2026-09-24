@@ -127,7 +127,7 @@
     "cit": "Sayı, o hücrenin kaç kenarının çizgide olduğunu söyler. Çizgi tek bir kapalı halka olmalı. Boş hücrede sayı yoktur.",
     "amiral-batti": "Satır ve sütun sayıları, o çizgideki gemi karelerinin adedidir. Gemiler birbirine değmez.",
     "sihirli-piramit": "Yol tepeden başlar ve her sıradan bir daireyle tabana iner. Adım yalnız alttaki komşu daireye değer. Yolda 1’den sıra sayısına kadar her sayı bir kez durur.",
-    "patika": "Numaralı noktalar, yatay ve dikey adımlarla kesintisiz bir yol oluşturur.",
+    "patika": "Siyah kareler kapalıdır. Beyaz karelerden tek bir kapalı halka geçer. Halka her beyaz kareye bir kez girer, yalnız yatay ve dikey komşuya ilerler, siyah kareye girmez ve kendini kesmez. Başladığı kareye geri döner.",
     "abc-baglama": "Aynı harfler, birbirini kesmeyen yatay ve dikey bir çizgiyle birleşir.",
     "islem-karesi": "Her satır ve her sütun, aradaki işlemlerle sağdaki ve alttaki sonuca ulaşır. Çarpma ve bölme önce yapılır. Sayılar 1-9 arasındadır ve tekrar etmez.",
     "kendoku": "Her satır ve sütun 1-{{n}} rakamlarını birer kez içerir. Kafesler toplama, çıkarma, çarpma veya bölme ister.",

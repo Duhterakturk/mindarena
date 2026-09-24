@@ -29,8 +29,8 @@ export const HINTS = {
     en: { hint: "The path comes down from the top. One circle stands on each row, and a step only touches the neighbor below. Each number appears once.", example: "Once the top 3 is used, another 3 stays off the path." },
   },
   patika: {
-    tr: { hint: "Yol 1’den başlar. Sıradaki sayıya yalnız sağa, sola, yukarı veya aşağı gidilir.", example: "1 ile 2 yan yanaysa aralarında düz bir adım durur." },
-    en: { hint: "The path begins at 1. The next number is only up, down, left, or right.", example: "When 1 and 2 are neighbors, a straight step sits between them." },
+    tr: { hint: "Her beyaz karenin halkada iki komşusu vardır. Çıkmaz bir kare halkaya girmez.", example: "İki beyaz kare yan yanaysa aralarındaki çizgi halkaya ait olabilir." },
+    en: { hint: "Each white cell has two neighbors on the loop. A dead end stays off the loop.", example: "When two white cells sit side by side, the line between them may belong to the loop." },
   },
   "abc-baglama": {
     tr: { hint: "Aynı harf birbirine bağlanır. Çizgiler kesişmez ve üst üste binmez.", example: "İki A köşedeyse arada boş bir koridor durur." },

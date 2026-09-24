@@ -32,7 +32,7 @@ def pick_hint(slug, public, proof, focus=None):
     if slug == "cit":
         return _edge(solution)
     if slug == "patika":
-        return _step(public, solution)
+        return _loop_edge(solution)
     if slug == "abc-baglama":
         return _letter_path(public, solution)
     if slug == "pentominolar":
@@ -132,6 +132,15 @@ def _mark(public, solution, note):
         raise HintError("İpucu verilecek boş kare kalmadı")
     row_index, col_index = random.choice(spots)
     return {"kind": "mark", "row": row_index, "col": col_index, "note": note}
+
+
+def _loop_edge(solution):
+    edges = solution.get("edges") if isinstance(solution, dict) else None
+    if not isinstance(edges, list) or not edges:
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    edge = random.choice([str(item) for item in edges])
+    left, right = edge.split("|")
+    return {"kind": "edge", "a": left, "b": right}
 
 
 def _step(public, solution):

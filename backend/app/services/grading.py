@@ -219,7 +219,6 @@ FLEETS = {
     "hard": (7, 7, (4, 3, 3, 2, 2, 1, 1)),
 }
 PYRAMID_BASE = {"easy": 4, "medium": 5, "hard": 6}
-PATH_LENGTH = {"easy": 12, "medium": 16, "hard": 22}
 ABC_CONFIG = {
     "easy": (5, 2, 5),
     "medium": (6, 3, 6),
@@ -780,22 +779,36 @@ def _components(nodes):
 
 
 def _grade_patika(difficulty, puzzle, answer):
-    if not isinstance(puzzle, dict):
-        raise GradeError("Bulmaca eksik")
-    fixed = puzzle.get("fixedCells") or {}
-    rows, cols = puzzle.get("rows"), puzzle.get("cols")
-    size = {12: 5, 16: 6, 22: 7}[PATH_LENGTH[difficulty]]
-    if rows != size or cols != size or not isinstance(fixed, dict):
+    size = {"easy": 8, "medium": 9, "hard": 10}.get(difficulty)
+    if not isinstance(puzzle, dict) or puzzle.get("rows") != size or puzzle.get("cols") != size:
         raise GradeError("Izgara boyutu uyuşmuyor")
-    labels = list(fixed.values())
-    if sorted(str(v) for v in labels) != ["1", "2", "3", "4"]:
-        raise GradeError("Duraklar eksik")
-    marked = set((answer or {}).get("cells") or [])
-    nodes = marked | set(fixed)
-    if len(nodes) < PATH_LENGTH[difficulty]:
-        raise GradeError("Yol çok kısa")
-    if not _sequential(marked, {k: str(v) for k, v in fixed.items()}):
-        raise GradeError("Çözüm kurallara uymuyor")
+    blacks = {str(cell) for cell in (puzzle.get("blacks") or [])}
+    edges = [str(edge) for edge in ((answer or {}).get("edges") or [])]
+    whites = [f"{row}-{col}" for row in range(size) for col in range(size) if f"{row}-{col}" not in blacks]
+    if len(whites) < 4:
+        raise GradeError("Beyaz kare eksik")
+    links = {cell: [] for cell in whites}
+    for edge in edges:
+        parts = edge.split("|")
+        if len(parts) != 2 or parts[0] not in links or parts[1] not in links:
+            raise GradeError("Çizgi beyaz kareleri bağlamıyor")
+        ar, ac = (int(part) for part in parts[0].split("-"))
+        br, bc = (int(part) for part in parts[1].split("-"))
+        if abs(ar - br) + abs(ac - bc) != 1:
+            raise GradeError("Çizgi çapraz")
+        links[parts[0]].append(parts[1])
+        links[parts[1]].append(parts[0])
+    if any(len(links[cell]) != 2 for cell in whites):
+        raise GradeError("Halka kurallara uymuyor")
+    seen = {whites[0]}
+    prev = whites[0]
+    cursor = links[whites[0]][0]
+    while cursor not in seen:
+        seen.add(cursor)
+        nxt = next(cell for cell in links[cursor] if cell != prev)
+        prev, cursor = cursor, nxt
+    if len(seen) != len(whites) or cursor != whites[0]:
+        raise GradeError("Halka kurallara uymuyor")
 
 
 def _sequential(marked, fixed):

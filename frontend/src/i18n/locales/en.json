@@ -127,7 +127,7 @@
     "cit": "A number says how many of that cell's edges belong to the line. The line is one closed loop. An empty cell has no number.",
     "amiral-batti": "A row or column number is how many ship cells sit on that line. Ships do not touch.",
     "sihirli-piramit": "The path starts at the top and reaches the base with one circle on each row. A step only touches the neighboring circle below. Each number from 1 up to the number of rows appears once.",
-    "patika": "The numbered dots form a continuous path of horizontal and vertical steps.",
+    "patika": "Black cells are closed. One loop passes through every white cell once. It moves only up, down, left, or right, stays out of black cells, and does not cross itself. It returns to where it started.",
     "abc-baglama": "Matching letters join with horizontal and vertical lines that do not cross.",
     "islem-karesi": "Each row and each column reaches the result on the right or below, using the signs between the numbers. Multiplication and division come before addition and subtraction. The numbers are 1–9, each once.",
     "kendoku": "Each row and column contains 1–{{n}} once. Cages use addition, subtraction, multiplication, or division.",

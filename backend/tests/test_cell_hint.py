@@ -116,10 +116,10 @@ def test_pentomino_hint_places_the_first_piece(client, student, app):
 def test_patika_hint_is_the_step_after_one():
     from app.services.cell_hint import pick_hint
 
-    public = {"fixedCells": {"0-0": "1", "0-3": "2", "2-3": "3", "2-0": "4"}}
-    solution = {"cells": ["0-0", "0-1", "0-2", "0-3", "1-3", "2-3", "2-2", "2-1", "2-0"]}
+    public = {"rows": 8, "cols": 8, "blacks": ["1-1"]}
+    solution = {"edges": ["0-0|0-1"]}
     hint = pick_hint("patika", public, {"solution": solution})
-    assert hint == {"kind": "mark", "row": 0, "col": 1, "note": "step", "label": "1"}
+    assert hint == {"kind": "edge", "a": "0-0", "b": "0-1"}
 
 
 def test_abc_hint_draws_the_first_letter():

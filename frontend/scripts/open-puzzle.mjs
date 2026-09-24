@@ -66,8 +66,8 @@ function open(slug, difficulty) {
     }
     case "patika": {
       const puzzle = patika(difficulty);
-      const pub = { fixedCells: puzzle.fixedCells, rows: puzzle.rows, cols: puzzle.cols };
-      return sealed(pub, pub, { cells: puzzle.solutionSet });
+      const pub = { rows: puzzle.rows, cols: puzzle.cols, blacks: puzzle.blacks };
+      return sealed(pub, pub, { edges: puzzle.edges });
     }
     case "abc-baglama": {
       const puzzle = abc(difficulty);
