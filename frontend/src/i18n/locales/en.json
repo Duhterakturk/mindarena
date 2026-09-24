@@ -90,6 +90,7 @@
     "linked": "Linked: {{linked}}/{{pairs}} · Filled cells: {{filled}}/{{total}}",
     "emptyCell": "An empty cell remains",
     "letterOpen": "The {{letter}} letters are not linked",
+    "flowHint": "Press a letter and drag, or tap a letter and then the neighboring cells in order.",
     "anchor": "A piece is chosen, turned, then set on the cell it covers. A filled cell lifts that piece.",
     "leaderboard": "Best scores",
     "noScores": "No saved scores for this game yet.",

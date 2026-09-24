@@ -19,8 +19,6 @@ const COLOR = {
   G: "#db2777",
 };
 
-const CELL = 44;
-
 function neighbors(a, b) {
   const [ar, ac] = a.split("-").map(Number);
   const [br, bc] = b.split("-").map(Number);
@@ -35,6 +33,34 @@ function ownerOf(paths, key) {
   return null;
 }
 
+function applyStep(prev, letter, key, fixed) {
+  const path = [...(prev[letter] || [])];
+  if (path.length === 0) return prev;
+  const tip = path[path.length - 1];
+  if (key === tip) return prev;
+  if (path.length >= 2 && key === path[path.length - 2]) {
+    path.pop();
+    return { ...prev, [letter]: path };
+  }
+  if (!neighbors(tip, key) || path.includes(key)) return prev;
+  const letterHere = fixed[key];
+  if (letterHere && letterHere !== letter) return prev;
+  if (letterHere === letter && path.includes(key)) return prev;
+  const next = { ...prev };
+  const other = ownerOf(prev, key);
+  if (other && other.letter !== letter) {
+    if (other.index === 0) return prev;
+    next[other.letter] = prev[other.letter].slice(0, other.index);
+  }
+  next[letter] = [...path, key];
+  return next;
+}
+
+function cellSize(boardSize) {
+  if (!boardSize || typeof window === "undefined") return 44;
+  return Math.floor(Math.min(56, (window.innerWidth - 32) / boardSize));
+}
+
 export default function AbcBaglama() {
   const { t } = useTranslation();
   const copy = useGameText("abc-baglama");
@@ -44,20 +70,35 @@ export default function AbcBaglama() {
   const puzzle = issue?.puzzle;
   const attemptId = issue?.id;
   const [paths, setPaths] = useState({});
+  const [selected, setSelected] = useState(null);
+  const [shake, setShake] = useState(null);
   const [status, setStatus] = useState("playing");
   const [note, setNote] = useState("");
   const [seconds, setSeconds] = useState(0);
+  const [cell, setCell] = useState(44);
   const timerRef = useRef(null);
   const drag = useRef(null);
+  const pointer = useRef(null);
+  const pathsRef = useRef(paths);
   const boardRef = useRef(null);
+  pathsRef.current = paths;
 
   const fixed = puzzle?.fixedCells || {};
   const size = puzzle?.rows || 0;
   const letters = [...new Set(Object.values(fixed))].sort();
 
   useEffect(() => {
+    if (!size) return undefined;
+    const measure = () => setCell(cellSize(size));
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [size]);
+
+  useEffect(() => {
     if (!attemptId) return undefined;
     setPaths({});
+    setSelected(null);
     setStatus("playing");
     setNote("");
     setSeconds(0);
@@ -89,78 +130,123 @@ export default function AbcBaglama() {
     return new Set(Object.values(paths).flat()).size;
   }
 
-  function begin(letter, from) {
-    drag.current = { letter, from };
-    setStatus("playing");
-    setNote("");
+  function reachedMate(letter, path) {
+    if (!path || path.length < 2) return false;
+    const ends = endsOf(letter);
+    return ends.includes(path[0]) && ends.includes(path[path.length - 1]) && path[0] !== path[path.length - 1];
   }
 
-  function onPointerMove(event) {
-    const hit = document.elementFromPoint(event.clientX, event.clientY);
-    const key = hit?.closest?.("[data-cell]")?.getAttribute("data-cell");
-    if (key) extend(key);
+  function clickCell(key) {
+    const letterHere = fixed[key];
+    const current = pathsRef.current;
+    const path = selected ? current[selected] || [] : [];
+    const tip = path[path.length - 1];
+
+    if (selected && key === tip && path.length > 0) {
+      if (path.length <= 1) {
+        setPaths((prev) => ({ ...prev, [selected]: [] }));
+        setSelected(null);
+      } else {
+        setPaths((prev) => ({ ...prev, [selected]: prev[selected].slice(0, -1) }));
+      }
+      return;
+    }
+
+    if (selected && tip && neighbors(tip, key)) {
+      const stepped = applyStep(current, selected, key, fixed);
+      if (stepped !== current) {
+        setPaths(stepped);
+        if (reachedMate(selected, stepped[selected])) setSelected(null);
+        return;
+      }
+    }
+
+    if (letterHere) {
+      setSelected(letterHere);
+      setPaths((prev) => {
+        const existing = prev[letterHere] || [];
+        if (existing.length === 0) return { ...prev, [letterHere]: [key] };
+        if (existing[0] === key && existing[existing.length - 1] !== key) {
+          return { ...prev, [letterHere]: [...existing].reverse() };
+        }
+        return prev;
+      });
+      return;
+    }
+
+    const occupied = ownerOf(current, key);
+    if (occupied && occupied.index === (current[occupied.letter] || []).length - 1 && occupied.index > 0) {
+      setSelected(occupied.letter);
+      return;
+    }
+
+    setShake(key);
+    window.setTimeout(() => setShake((value) => (value === key ? null : value)), 180);
+    setSelected(null);
   }
 
   function onPointerDown(event, key) {
     if (status === "correct") return;
     boardRef.current?.setPointerCapture?.(event.pointerId);
-    const letterHere = fixed[key];
-    const occupied = ownerOf(paths, key);
-    if (letterHere) {
-      const path = paths[letterHere] || [];
-      if (path.length > 1) {
-        setPaths((prev) => ({ ...prev, [letterHere]: [] }));
-        drag.current = null;
-        return;
-      }
-      setPaths((prev) => ({ ...prev, [letterHere]: [key] }));
-      begin(letterHere, key);
-      return;
-    }
-    if (occupied && occupied.index === (paths[occupied.letter] || []).length - 1 && occupied.index > 0) {
-      begin(occupied.letter, key);
-    }
+    pointer.current = { key, x: event.clientX, y: event.clientY, dragged: false };
+    drag.current = null;
   }
 
-  function extend(key) {
-    const active = drag.current;
+  function onPointerMove(event) {
+    const active = pointer.current;
     if (!active) return;
+    const moved = Math.hypot(event.clientX - active.x, event.clientY - active.y);
+    if (!active.dragged && moved < 8) return;
+    active.dragged = true;
+    const hit = document.elementFromPoint(event.clientX, event.clientY);
+    const key = hit?.closest?.("[data-cell]")?.getAttribute("data-cell");
+    if (!key || key === active.key && !drag.current) {
+      const letterHere = fixed[active.key];
+      if (letterHere) {
+        drag.current = { letter: letterHere };
+        setSelected(letterHere);
+        setPaths((prev) => ({ ...prev, [letterHere]: [active.key] }));
+      }
+      return;
+    }
+    if (!key) return;
     setPaths((prev) => {
-      const path = [...(prev[active.letter] || [])];
-      if (path.length === 0) return prev;
-      const tip = path[path.length - 1];
-      if (key === tip) return prev;
-      if (path.length >= 2 && key === path[path.length - 2]) {
-        path.pop();
-        return { ...prev, [active.letter]: path };
+      let letter = drag.current?.letter;
+      let base = prev;
+      if (!letter) {
+        const letterHere = fixed[active.key];
+        if (letterHere) {
+          letter = letterHere;
+          base = { ...prev, [letter]: [active.key] };
+        } else {
+          const occupied = ownerOf(prev, active.key);
+          const path = occupied && prev[occupied.letter];
+          if (!occupied || !path || occupied.index !== path.length - 1 || occupied.index === 0) return prev;
+          letter = occupied.letter;
+        }
+        drag.current = { letter };
+        setSelected(letter);
       }
-      if (!neighbors(tip, key) || path.includes(key)) return prev;
-      const letterHere = fixed[key];
-      if (letterHere && letterHere !== active.letter) return prev;
-      if (letterHere === active.letter && path.includes(letterHere)) return prev;
-      const next = { ...prev };
-      const other = ownerOf(prev, key);
-      if (other && other.letter !== active.letter) {
-        if (other.index === 0) return prev;
-        next[other.letter] = prev[other.letter].slice(0, other.index);
+      const stepped = applyStep(base, letter, key, fixed);
+      if (reachedMate(letter, stepped[letter])) {
+        drag.current = null;
+        setSelected(null);
       }
-      next[active.letter] = [...path, key];
-      if (letterHere === active.letter) drag.current = null;
-      return next;
+      return stepped;
     });
   }
 
   function onPointerUp() {
+    const active = pointer.current;
+    pointer.current = null;
+    const dragged = active?.dragged;
     drag.current = null;
+    if (active && !dragged) clickCell(active.key);
   }
 
   function localProblem() {
     if (filledCount() < size * size) return t("play.emptyCell");
-    const open = letters.find((letter) => {
-      const path = paths[letter] || [];
-      const ends = endsOf(letter);
-      return path.length < 2 || !ends.includes(path[0]) || !ends.includes(path[path.length - 1]) || path[0] === path[path.length - 1];
-    });
+    const open = letters.find((letter) => !reachedMate(letter, paths[letter]));
     return open ? t("play.letterOpen", { letter: open }) : "";
   }
 
@@ -197,15 +283,16 @@ export default function AbcBaglama() {
 
   if (phase !== "ready" || !size) return <PuzzlePending phase={phase} />;
 
-  const width = size * CELL;
+  const width = size * cell;
 
   return (
     <div className="flex flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="abc-baglama" value={difficulty} onChange={setDifficulty} />
       <p className="play-rules text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{t("play.flowHint")}</p>
       <p className="text-slate-500 text-sm mb-2">{play.clock(seconds)}</p>
-      <p className="text-sm font-semibold text-slate-700 mb-3">
+      <p className="text-sm font-semibold text-slate-700 mb-3" data-testid="link-progress">
         {t("play.linked", { linked: linkedCount(), pairs: letters.length, filled: filledCount(), total: size * size })}
       </p>
 
@@ -217,7 +304,8 @@ export default function AbcBaglama() {
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
-        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${size}, ${CELL}px)` }}>
+        <style>{`@keyframes abc-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }`}</style>
+        <div className="absolute inset-0 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)` }}>
           {Array.from({ length: size * size }, (_, index) => {
             const row = Math.floor(index / size);
             const col = index % size;
@@ -230,7 +318,7 @@ export default function AbcBaglama() {
                 aria-label={fixed[key] || key}
                 onPointerDown={(event) => onPointerDown(event, key)}
                 className="border border-slate-300 bg-transparent"
-                style={{ width: CELL, height: CELL }}
+                style={{ width: cell, height: cell, animation: shake === key ? "abc-shake 180ms linear" : undefined }}
               />
             );
           })}
@@ -241,7 +329,7 @@ export default function AbcBaglama() {
             if (path.length < 2) return null;
             const points = path.map((key) => {
               const [row, col] = key.split("-").map(Number);
-              return `${col * CELL + CELL / 2},${row * CELL + CELL / 2}`;
+              return `${col * cell + cell / 2},${row * cell + cell / 2}`;
             }).join(" ");
             return (
               <polyline
@@ -256,15 +344,20 @@ export default function AbcBaglama() {
             );
           })}
         </svg>
-        <div className="pointer-events-none absolute inset-0 z-20 grid" style={{ gridTemplateColumns: `repeat(${size}, ${CELL}px)` }}>
+        <div className="pointer-events-none absolute inset-0 z-20 grid" style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)` }}>
           {Array.from({ length: size * size }, (_, index) => {
             const letter = fixed[`${Math.floor(index / size)}-${index % size}`];
+            const active = letter && selected === letter;
             return (
               <div key={index} className="flex items-center justify-center">
                 {letter && (
                   <span
                     className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white"
-                    style={{ background: COLOR[letter] }}
+                    style={{
+                      background: COLOR[letter],
+                      transform: active ? "scale(1.15)" : undefined,
+                      boxShadow: active ? `0 0 0 3px #fff, 0 0 0 5px ${COLOR[letter]}` : undefined,
+                    }}
                   >
                     {letter}
                   </span>
@@ -277,7 +370,7 @@ export default function AbcBaglama() {
 
       <div className="flex flex-wrap justify-center gap-3 mt-4">
         <button type="button" onClick={checkSolution} className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold">{play.check}</button>
-        <ClearBoardButton onClick={() => { setPaths({}); setStatus("playing"); setNote(""); }} />
+        <ClearBoardButton onClick={() => { setPaths({}); setSelected(null); setStatus("playing"); setNote(""); }} />
         <button type="button" onClick={reload} className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold">{play.newPuzzle}</button>
         {status === "correct" && (
           <button type="button" onClick={handleSubmitScore} className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold">{play.save}</button>

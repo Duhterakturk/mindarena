@@ -90,6 +90,7 @@
     "linked": "Bağlanan: {{linked}}/{{pairs}} · Dolu kare: {{filled}}/{{total}}",
     "emptyCell": "Boş kare kaldı",
     "letterOpen": "{{letter}} harfleri bağlanmadı",
+    "flowHint": "Harfe basıp sürükle veya harfe dokunup yan kareleri sırayla seç.",
     "anchor": "Parça seçilir, döndürülür, sonra oturacağı kareye bırakılır. Dolu kareye basılınca parça kalkar.",
     "leaderboard": "En iyi skorlar",
     "noScores": "Bu oyunda henüz kayıtlı skor yok.",

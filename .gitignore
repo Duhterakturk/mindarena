@@ -12,6 +12,8 @@ backend/puzzle-runner.mjs
 frontend/node_modules/
 frontend/dist/
 frontend/.env
+frontend/test-results/
+frontend/playwright-report/
 
 # OS / editors
 .DS_Store
