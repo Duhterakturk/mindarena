@@ -44,36 +44,47 @@ function Glyph({ shape, color, size = 28 }) {
   );
 }
 
-function markGlyph(cell) {
-  if (cell.mark === "empty") return <span className="text-[10px] font-bold text-rose-500">✕</span>;
-  if (cell.mark === "unknown") return <span className="text-[10px] font-bold text-slate-500">?</span>;
-  if (cell.mark === "filled") return <span className="text-[10px] font-bold text-emerald-600">✓</span>;
-  return <Glyph shape={cell.shape} color={cell.color} size={14} />;
+function ItemMark({ item }) {
+  if (item.endsWith("?")) {
+    const ink = INK[{ G: "green", B: "blue", Y: "yellow", R: "red", K: "black" }[item[0]]];
+    return (
+      <svg width="18" height="18" viewBox="0 0 32 32" aria-hidden="true">
+        <line x1="6" y1="26" x2="26" y2="6" stroke={ink} strokeWidth="4" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  if (item.startsWith("?")) {
+    return (
+      <span className="relative inline-flex">
+        <Glyph shape={item[1] === "S" ? "square" : "circle"} size={18} />
+        <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold text-slate-700">?</span>
+      </span>
+    );
+  }
+  const color = { G: "green", B: "blue", Y: "yellow", R: "red", K: "black" }[item[0]];
+  return <Glyph shape={item[1] === "S" ? "square" : "circle"} color={color} size={18} />;
 }
 
 function ClueCard({ clue }) {
-  const no = clue.sign === "no";
   return (
-    <div className={`relative rounded-lg border bg-white p-1.5 ${no ? "border-rose-400" : "border-emerald-500"}`}>
-      <div className="grid grid-cols-4 gap-0.5">
-        {Array.from({ length: 16 }, (_, index) => {
-          const row = Math.floor(index / 4);
-          const col = index % 4;
-          const cell = clue.cells.find((item) => item.row === row && item.col === col);
-          return (
-            <div key={`${row}-${col}`} className="w-4 h-4 border border-slate-300 bg-white flex items-center justify-center">
-              {cell ? markGlyph(cell) : null}
-            </div>
-          );
-        })}
+    <div className="flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-2 py-1.5">
+      <div className="flex flex-col">
+        {clue.items.map((item, index) => <ItemMark key={`${item}-${index}`} item={item} />)}
       </div>
-      {no && <span className="absolute inset-0 flex items-center justify-center text-3xl text-rose-500/80 pointer-events-none">/</span>}
+      <div className="grid grid-cols-3 gap-px bg-slate-300 p-px">
+        {clue.marks.flatMap((row, rowIndex) => row.map((mark, colIndex) => (
+          <div key={`${rowIndex}-${colIndex}`} className="flex h-4 w-4 items-center justify-center bg-white text-[11px] font-bold leading-none">
+            {mark === "V" ? <span className="text-emerald-600">✓</span> : null}
+            {mark === "X" ? <span className="text-rose-600">✕</span> : null}
+          </div>
+        )))}
+      </div>
     </div>
   );
 }
 
 function emptyBoard() {
-  return Array.from({ length: 4 }, () => Array(4).fill(null));
+  return Array.from({ length: 3 }, () => Array(3).fill(null));
 }
 
 export default function Colours() {
@@ -108,8 +119,8 @@ export default function Colours() {
     const piece = { shape: hint.shape, color: hint.color };
     setBoard((prev) => {
       const next = prev.map((row) => row.slice());
-      for (let row = 0; row < 4; row += 1) {
-        for (let col = 0; col < 4; col += 1) {
+      for (let row = 0; row < 3; row += 1) {
+        for (let col = 0; col < 3; col += 1) {
           if (samePiece(next[row][col], piece)) next[row][col] = null;
         }
       }
@@ -137,8 +148,8 @@ export default function Colours() {
       setStatus("playing");
       return;
     }
-    for (let r = 0; r < 4; r += 1) {
-      for (let c = 0; c < 4; c += 1) {
+    for (let r = 0; r < 3; r += 1) {
+      for (let c = 0; c < 3; c += 1) {
         if (samePiece(next[r][c], selected)) next[r][c] = null;
       }
     }
@@ -178,7 +189,7 @@ export default function Colours() {
     <div className="flex w-full max-w-xl flex-col items-center">
       <h1 className="text-2xl font-bold mb-1">{copy.title}</h1>
       <DifficultyPicker gameSlug="colours" value={difficulty} onChange={newGame} />
-      <p className="text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
+      <p className="play-rules text-slate-500 text-sm mb-2 max-w-md text-center">{copy.rules}</p>
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div className="mb-4 flex w-full flex-wrap justify-center gap-2">
@@ -186,7 +197,7 @@ export default function Colours() {
       </div>
 
       <div className="mb-4 flex items-start justify-center gap-3">
-        <div className="inline-grid grid-cols-4 gap-1 rounded-lg bg-slate-300 p-1">
+        <div className="inline-grid grid-cols-3 gap-1 rounded-lg bg-slate-300 p-1">
           {board.map((row, rowIndex) => row.map((piece, colIndex) => {
             const key = `${rowIndex}-${colIndex}`;
             return (

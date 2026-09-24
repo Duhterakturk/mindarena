@@ -1369,53 +1369,88 @@ def _number_clue(clue, values):
 
 
 def _grade_colours(_difficulty, puzzle, answer):
-    pieces = (puzzle or {}).get("pieces") if isinstance(puzzle, dict) else None
-    clues = (puzzle or {}).get("clues")
+    clues = (puzzle or {}).get("clues") if isinstance(puzzle, dict) else None
     grid = _as_grid(answer)
-    if not isinstance(pieces, list) or not pieces or not isinstance(grid, list) or len(grid) != 4:
+    if not isinstance(grid, list) or len(grid) != 3 or not isinstance(clues, list) or not clues:
         raise GradeError("Izgara boyutu uyuşmuyor")
-    found = []
+    seen = set()
     for row in grid:
-        if not isinstance(row, list) or len(row) != 4:
+        if not isinstance(row, list) or len(row) != 3:
             raise GradeError("Izgara boyutu uyuşmuyor")
         for cell in row:
-            if cell in (None, ""):
-                continue
             if not isinstance(cell, dict):
+                raise GradeError("Parça eksik")
+            code = _colour_code(cell)
+            if code not in _COLOUR_CODES or code in seen:
                 raise GradeError("Parça geçersiz")
-            found.append((cell.get("shape"), cell.get("color")))
-    expected = [(piece.get("shape"), piece.get("color")) for piece in pieces]
-    if sorted(found) != sorted(expected):
+            seen.add(code)
+    if len(seen) != 9:
         raise GradeError("Parça eksik")
-    if not isinstance(clues, list) or not clues:
-        raise GradeError("İpucu eksik")
     for clue in clues:
         if not _colour_clue(grid, clue):
             raise GradeError("İpucu tutmuyor")
 
 
-def _colour_cell(grid, cell):
-    piece = grid[cell["row"]][cell["col"]]
-    mark = cell.get("mark")
-    if mark == "empty":
-        return piece in (None, "")
-    if mark in ("filled", "unknown"):
-        return isinstance(piece, dict)
-    if mark == "piece":
-        return isinstance(piece, dict) and piece.get("shape") == cell.get("shape") and piece.get("color") == cell.get("color")
-    return False
+_COLOUR_CODES = {"GS", "BS", "YS", "RS", "YC", "KC", "GC", "RC", "BC"}
+
+
+def _colour_code(piece):
+    color = {"green": "G", "blue": "B", "yellow": "Y", "red": "R", "black": "K"}.get(piece.get("color"))
+    shape = {"square": "S", "circle": "C"}.get(piece.get("shape"))
+    if not color or not shape:
+        return None
+    return color + shape
+
+
+def _colour_matches(piece, item):
+    code = _colour_code(piece) if isinstance(piece, dict) else None
+    if not code or not isinstance(item, str) or len(item) != 2:
+        return False
+    if item.startswith("?"):
+        return code[1] == item[1]
+    if item.endswith("?"):
+        return code[0] == item[0]
+    return code == item
+
+
+def _colour_assigns(pieces, items):
+    if len(pieces) != len(items):
+        return False
+    used = [False] * len(items)
+
+    def take(index):
+        if index == len(pieces):
+            return True
+        for item_index, item in enumerate(items):
+            if used[item_index] or not _colour_matches(pieces[index], item):
+                continue
+            used[item_index] = True
+            if take(index + 1):
+                return True
+            used[item_index] = False
+        return False
+
+    return take(0)
 
 
 def _colour_clue(grid, clue):
-    cells = clue.get("cells") if isinstance(clue, dict) else None
-    if not isinstance(cells, list) or not cells:
+    marks = clue.get("marks") if isinstance(clue, dict) else None
+    items = clue.get("items")
+    if not isinstance(marks, list) or len(marks) != 3 or not isinstance(items, list):
         return False
-    matched = all(_colour_cell(grid, cell) for cell in cells)
-    if clue.get("sign") == "yes":
-        return matched
-    if clue.get("sign") == "no":
-        return not matched
-    return False
+    checks = []
+    for row_index, row in enumerate(marks):
+        if not isinstance(row, list) or len(row) != 3:
+            return False
+        for col_index, mark in enumerate(row):
+            piece = grid[row_index][col_index]
+            if mark == "V":
+                checks.append(piece)
+            elif mark == "X" and any(_colour_matches(piece, item) for item in items):
+                return False
+    if checks and not _colour_assigns(checks, items):
+        return False
+    return True
 
 
 def _grade_metaforms(_difficulty, puzzle, answer):

@@ -73,8 +73,8 @@ export const HINTS = {
     en: { hint: "A given number is the start. When two stars add up to a total, the blank is what remains.", example: "If one star is 4 and the sum is 11, the other is 7." },
   },
   colours: {
-    tr: { hint: "Çizili parça, gösterildiği kareye oturur. Çarpılı kare boş kalır.", example: "Kırmızı daire bir karede gösteriliyorsa başka kareye gitmez." },
-    en: { hint: "A drawn piece settles in the cell that shows it. A crossed cell stays empty.", example: "If the red circle is shown in one cell, it does not go anywhere else." },
+    tr: { hint: "Tikli kareler listedeki öğeleri alır. Çarpılı karede o öğe durmaz.", example: "İki mavi çizgi, iki tikli kareye iki mavi parça ister." },
+    en: { hint: "Checked cells take the listed items. A crossed cell does not hold those items.", example: "Two blue strokes ask for two blue pieces in the checked cells." },
   },
 };
 
