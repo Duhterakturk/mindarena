@@ -1,4 +1,4 @@
-// Mini Mantık. Desen yalnızca kayar. Döndürülmez, aynalanmaz.
+// Metaforms. Desen yalnızca kayar. Döndürülmez, aynalanmaz.
 // "#" öznenin yeridir. "X" öznenin olmadığı yerdir. "." kısıt değildir.
 // "-" desende yoktur. "RC" belirli parça, "?T" herhangi bir üçgen, "R?" herhangi bir kırmızıdır.
 

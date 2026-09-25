@@ -1,4 +1,4 @@
-// Renkli Şekiller: 3×3, 9 parça, boş hücre yok.
+// Colours: 3×3, 9 parça, boş hücre yok.
 // Tikli kareler listedeki öğeleri birebir alır, sıra serbesttir.
 // Çarpılı karelerde bu öğeler bulunmaz.
 // ?S herhangi bir kare, ?C herhangi bir daire, B? o renkten herhangi bir parça.

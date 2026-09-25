@@ -1,4 +1,4 @@
-// Yıldızlı Sayılar: 3×3, sayılar 1-9 birer kez. Harfler A B C / D E F / G H I.
+// Numbers: 3×3, sayılar 1-9 birer kez. Harfler A B C / D E F / G H I.
 // Tek yıldızlı harf işleminde yıldızlı kare yazılan işleme eşittir.
 // Çok yıldızlı harf işlemi harflerle okunur. Sonuçlu yıldız toplamı veya çarpımı sayıya eşittir.
 // Sonuçsuz ★+★=★ ve ★×★=★ sırasızdır: herhangi ikisi üçüncüsünü verir. Bölme tam bölünür.

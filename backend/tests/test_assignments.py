@@ -102,7 +102,7 @@ def test_one_drop_can_include_several_games(client, teacher, student, app):
     created = _assign(client, teacher, classroom, slugs=["cit", "sudoku"], target_count=1)
     assert created.status_code == 201
     names = [item["name_tr"] for item in created.get_json()["assignments"]]
-    assert names == ["Çit", "Rakam Yerleştirme"]
+    assert names == ["Çit", "Sudoku"]
 
     _score(app, student["user"]["id"], "cit")
     mine = client.get("/api/assignments/mine", headers=auth_headers(student["token"])).get_json()

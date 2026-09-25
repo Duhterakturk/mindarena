@@ -410,5 +410,5 @@ export function generate(difficulty = "easy") {
       }
     }
   }
-  throw new Error("Tek çözüm Çapraz Toplam üretilemedi");
+  throw new Error("Tek çözüm Kakuro üretilemedi");
 }

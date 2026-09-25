@@ -1,4 +1,4 @@
-// Harf Bağlama: her harf çifti tek bir yatay/dikey çizgiyle bağlanır.
+// ABC Bağlama: her harf çifti tek bir yatay/dikey çizgiyle bağlanır.
 // Çizgiler kesişmez, kare paylaşmaz ve tahtayı boşluksuz kaplar.
 
 const LETTERS = ["A", "B", "C", "D", "E", "F", "G"];

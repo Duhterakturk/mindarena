@@ -14,17 +14,19 @@ def test_get_game_by_slug(client):
     assert resp.get_json()["slug"] == "sudoku"
 
 
-def test_display_names_describe_the_puzzle_without_branded_titles(client):
+def test_display_names_use_the_book_titles(client):
     stars = client.get("/api/games/yildiz-savaslari").get_json()
-    assert stars["name_tr"] == "Yıldız Yerleşimi"
-    assert stars["name_en"] == "Star Places"
+    assert stars["name_tr"] == "Yıldız Savaşları"
+    assert stars["name_en"] == "Star Battle"
+    assert stars["slug"] == "yildiz-savaslari"
     fleet = client.get("/api/games/amiral-batti").get_json()
-    assert fleet["name_tr"] == "Gizli Gemiler"
+    assert fleet["name_tr"] == "Amiral Battı"
+    assert fleet["name_en"] == "Battleships"
     cages = client.get("/api/games/kendoku").get_json()
-    assert cages["name_tr"] == "İşlem Kafesi"
+    assert cages["name_tr"] == "Kendoku"
     logic = client.get("/api/games/metaforms").get_json()
-    assert logic["name_tr"] == "Mini Mantık"
-    assert "metaform" not in logic["name_tr"].lower()
+    assert logic["name_tr"] == "Metaforms"
+    assert logic["slug"] == "metaforms"
 
 
 def test_get_unknown_game_returns_404(client):
