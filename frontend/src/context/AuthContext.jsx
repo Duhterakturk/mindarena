@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { login as loginRequest, register as registerRequest, fetchMe } from "../api/auth";
+import { refreshSession } from "../api/client";
 
 const AuthContext = createContext(null);
 
@@ -15,7 +16,16 @@ export function AuthProvider({ children }) {
     }
     fetchMe()
       .then(setUser)
-      .catch(() => {
+      .catch(async (error) => {
+        if (error?.response?.status === 401 && localStorage.getItem("mindarena_refresh_token")) {
+          try {
+            await refreshSession();
+            setUser(await fetchMe());
+            return;
+          } catch {
+            /* refresh de olmadi */
+          }
+        }
         localStorage.removeItem("mindarena_access_token");
         localStorage.removeItem("mindarena_refresh_token");
       })

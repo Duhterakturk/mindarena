@@ -79,6 +79,7 @@ def set_student_password(classroom_id, student_id):
 
 @classrooms_bp.post("/join")
 @jwt_required()
+@limiter.limit("10 per minute")
 def join_classroom():
     student = db.session.get(User, get_jwt_identity())
     if not student or student.role != UserRole.STUDENT:

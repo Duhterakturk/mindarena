@@ -24,6 +24,8 @@ export function usePlayCopy() {
     incorrectCells: t("play.incorrectCells"),
     saved: t("play.saved"),
     rejected: t("play.rejected"),
+    offline: t("play.offline"),
+    retry: t("play.retry"),
     loading: t("play.loading"),
     loadingSlow: t("play.loadingSlow"),
     unavailable: t("play.unavailable"),

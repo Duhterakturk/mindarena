@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { scoreStatus } from "../../api/client";
 import { checkPuzzle, submitScore } from "../../api/games";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import ClearBoardButton from "../common/ClearBoardButton";
@@ -103,7 +104,7 @@ const HitGrid = memo(function HitGrid({ size, cell, fixed, shake, downRef }) {
 });
 
 const LetterGrid = memo(function LetterGrid({ size, cell, fixed, selected }) {
-  const mark = Math.round(cell * 0.7);
+  const mark = Math.max(0, Math.round(cell * 0.7));
   return (
     <div
       className="pointer-events-none absolute inset-0 z-20 grid"
@@ -139,7 +140,7 @@ const LetterGrid = memo(function LetterGrid({ size, cell, fixed, selected }) {
 
 function cellSize(boardSize) {
   if (!boardSize || typeof window === "undefined") return 44;
-  return Math.floor(Math.min(56, (window.innerWidth - 32) / boardSize));
+  return Math.max(0, Math.floor(Math.min(56, (window.innerWidth - 32) / boardSize)));
 }
 
 export default function AbcBaglama() {
@@ -487,9 +488,10 @@ export default function AbcBaglama() {
       setStatus(correct ? "correct" : "incorrect");
       setNote(correct ? "" : play.incorrect);
       if (correct) clearInterval(timerRef.current);
-    } catch {
-      setStatus("rejected");
-      setNote(play.rejected);
+    } catch (error) {
+      const next = scoreStatus(error);
+      setStatus(next);
+      setNote(next === "rejected" ? play.rejected : play.offline);
     }
   }
 
@@ -499,9 +501,10 @@ export default function AbcBaglama() {
       await submitScore({ attempt_id: attemptId, answer: { paths } });
       setStatus("submitted");
       setNote(play.saved);
-    } catch {
-      setStatus("rejected");
-      setNote(play.rejected);
+    } catch (error) {
+      const next = scoreStatus(error);
+      setStatus(next);
+      setNote(next === "rejected" ? play.rejected : play.offline);
     }
   }
 
@@ -530,12 +533,15 @@ export default function AbcBaglama() {
         try {
           await submitScore({ attempt_id: token, answer: { paths: answer } });
           setNote(`${play.correct} ${play.saved}`);
-        } catch {
-          setNote(play.rejected);
+        } catch (error) {
+          const next = scoreStatus(error);
+          setStatus(next);
+          setNote(next === "rejected" ? play.rejected : play.offline);
         }
-      } catch {
-        setStatus("rejected");
-        setNote(play.rejected);
+      } catch (error) {
+        const next = scoreStatus(error);
+        setStatus(next);
+        setNote(next === "rejected" ? play.rejected : play.offline);
       }
     })();
     return undefined;
@@ -543,7 +549,7 @@ export default function AbcBaglama() {
 
   if (phase !== "ready" || !size) return <PuzzlePending phase={phase} />;
 
-  const width = size * cell;
+  const width = Math.max(0, size * cell);
 
   return (
     <div className="flex flex-col items-center">
@@ -555,7 +561,7 @@ export default function AbcBaglama() {
       {letters.map((letter) => (
         <span key={letter} hidden data-testid={`path-${letter}`} data-length={(paths[letter] || []).length} />
       ))}
-      <p className="text-sm font-semibold text-slate-700 mb-3" data-testid="link-progress">
+      <p className="text-sm font-semibold text-[#f4efe6] mb-3" data-testid="link-progress">
         {t("play.linked", { linked, pairs: letters.length, filled, total: size * size })}
       </p>
 
@@ -569,7 +575,7 @@ export default function AbcBaglama() {
       >
         <style>{`@keyframes abc-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } } .abc-dragging, .abc-dragging * { transition: none !important; animation: none !important; }`}</style>
         <HitGrid size={size} cell={cell} fixed={fixed} shake={shake} downRef={downRef} />
-        <svg className="absolute inset-0 z-10 pointer-events-none" width={width} height={width}>
+        <svg className="absolute inset-0 z-10 pointer-events-none" width={Math.max(0, width)} height={Math.max(0, width)}>
           {letters.map((letter) => {
             const path = paths[letter] || [];
             if (path.length < 2) return null;
@@ -617,6 +623,9 @@ export default function AbcBaglama() {
         )}
       </div>
       {note && <p className={`mt-3 ${status === "correct" || status === "submitted" ? "text-emerald-600" : "text-red-500"}`}>{note}</p>}
+      {status === "offline" && (
+        <button type="button" className="mt-2 text-sm font-semibold underline text-[#f4efe6]" onClick={handleSubmitScore}>{play.retry}</button>
+      )}
       {status === "correct" && !note && <p className="text-emerald-600 mt-3">{play.correct}</p>}
     </div>
   );

@@ -18,7 +18,7 @@ export default function GameCard({ game, index = 0 }) {
           <span className="toy-icon" aria-hidden="true">{emoji}</span>
         </div>
         <h3 className="font-bold">{name}</h3>
-        <p className="text-xs text-stone-500 mt-1">
+        <p className="text-xs text-slate-600 mt-1">
           {t("games.min_grade")}: {game.min_grade_level}
         </p>
       </Link>

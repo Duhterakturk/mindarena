@@ -19,9 +19,11 @@ export default function DifficultyPicker({ gameSlug, value, onChange }) {
   const [state, setState] = useState(DEFAULT_STATE);
 
   useEffect(() => {
+    if (!localStorage.getItem("mindarena_access_token")) return undefined;
     fetchUnlockedDifficulties(gameSlug)
       .then(setState)
       .catch(() => setState(DEFAULT_STATE));
+    return undefined;
   }, [gameSlug]);
 
   const order = ["easy", "medium", "hard"];

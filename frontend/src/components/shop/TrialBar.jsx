@@ -39,7 +39,7 @@ export default function TrialBar() {
   return (
     <>
       <ThemeScene id={trial.id} />
-      <div className="fixed top-0 inset-x-0 z-40 flex flex-wrap items-center justify-center gap-2 bg-black/80 px-3 py-2 text-sm text-white" data-testid="theme-trial">
+      <div className="w-full bg-[#1c1c1c] flex flex-wrap items-center justify-center gap-2 px-3 py-2 text-sm text-white" data-testid="theme-trial">
         <span>{t("shop.trying", { name })}</span>
         {short > 0 ? (
           <span>{t("shop.short", { count: trial.price })}</span>

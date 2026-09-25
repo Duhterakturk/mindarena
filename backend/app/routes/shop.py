@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify, request
+from sqlalchemy.exc import IntegrityError
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from app.extensions import db
@@ -41,6 +42,9 @@ def buy():
     except ShopError as exc:
         db.session.rollback()
         return jsonify({"error": str(exc)}), exc.status
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Bu ürün zaten sende"}), 409
     return jsonify(_state(user))
 
 

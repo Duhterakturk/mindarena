@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { scoreStatus } from "../../api/client";
 import { checkPuzzle, submitScore } from "../../api/games";
 import ClearBoardButton from "./ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
@@ -110,8 +111,8 @@ export default function GridFillGame({
       const correct = await checkPuzzle(attemptId, displayBoard);
       setStatus(correct ? "correct" : "incorrect");
       if (correct) clearInterval(timerRef.current);
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -123,8 +124,8 @@ export default function GridFillGame({
         answer: displayBoard,
       });
       setStatus("submitted");
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -144,23 +145,28 @@ export default function GridFillGame({
       >
         {displayBoard.map((row, r) =>
           row.map((val, c) => (
-            <div key={`${r}-${c}`} className="relative">
+            <div
+              key={`${r}-${c}`}
+              className="relative"
+              style={{ backgroundColor: givenMask[r][c] ? "var(--cell, #f1f5f9)" : "var(--cell, #fff)" }}
+            >
               <input
                 value={val || ""}
                 onChange={(e) => handleCellChange(r, c, e.target.value)}
                 readOnly={givenMask[r][c] || status === "correct"}
                 className={[
                   cellSize,
-                  "relative z-10 text-center border border-slate-300 focus:outline-none focus:bg-brand-100 bg-transparent",
+                  "relative z-10 bg-transparent text-center border border-slate-300 focus:outline-none focus:bg-brand-100",
                   givenMask[r][c] ? "font-bold text-slate-700" : "",
                   cellClassName ? cellClassName(r, c) : "",
                 ].join(" ")}
-                style={{ backgroundColor: givenMask[r][c] ? "#f1f5f9" : "#fff" }}
               />
               {!val && !givenMask[r][c] && (
                 <NotesOverlay digits={displayNotes[r]?.[c] || []} maxDigit={maxDigit} />
               )}
-              {renderOverlay && renderOverlay(r, c)}
+              {renderOverlay && (
+                <div className="pointer-events-none absolute inset-0 z-20">{renderOverlay(r, c)}</div>
+              )}
             </div>
           ))
         )}
@@ -202,6 +208,12 @@ export default function GridFillGame({
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
+      {status === "offline" && (
+        <div className="mt-3 text-center">
+          <p className="text-[#f4efe6]">{play.offline}</p>
+          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
+        </div>
+      )}
     </div>
   );
 }

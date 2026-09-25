@@ -145,7 +145,7 @@ export default function Shop() {
                       type="button"
                       data-testid={`buy-${item.id}`}
                       disabled={need > 0}
-                      className={`text-sm font-semibold text-brand-700 ${need > 0 ? "opacity-40" : ""}`}
+                      className={`text-sm font-semibold ${need > 0 ? "text-slate-600 cursor-not-allowed" : "text-brand-700"}`}
                       onClick={(event) => {
                         event.stopPropagation();
                         if (need === 0) buy(item.id);
@@ -153,7 +153,7 @@ export default function Shop() {
                     >
                       {t("shop.buy")}
                     </button>
-                    {need > 0 && <p className="text-xs text-slate-500">{t("shop.short", { count: need })}</p>}
+                    {need > 0 && <p className="text-xs text-slate-600">{t("shop.short", { count: need })}</p>}
                   </div>
                 )}
               </article>
@@ -184,7 +184,7 @@ export default function Shop() {
                 <button
                   type="button"
                   disabled={short > 0}
-                  className={`rounded-lg bg-brand-500 text-white px-4 py-2 font-semibold ${short > 0 ? "opacity-40" : ""}`}
+                  className={`rounded-lg px-4 py-2 font-semibold ${short > 0 ? "bg-slate-200 text-slate-600" : "bg-brand-500 text-white"}`}
                   onClick={() => short === 0 && buy(open.id)}
                 >
                   {t("shop.buy")}

@@ -37,4 +37,46 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+let refreshPromise = null;
+
+export function refreshSession() {
+  if (!refreshPromise) refreshPromise = refreshAccess().finally(() => { refreshPromise = null; });
+  return refreshPromise;
+}
+
+function refreshAccess() {
+  const refresh = localStorage.getItem("mindarena_refresh_token");
+  if (!refresh) return Promise.reject(new Error("refresh yok"));
+  const base = String(apiClient.defaults.baseURL || "/api").replace(/\/$/, "");
+  return axios.post(`${base}/auth/refresh`, {}, { headers: { Authorization: `Bearer ${refresh}` } }).then(({ data }) => {
+    localStorage.setItem("mindarena_access_token", data.access_token);
+    return data.access_token;
+  });
+}
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const config = error.config || {};
+    const url = String(config.url || "");
+    if (error.response?.status !== 401 || config._retried || /\/auth\/(login|register|refresh)/.test(url)) {
+      return Promise.reject(error);
+    }
+    try {
+      await refreshSession();
+      config._retried = true;
+      return apiClient(config);
+    } catch (refreshError) {
+      localStorage.removeItem("mindarena_access_token");
+      localStorage.removeItem("mindarena_refresh_token");
+      if (!window.location.pathname.startsWith("/login")) window.location.assign("/login");
+      return Promise.reject(refreshError);
+    }
+  },
+);
+
+export function scoreStatus(error) {
+  return error?.response?.status === 400 ? "rejected" : "offline";
+}
+
 export default apiClient;

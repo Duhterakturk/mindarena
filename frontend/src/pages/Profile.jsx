@@ -1,18 +1,32 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "../context/AuthContext";
 import Owl from "../components/owl/Owl";
 import { chooseTitle, fetchProfile } from "../api/shop";
 import { downloadCertificate, fetchMyCertificates } from "../api/certificates";
 
 export default function Profile() {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const [profile, setProfile] = useState(null);
   const [certs, setCerts] = useState([]);
 
   useEffect(() => {
+    if (user?.role === "teacher") return undefined;
     fetchProfile().then(setProfile).catch(() => {});
     fetchMyCertificates().then(setCerts).catch(() => {});
-  }, []);
+    return undefined;
+  }, [user]);
+
+  if (user?.role === "teacher") {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-8">
+        <h1 className="text-2xl font-bold">{user.full_name}</h1>
+        <Link to="/teacher" className="mt-4 inline-block font-semibold text-[#f4efe6] underline">{t("nav.teacher")}</Link>
+      </div>
+    );
+  }
 
   if (!profile) return <p className="px-4 py-10 text-slate-400">{t("shop.loading")}</p>;
 

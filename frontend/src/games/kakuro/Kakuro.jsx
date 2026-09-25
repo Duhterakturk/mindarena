@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { scoreStatus } from "../../api/client";
 import { checkPuzzle, submitScore } from "../../api/games";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
@@ -108,8 +109,8 @@ export default function Kakuro() {
       const correct = await checkPuzzle(attemptId, answerGrid());
       setStatus(correct ? "correct" : "incorrect");
       if (correct) clearInterval(timerRef.current);
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -118,8 +119,8 @@ export default function Kakuro() {
     try {
       await submitScore({ attempt_id: attemptId, answer: answerGrid() });
       setStatus("submitted");
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -215,6 +216,12 @@ export default function Kakuro() {
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
+      {status === "offline" && (
+        <div className="mt-3 text-center">
+          <p className="text-[#f4efe6]">{play.offline}</p>
+          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
+        </div>
+      )}
     </div>
   );
 }

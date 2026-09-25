@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { scoreStatus } from "../../api/client";
 import { checkPuzzle, submitScore } from "../../api/games";
 import ClearBoardButton from "./ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
@@ -9,16 +10,44 @@ import { pathArms } from "./pathValidation";
 import { usePlayCopy } from "./playCopy";
 
 const REGION_BG = [
-  "bg-amber-50",
-  "bg-sky-50",
-  "bg-emerald-50",
-  "bg-rose-50",
-  "bg-violet-50",
-  "bg-orange-50",
-  "bg-teal-50",
-  "bg-lime-50",
-  "bg-fuchsia-50",
+  "bg-amber-200",
+  "bg-sky-200",
+  "bg-emerald-200",
+  "bg-rose-200",
+  "bg-violet-200",
+  "bg-orange-300",
+  "bg-teal-200",
+  "bg-lime-200",
+  "bg-fuchsia-200",
 ];
+
+function regionColors(regionGrid) {
+  if (!regionGrid) return null;
+  const neighbors = new Map();
+  for (let r = 0; r < regionGrid.length; r += 1) {
+    for (let c = 0; c < regionGrid[r].length; c += 1) {
+      const id = regionGrid[r][c];
+      if (!neighbors.has(id)) neighbors.set(id, new Set());
+      const link = (other) => {
+        if (other === id) return;
+        if (!neighbors.has(other)) neighbors.set(other, new Set());
+        neighbors.get(id).add(other);
+        neighbors.get(other).add(id);
+      };
+      if (c + 1 < regionGrid[r].length) link(regionGrid[r][c + 1]);
+      if (r + 1 < regionGrid.length) link(regionGrid[r + 1][c]);
+    }
+  }
+  const color = new Map();
+  for (const id of neighbors.keys()) {
+    const used = new Set();
+    for (const next of neighbors.get(id)) if (color.has(next)) used.add(color.get(next));
+    let pick = 0;
+    while (used.has(pick)) pick += 1;
+    color.set(id, pick % REGION_BG.length);
+  }
+  return color;
+}
 
 function PathStroke({ row, col, marked, fixedCells }) {
   const arms = pathArms(row, col, marked, fixedCells);
@@ -140,8 +169,8 @@ export default function ToggleGridGame({
       const correct = await checkPuzzle(attemptId, answerFrom ? answerFrom(marked) : { cells: [...marked] });
       setStatus(correct ? "correct" : "incorrect");
       if (correct) clearInterval(timerRef.current);
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -153,8 +182,8 @@ export default function ToggleGridGame({
         answer: answerFrom ? answerFrom(marked) : { cells: [...marked] },
       });
       setStatus("submitted");
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -165,7 +194,7 @@ export default function ToggleGridGame({
   const bookCell = book ? { width: `min(2.5rem, calc((100vw - 2rem) / ${gridCols}))`, height: `min(2.5rem, calc((100vw - 2rem) / ${gridCols}))` } : undefined;
   const clueCell = book
     ? "flex items-center justify-center text-xs font-bold text-center leading-tight bg-violet-100 text-violet-900"
-    : `${cellSize} flex items-center justify-center text-xs font-bold text-brand-700 text-center leading-tight`;
+    : `${cellSize} flex items-center justify-center text-xs font-bold text-[#f4efe6] text-center leading-tight`;
 
   function toneClass(tone) {
     if (tone === "done") return "text-violet-300";
@@ -200,11 +229,11 @@ export default function ToggleGridGame({
         try {
           await submitScore({ attempt_id: token, answer });
           setStatus("submitted");
-        } catch {
-          setStatus("rejected");
+        } catch (error) {
+          setStatus(scoreStatus(error));
         }
-      } catch {
-        setStatus("rejected");
+      } catch (error) {
+        setStatus(scoreStatus(error));
       }
     })();
     return undefined;
@@ -280,7 +309,15 @@ export default function ToggleGridGame({
               const fixedLabel = fixedCells[key];
               const isMarked = marked.has(key);
               const isCrossed = crossed.has(key);
-              const regionClass = regionGrid ? REGION_BG[regionGrid[r][c] % REGION_BG.length] : "bg-white";
+              const regionPaint = regionColors(regionGrid);
+              const regionId = regionGrid ? regionGrid[r][c] : null;
+              const regionEdge = regionGrid
+                ? [
+                    c + 1 < cols && regionGrid[r][c + 1] !== regionId ? "border-r-[3px] border-r-slate-800" : "",
+                    r + 1 < rows && regionGrid[r + 1][c] !== regionId ? "border-b-[3px] border-b-slate-800" : "",
+                  ].join(" ")
+                : "";
+              const regionClass = regionGrid ? `${REGION_BG[regionPaint.get(regionId)]} ${regionEdge}` : "bg-white";
               if (fixedLabel !== undefined) {
                 return (
                   <div
@@ -352,6 +389,12 @@ export default function ToggleGridGame({
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
+      {status === "offline" && (
+        <div className="mt-3 text-center">
+          <p className="text-[#f4efe6]">{play.offline}</p>
+          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
+        </div>
+      )}
     </div>
   );
 }

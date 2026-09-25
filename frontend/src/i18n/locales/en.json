@@ -8,7 +8,8 @@
     "register": "Sign Up",
     "logout": "Log Out",
     "profile": "Profile",
-    "shop": "Shop"
+    "shop": "Shop",
+    "teacher": "Teacher panel"
   },
   "owl": { "grew": "Your owl grew!" },
   "stages": {
@@ -153,6 +154,8 @@
     "incorrectCells": "Some cells are not in place yet.",
     "saved": "Score saved.",
     "rejected": "The score was not saved. The solution could not be verified.",
+    "offline": "Connection problem, try again",
+    "retry": "Send again",
     "loading": "The puzzle is being prepared.",
     "loadingSlow": "The server is waking up and the puzzle is being prepared. This can take a minute.",
     "unavailable": "The puzzle could not be opened. It can be opened again in a moment.",

@@ -8,7 +8,8 @@
     "register": "Kayıt Ol",
     "logout": "Çıkış Yap",
     "profile": "Profil",
-    "shop": "Dükkân"
+    "shop": "Dükkân",
+    "teacher": "Öğretmen Paneli"
   },
   "owl": { "grew": "Baykuşun büyüdü!" },
   "stages": {
@@ -153,6 +154,8 @@
     "incorrectCells": "Bazı kareler henüz yerinde değil.",
     "saved": "Skor kaydedildi.",
     "rejected": "Skor kaydedilemedi. Çözüm doğrulanamadı.",
+    "offline": "Bağlantı sorunu, tekrar dene",
+    "retry": "Tekrar gönder",
     "loading": "Bulmaca hazırlanıyor.",
     "loadingSlow": "Sunucu uyanıyor, bulmaca hazırlanıyor. Bu bir dakika sürebilir.",
     "unavailable": "Bulmaca şu an açılamadı. Biraz sonra yeniden gelebilir.",

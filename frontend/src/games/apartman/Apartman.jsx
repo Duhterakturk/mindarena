@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from "react";
+import { scoreStatus } from "../../api/client";
 import { checkPuzzle, submitScore } from "../../api/games";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
@@ -92,8 +93,8 @@ export default function Apartman() {
       const correct = await checkPuzzle(attemptId, board);
       setStatus(correct ? "correct" : "incorrect");
       if (correct) clearInterval(timerRef.current);
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
@@ -102,12 +103,12 @@ export default function Apartman() {
     try {
       await submitScore({ attempt_id: attemptId, answer: board });
       setStatus("submitted");
-    } catch {
-      setStatus("rejected");
+    } catch (error) {
+      setStatus(scoreStatus(error));
     }
   }
 
-  const clueCell = "w-12 h-12 flex items-center justify-center text-sm font-bold text-brand-700";
+  const clueCell = "w-12 h-12 flex items-center justify-center text-sm font-bold text-[#f4efe6]";
 
   if (phase !== "ready" || !board || !notes || !clues) return <PuzzlePending phase={phase} />;
 
@@ -192,6 +193,12 @@ export default function Apartman() {
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
       {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
+      {status === "offline" && (
+        <div className="mt-3 text-center">
+          <p className="text-[#f4efe6]">{play.offline}</p>
+          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
+        </div>
+      )}
     </div>
   );
 }

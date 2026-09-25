@@ -21,7 +21,7 @@ export default function Kendoku() {
     const [ar, ac] = cageAnchor[id];
     if (ar !== r || ac !== c) return null;
     return (
-      <span className="absolute top-0.5 left-1 text-[10px] font-bold text-brand-700 pointer-events-none">
+      <span data-testid="cage-label" className="pointer-events-auto absolute top-0.5 left-0.5 text-[11px] font-bold leading-none text-slate-900 bg-white/80 rounded-sm px-0.5">
         {cageClues[id]}
       </span>
     );

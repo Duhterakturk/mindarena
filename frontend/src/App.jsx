@@ -27,8 +27,8 @@ function Shell() {
   return (
     <>
       <BoardTheme />
-      <TrialBar />
       {!onBoard && <Navbar />}
+      {!onBoard && <TrialBar />}
       <main key={location.pathname} className={onBoard ? undefined : "page-enter relative z-[1]"}>
         <Routes location={location}>
           <Route path="/" element={<Home />} />
