@@ -109,6 +109,7 @@
     "role_parent": "Parent",
     "role_teacher": "Teacher",
     "grade_level": "Grade Level",
+    "connecting": "Connecting to the server...",
     "login_button": "Log In",
     "register_button": "Sign Up",
     "no_account": "Don't have an account?",

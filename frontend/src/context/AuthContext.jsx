@@ -1,35 +1,70 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { login as loginRequest, register as registerRequest, fetchMe } from "../api/auth";
-import { refreshSession } from "../api/client";
+import {
+  clearStoredSession,
+  hasStoredSession,
+  isDefiniteAuthFailure,
+  readStoredUser,
+  refreshSession,
+  withWake,
+  writeStoredUser,
+} from "../api/client";
 
 const AuthContext = createContext(null);
+const WAKE_ATTEMPTS = 4;
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(() => (hasStoredSession() ? readStoredUser() : null));
+  const [loading, setLoading] = useState(() => hasStoredSession() && !readStoredUser());
+  const [connecting, setConnecting] = useState(() => hasStoredSession());
 
   useEffect(() => {
-    const token = localStorage.getItem("mindarena_access_token");
-    if (!token) {
+    if (!hasStoredSession()) {
+      writeStoredUser(null);
       setLoading(false);
-      return;
+      setConnecting(false);
+      return undefined;
     }
-    fetchMe()
-      .then(setUser)
-      .catch(async (error) => {
-        if (error?.response?.status === 401 && localStorage.getItem("mindarena_refresh_token")) {
-          try {
-            await refreshSession();
-            setUser(await fetchMe());
-            return;
-          } catch {
-            /* refresh de olmadi */
-          }
+
+    let cancelled = false;
+
+    async function slideRefresh() {
+      if (!localStorage.getItem("mindarena_refresh_token")) return;
+      try {
+        await withWake(() => refreshSession(), WAKE_ATTEMPTS);
+      } catch (error) {
+        if (!isDefiniteAuthFailure(error)) return;
+        clearStoredSession();
+        if (!cancelled) setUser(null);
+      }
+    }
+
+    (async () => {
+      try {
+        const me = await fetchMe(WAKE_ATTEMPTS);
+        if (cancelled) return;
+        setUser(me);
+        writeStoredUser(me);
+        await slideRefresh();
+      } catch (error) {
+        if (cancelled) return;
+        if (isDefiniteAuthFailure(error)) {
+          clearStoredSession();
+          setUser(null);
+          return;
         }
-        localStorage.removeItem("mindarena_access_token");
-        localStorage.removeItem("mindarena_refresh_token");
-      })
-      .finally(() => setLoading(false));
+        setUser(readStoredUser());
+      } finally {
+        if (!cancelled) {
+          setConnecting(false);
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   function persistTokens({ access_token, refresh_token }) {
@@ -37,34 +72,38 @@ export function AuthProvider({ children }) {
     localStorage.setItem("mindarena_refresh_token", refresh_token);
   }
 
+  function remember(next) {
+    writeStoredUser(next);
+    setUser(next);
+  }
+
   async function login(credentials) {
     const data = await loginRequest(credentials);
     persistTokens(data);
-    setUser(data.user);
+    remember(data.user);
     return data.user;
   }
 
   async function register(payload) {
     const data = await registerRequest(payload);
     persistTokens(data);
-    setUser(data.user);
+    remember(data.user);
     return data.user;
   }
 
   function logout() {
-    localStorage.removeItem("mindarena_access_token");
-    localStorage.removeItem("mindarena_refresh_token");
+    clearStoredSession();
     setUser(null);
   }
 
   async function refreshUser() {
     const data = await fetchMe();
-    setUser(data);
+    remember(data);
     return data;
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, connecting, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

@@ -46,7 +46,10 @@ export default function Register() {
           onChange={(e) => setForm({ ...form, full_name: e.target.value })}
         />
         <input
+          id="email"
+          name="email"
           type="email"
+          autoComplete="username"
           placeholder={t("auth.email")}
           required
           className="w-full border border-slate-200 rounded-lg px-3 py-2"
@@ -54,7 +57,10 @@ export default function Register() {
           onChange={(e) => setForm({ ...form, email: e.target.value })}
         />
         <input
+          id="password"
+          name="password"
           type="password"
+          autoComplete="new-password"
           placeholder={t("auth.password")}
           required
           minLength={8}

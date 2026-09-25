@@ -109,6 +109,7 @@
     "role_parent": "Veli",
     "role_teacher": "Öğretmen",
     "grade_level": "Sınıf Seviyesi",
+    "connecting": "Sunucuya bağlanılıyor...",
     "login_button": "Giriş Yap",
     "register_button": "Kayıt Ol",
     "no_account": "Hesabın yok mu?",

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
+import { useTranslation } from "react-i18next";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import BadgeToastHost from "./components/badges/BadgeToastHost";
@@ -23,6 +24,8 @@ import TeacherPanel from "./pages/TeacherPanel";
 import Board from "./pages/Board";
 
 function Shell() {
+  const { t } = useTranslation();
+  const { connecting } = useAuth();
   const location = useLocation();
   const onBoard = location.pathname.startsWith("/board");
   return (
@@ -30,6 +33,11 @@ function Shell() {
       <BoardTheme />
       {!onBoard && <PhotoBackdrop />}
       {!onBoard && <Navbar />}
+      {connecting && (
+        <p className="relative z-[1] text-center text-sm text-slate-600 py-2" role="status">
+          {t("auth.connecting")}
+        </p>
+      )}
       {!onBoard && <TrialBar />}
       <main key={location.pathname} className={onBoard ? undefined : "page-enter relative z-[1]"}>
         <Routes location={location}>

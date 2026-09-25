@@ -10,11 +10,11 @@ export async function login(payload) {
   return data;
 }
 
-export async function fetchMe() {
+export async function fetchMe(attempts = 2) {
   return withWake(async () => {
     const { data } = await apiClient.get("/auth/me");
     return data;
-  });
+  }, attempts);
 }
 
 export async function changePassword(currentPassword, newPassword) {

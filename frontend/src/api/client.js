@@ -37,6 +37,39 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+export const USER_STORAGE_KEY = "mindarena_user";
+
+export function readStoredUser() {
+  try {
+    const raw = localStorage.getItem(USER_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeStoredUser(user) {
+  if (user) localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(user));
+  else localStorage.removeItem(USER_STORAGE_KEY);
+}
+
+export function clearStoredSession() {
+  localStorage.removeItem("mindarena_access_token");
+  localStorage.removeItem("mindarena_refresh_token");
+  localStorage.removeItem(USER_STORAGE_KEY);
+}
+
+export function hasStoredSession() {
+  return Boolean(
+    localStorage.getItem("mindarena_access_token") || localStorage.getItem("mindarena_refresh_token"),
+  );
+}
+
+export function isDefiniteAuthFailure(error) {
+  const status = error?.response?.status;
+  return status === 401 || status === 422;
+}
+
 let refreshPromise = null;
 
 export function refreshSession() {
@@ -46,12 +79,19 @@ export function refreshSession() {
 
 function refreshAccess() {
   const refresh = localStorage.getItem("mindarena_refresh_token");
-  if (!refresh) return Promise.reject(new Error("refresh yok"));
+  if (!refresh) {
+    const error = new Error("refresh yok");
+    error.response = { status: 401 };
+    return Promise.reject(error);
+  }
   const base = String(apiClient.defaults.baseURL || "/api").replace(/\/$/, "");
-  return axios.post(`${base}/auth/refresh`, {}, { headers: { Authorization: `Bearer ${refresh}` } }).then(({ data }) => {
-    localStorage.setItem("mindarena_access_token", data.access_token);
-    return data.access_token;
-  });
+  return axios
+    .post(`${base}/auth/refresh`, {}, { headers: { Authorization: `Bearer ${refresh}` }, timeout: 70000 })
+    .then(({ data }) => {
+      localStorage.setItem("mindarena_access_token", data.access_token);
+      if (data.refresh_token) localStorage.setItem("mindarena_refresh_token", data.refresh_token);
+      return data.access_token;
+    });
 }
 
 apiClient.interceptors.response.use(
@@ -67,9 +107,10 @@ apiClient.interceptors.response.use(
       config._retried = true;
       return apiClient(config);
     } catch (refreshError) {
-      localStorage.removeItem("mindarena_access_token");
-      localStorage.removeItem("mindarena_refresh_token");
-      if (!window.location.pathname.startsWith("/login")) window.location.assign("/login");
+      if (isDefiniteAuthFailure(refreshError)) {
+        clearStoredSession();
+        if (!window.location.pathname.startsWith("/login")) window.location.assign("/login");
+      }
       return Promise.reject(refreshError);
     }
   },

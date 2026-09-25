@@ -22,7 +22,7 @@ class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-secret-change-me"
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY") or "dev-jwt-secret-change-me"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
-    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=90)
 
     SQLALCHEMY_DATABASE_URI = _normalize_database_url(
         os.environ.get(
