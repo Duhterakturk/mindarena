@@ -81,9 +81,10 @@
   },
   "stars": {
     "title": "Your stars",
-    "solve": "Solved +1",
-    "no_hint": "No hints +1",
-    "fast": "Quick +1",
+    "solve": "Solved +{{count}}",
+    "no_hint": "No hints +{{count}}",
+    "fast": "Quick +{{count}}",
+    "total": "{{count}} stars from this puzzle",
     "record": "New record! {{seconds}} seconds faster",
     "login": "Log in to keep your stars",
     "close": "OK"

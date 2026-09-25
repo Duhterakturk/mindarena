@@ -38,8 +38,12 @@ test("five easy solves unlock medium without a save button", async ({ page }) =>
     await page.getByRole("button", { name: "Kontrol Et" }).click();
     await expect(page.getByText("Kaydediliyor...")).toBeVisible();
     await expect(page.getByText("Skor kaydedildi.")).toBeVisible();
-    await expect(page.getByTestId("star-card")).toBeVisible();
-    await page.getByTestId("star-card").getByRole("button", { name: "Tamam" }).click();
+    if (round === 4) {
+      await expect(page.getByTestId("star-card")).toBeVisible();
+      await page.getByTestId("star-card").getByRole("button", { name: "Tamam" }).click();
+    } else {
+      await expect(page.getByTestId("star-toast")).toBeVisible();
+    }
     if (round < 4) await page.getByRole("button", { name: "Yeni Bulmaca" }).click();
   }
 

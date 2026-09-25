@@ -81,9 +81,10 @@
   },
   "stars": {
     "title": "Yıldızların",
-    "solve": "Çözdün +1",
-    "no_hint": "İpucusuz +1",
-    "fast": "Hızlı +1",
+    "solve": "Çözdün +{{count}}",
+    "no_hint": "İpucusuz +{{count}}",
+    "fast": "Hızlı +{{count}}",
+    "total": "Bu bulmacadan {{count}} yıldız",
     "record": "Yeni rekor! {{seconds}} saniye daha hızlı",
     "login": "Yıldızlarını saklamak için giriş yap",
     "close": "Tamam"

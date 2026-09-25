@@ -95,6 +95,10 @@ html[data-board-theme] .play-room .press-btn {
   background-color: var(--accent) !important;
 }
 
+body:has([data-testid="star-toast"]) .play-room {
+  transform: translateY(-4.25rem);
+}
+
 .theme-photo {
   width: 100%;
   height: 100%;

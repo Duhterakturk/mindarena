@@ -33,7 +33,10 @@ export default function DifficultyPicker({ gameSlug, value, onChange }) {
         const previous = known.current;
         if (previous) {
           const fresh = ["medium", "hard"].find((level) => !previous.unlocked[level] && next.unlocked[level]);
-          if (fresh) setOpened(t("difficulty.opened", { level: t(`difficulty.${fresh}`) }));
+          if (fresh) {
+            setOpened(t("difficulty.opened", { level: t(`difficulty.${fresh}`) }));
+            window.dispatchEvent(new CustomEvent("mindarena:level-opened", { detail: { level: fresh } }));
+          }
         }
         known.current = next;
         setState(next);
