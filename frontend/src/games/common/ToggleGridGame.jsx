@@ -194,7 +194,7 @@ export default function ToggleGridGame({
   const bookCell = book ? { width: `min(2.5rem, calc((100vw - 2rem) / ${gridCols}))`, height: `min(2.5rem, calc((100vw - 2rem) / ${gridCols}))` } : undefined;
   const clueCell = book
     ? "flex items-center justify-center text-xs font-bold text-center leading-tight bg-violet-100 text-violet-900"
-    : `${cellSize} flex items-center justify-center text-xs font-bold text-[#f4efe6] text-center leading-tight`;
+    : `${cellSize} board-clue flex items-center justify-center text-xs font-bold text-[#f4efe6] text-center leading-tight`;
 
   function toneClass(tone) {
     if (tone === "done") return "text-violet-300";

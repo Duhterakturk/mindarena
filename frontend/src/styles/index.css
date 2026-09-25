@@ -53,7 +53,7 @@ textarea,
 
 /* Aday rakam beyaz karenin üstünde durur. text-slate-500 sayfada açık renge çekildiği için burada sabit. */
 .cell-notes {
-  color: #57534e;
+  color: var(--ink, #57534e);
 }
 
 .page-enter {
@@ -114,12 +114,36 @@ body:has([data-testid="star-toast"]) .play-room {
 }
 
 html[data-board-theme] .play-scale {
-  background: color-mix(in srgb, var(--cell) 94%, transparent);
+  background: color-mix(in srgb, var(--cell) 72%, transparent);
+  backdrop-filter: blur(6px);
   color: var(--ink);
   border: 1px solid rgba(255, 255, 255, 0.35);
   border-radius: 16px;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
   padding: 12px;
+}
+
+html[data-board-theme] .play-room input,
+html[data-board-theme] .play-room .cell-notes,
+html[data-board-theme] .play-room [data-testid="futo-sign"],
+html[data-board-theme] .play-room [data-testid="cage-label"],
+html[data-board-theme] .play-room .board-clue {
+  color: var(--ink) !important;
+  caret-color: var(--ink);
+}
+
+html[data-board-theme] .play-room input,
+html[data-board-theme] .play-room .board-cell {
+  background-color: var(--cell) !important;
+  border-color: var(--line);
+}
+
+html[data-board-theme] .play-room input[readonly] {
+  font-weight: 700;
+}
+
+html[data-board-theme] .play-room [data-testid="cage-label"] {
+  background: transparent;
 }
 
 html[data-board-theme] .play-scale .text-slate-500,
@@ -192,6 +216,11 @@ html[data-board-theme] .play-scale .text-slate-600 {
   .play-scale {
     zoom: 1.55;
     max-width: calc(100% / 1.55);
+  }
+
+  html[data-board-theme] .play-scale {
+    zoom: 1.15;
+    max-width: 680px;
   }
 }
 

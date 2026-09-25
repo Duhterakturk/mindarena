@@ -123,13 +123,13 @@ export default function Sudoku() {
                 onChange={(e) => handleCellChange(r, c, e.target.value)}
                 readOnly={givenMask[r][c]}
                 className={[
-                  "w-9 h-9 relative z-10 text-center text-lg border border-slate-300 focus:outline-none focus:bg-brand-100 bg-transparent",
-                  givenMask[r][c] ? "font-bold text-slate-700" : "",
+                  "board-cell w-9 h-9 relative z-10 text-center text-lg border border-slate-300 focus:outline-none focus:bg-brand-100",
+                  givenMask[r][c] ? "font-bold" : "",
                   c % 3 === 2 && c !== 8 ? "border-r-2 border-r-slate-700" : "",
                   r % 3 === 2 && r !== 8 ? "border-b-2 border-b-slate-700" : "",
                   selected && selected[0] === r && selected[1] === c ? "ring-2 ring-brand-400" : "",
                 ].join(" ")}
-                style={{ backgroundColor: givenMask[r][c] ? "#f1f5f9" : "#fff" }}
+                style={{ backgroundColor: "var(--cell, #fff)", color: "var(--ink, #1e1a16)" }}
               />
               {!val && !givenMask[r][c] && <NotesOverlay digits={notes[r][c]} maxDigit={9} />}
             </div>

@@ -103,7 +103,7 @@ export default function Apartman() {
     }
   }
 
-  const clueCell = "w-12 h-12 flex items-center justify-center text-sm font-bold text-[#f4efe6]";
+  const clueCell = "board-clue w-12 h-12 flex items-center justify-center text-sm font-bold text-[#f4efe6]";
 
   if (phase !== "ready" || !board || !notes || !clues) return <PuzzlePending phase={phase} />;
 
@@ -135,10 +135,10 @@ export default function Apartman() {
                   onChange={(e) => handleCellChange(r, c, e.target.value)}
                   readOnly={givenMask[r][c] || status === "correct"}
                   className={[
-                    "w-12 h-12 relative z-10 text-center text-lg border border-slate-300 focus:outline-none focus:bg-brand-100 bg-transparent",
-                    givenMask[r][c] ? "font-bold text-slate-700" : "",
+                    "board-cell w-12 h-12 relative z-10 text-center text-lg border border-slate-300 focus:outline-none focus:bg-brand-100",
+                    givenMask[r][c] ? "font-bold" : "",
                   ].join(" ")}
-                  style={{ backgroundColor: givenMask[r][c] ? "#f1f5f9" : "#fff" }}
+                  style={{ backgroundColor: "var(--cell, #fff)", color: "var(--ink, #1e1a16)" }}
                 />
                 {!val && !givenMask[r][c] && <NotesOverlay digits={notes[r][c]} maxDigit={maxDigit} />}
               </div>

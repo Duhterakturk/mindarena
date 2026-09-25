@@ -30,9 +30,28 @@ export function currentTrial() {
   return trial;
 }
 
+function equippedTheme() {
+  return savedItems.find((item) => item.equipped && item.type === "theme") || null;
+}
+
+function equippedBackground() {
+  return savedItems.find((item) => item.equipped && item.type === "background") || null;
+}
+
+function colorItem() {
+  if (trial?.type === "theme") return trial;
+  const theme = equippedTheme();
+  if (theme) return theme;
+  if (trial?.type === "background") return trial;
+  return equippedBackground();
+}
+
 export function activePhotoId() {
-  if (trial && trial.type !== "accessory") return trial.id;
-  return equippedId;
+  if (trial?.type === "background") return trial.id;
+  const background = equippedBackground();
+  if (background) return background.id;
+  if (trial?.type === "theme") return trial.id;
+  return equippedTheme()?.id || null;
 }
 
 function paint(preview, id) {
@@ -57,12 +76,9 @@ function paint(preview, id) {
 }
 
 function paintSaved() {
-  const theme = savedItems.find((item) => item.equipped && item.type === "theme");
-  const background = savedItems.find((item) => item.equipped && item.type === "background");
-  const chosen = theme || background;
-  const preview = { ...(background?.preview || {}), ...(theme?.preview || {}) };
-  equippedId = chosen?.id || null;
-  paint(chosen ? preview : null, chosen?.id || null);
+  const source = colorItem();
+  equippedId = activePhotoId();
+  paint(source?.preview || null, source?.id || null);
   emit();
 }
 
@@ -74,9 +90,8 @@ export function rememberEquipped(items) {
 export function startTrial(item) {
   clearTimeout(timer);
   trial = item;
-  paint(item.preview, item.id);
+  paintSaved();
   timer = setTimeout(() => clearTrial(), 60000);
-  emit();
 }
 
 export function clearTrial() {

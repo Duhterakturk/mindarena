@@ -139,8 +139,8 @@ export default function GridFillGame({
           row.map((val, c) => (
             <div
               key={`${r}-${c}`}
-              className="relative"
-              style={{ backgroundColor: givenMask[r][c] ? "var(--cell, #f1f5f9)" : "var(--cell, #fff)" }}
+              className="board-cell relative"
+              style={{ backgroundColor: "var(--cell, #fff)" }}
             >
               <input
                 value={val || ""}
@@ -148,8 +148,8 @@ export default function GridFillGame({
                 readOnly={givenMask[r][c] || status === "correct"}
                 className={[
                   cellSize,
-                  "relative z-10 bg-transparent text-center border border-slate-300 focus:outline-none focus:bg-brand-100",
-                  givenMask[r][c] ? "font-bold text-slate-700" : "",
+                  "relative z-10 bg-transparent text-center border border-slate-300 focus:outline-none focus:bg-brand-100 text-[var(--ink,#1e1a16)]",
+                  givenMask[r][c] ? "font-bold" : "",
                   cellClassName ? cellClassName(r, c) : "",
                 ].join(" ")}
               />

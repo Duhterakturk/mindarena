@@ -140,15 +140,15 @@ export default function Kakuro() {
           row.map((item, c) => {
             if (item.type === "clue") {
               return (
-                <div key={`${r}-${c}`} className="relative border border-[#6d8a6d]" style={{ width: cell, height: cell, background: "#cfe3cf" }}>
+                <div key={`${r}-${c}`} className="board-cell relative border" style={{ width: cell, height: cell, background: "var(--cell, #cfe3cf)", borderColor: "var(--line, #6d8a6d)", color: "var(--ink, #1e1a16)" }}>
                   <svg viewBox="0 0 10 10" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-                    <line x1="0" y1="0" x2="10" y2="10" stroke="#243024" strokeWidth="0.15" />
+                    <line x1="0" y1="0" x2="10" y2="10" stroke="var(--ink, #243024)" strokeWidth="0.15" />
                   </svg>
                   {item.right != null && (
-                    <span className="absolute top-0 right-0 z-10 bg-[#cfe3cf] px-0.5 text-[13px] font-bold leading-none text-slate-900 sm:text-[14px]">{item.right}</span>
+                    <span className="board-clue absolute top-0 right-0 z-10 px-0.5 text-[13px] font-bold leading-none sm:text-[14px]">{item.right}</span>
                   )}
                   {item.down != null && (
-                    <span className="absolute bottom-0 left-0 z-10 bg-[#cfe3cf] px-0.5 text-[13px] font-bold leading-none text-slate-900 sm:text-[14px]">{item.down}</span>
+                    <span className="board-clue absolute bottom-0 left-0 z-10 px-0.5 text-[13px] font-bold leading-none sm:text-[14px]">{item.down}</span>
                   )}
                 </div>
               );
@@ -157,7 +157,7 @@ export default function Kakuro() {
               return <div key={`${r}-${c}`} style={{ width: cell, height: cell, background: "#4a4a4a" }} />;
             }
             return (
-              <div key={`${r}-${c}`} className="relative" style={{ width: cell, height: cell, background: item.given ? "#f1f5f9" : "#fff" }}>
+              <div key={`${r}-${c}`} className="board-cell relative" style={{ width: cell, height: cell, background: "var(--cell, #fff)" }}>
                 <input
                   aria-label={`${r + 1}-${c + 1}`}
                   value={displayBoard[r][c] || ""}
@@ -165,7 +165,7 @@ export default function Kakuro() {
                   readOnly={status === "correct" || Boolean(item.given)}
                   inputMode="numeric"
                   className={[
-                    "relative z-10 h-full w-full border border-slate-300 bg-transparent text-center text-base font-semibold text-slate-900 focus:outline-none focus:bg-brand-100",
+                    "relative z-10 h-full w-full border border-slate-300 bg-transparent text-center text-base font-semibold text-[var(--ink,#1e1a16)] focus:outline-none focus:bg-brand-100",
                     item.given ? "font-bold" : "",
                   ].join(" ")}
                 />

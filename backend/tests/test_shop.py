@@ -17,10 +17,13 @@ def _ratio(cell, ink):
 
 
 def test_theme_ink_stays_readable_on_the_cell():
-    for item in CATALOG:
-        if "cell" not in item["preview"]:
-            continue
-        assert _ratio(item["preview"]["cell"], item["preview"]["ink"]) >= 4.5
+    themed = [item for item in CATALOG if "cell" in item["preview"] and "ink" in item["preview"]]
+    assert {item["id"] for item in themed} >= {
+        "theme-space", "theme-forest", "theme-sea", "theme-candy", "theme-night", "bg-dawn", "bg-meadow", "bg-ink",
+    }
+    for item in themed:
+        ratio = _ratio(item["preview"]["cell"], item["preview"]["ink"])
+        assert ratio >= 4.5, f"{item['id']} contrast {ratio:.2f} is below 4.5"
 
 
 def test_stage_and_rank_follow_solved_counts():

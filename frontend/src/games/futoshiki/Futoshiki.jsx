@@ -14,12 +14,12 @@ export default function Futoshiki() {
     return (
       <>
         {h && (
-          <span data-testid="futo-sign" className="pointer-events-auto absolute left-full top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-slate-900">
+          <span data-testid="futo-sign" className="pointer-events-auto absolute left-full top-1/2 z-30 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-[var(--ink,#1e1a16)]">
             {h.sign === ">" ? ">" : "<"}
           </span>
         )}
         {v && (
-          <span data-testid="futo-sign" className="pointer-events-auto absolute top-full left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-slate-900">
+          <span data-testid="futo-sign" className="pointer-events-auto absolute top-full left-1/2 z-30 -translate-x-1/2 -translate-y-1/2 text-sm font-bold text-[var(--ink,#1e1a16)]">
             {v.sign === "v" ? "∨" : "∧"}
           </span>
         )}
