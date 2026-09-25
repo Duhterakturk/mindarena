@@ -45,6 +45,8 @@ test("an easy cross-sum solves and saves", async ({ page }, info) => {
   await expect(page.getByText("Skor kaydedildi.")).toBeVisible();
   expect(saved.answer).toEqual(answer);
 
+  const clueSize = await board.locator("span").first().evaluate((node) => getComputedStyle(node).fontSize);
+  expect(clueSize).toBe(info.project.name === "mobile" ? "13px" : "14px");
   const box = await board.boundingBox();
   expect(box.width).toBeLessThanOrEqual(info.project.name === "mobile" ? 390 : 1280);
   await page.screenshot({ path: `test-results/kakuro-${info.project.name}.png`, fullPage: true });

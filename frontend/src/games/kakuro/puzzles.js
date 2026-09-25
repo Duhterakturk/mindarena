@@ -1,7 +1,7 @@
 const CONFIG = {
-  easy: { size: 6, min: 2, max: 4, budget: 1000 },
-  medium: { size: 7, min: 2, max: 5, budget: 2000 },
-  hard: { size: 8, min: 2, max: 6, budget: 3000 },
+  easy: { size: 6, min: 2, max: 4, budget: 1000, whites: [8, 25] },
+  medium: { size: 7, min: 2, max: 5, budget: 2000, whites: [20, 36] },
+  hard: { size: 8, min: 2, max: 6, budget: 3000, whites: [32, 40] },
 };
 
 const COMBOS = new Map();
@@ -119,78 +119,70 @@ export function shapeProblems(white, minRun, maxRun) {
   let total = 0;
   for (let r = 0; r < n; r += 1) for (let c = 0; c < n; c += 1) if (white[r][c]) total += 1;
   if (seen.size !== total) return "split";
+  for (let i = 1; i < n; i += 1) {
+    if (!white[i].some(Boolean)) return "edge";
+    if (!white.some((row) => row[i])) return "edge";
+  }
   const rows = white.slice(1).map((row) => row.join(""));
   if (new Set(rows).size < Math.min(3, n - 1)) return "repeat";
   return "";
 }
 
-function paintRow(n, minRun, maxRun, open, last) {
-  const row = Array(n).fill(false);
-  let c = 1;
-  while (c < n) {
-    if (last && open[c] === 0) {
-      c += 1;
-      continue;
-    }
-    if (open[c] >= maxRun) {
-      c += 1;
-      continue;
-    }
-    const must = open[c] > 0 && open[c] < minRun;
-    if (!must && !last && Math.random() < (n >= 8 ? 0.5 : 0.28)) {
-      c += 1;
-      continue;
-    }
-    if (!must && last) {
-      c += 1;
-      continue;
-    }
-    let len = must ? 1 : minRun;
-    while (c + len < n && open[c + len] > 0 && open[c + len] < minRun) len += 1;
-    if (!must && Math.random() < 0.35) {
-      const room = Math.min(maxRun, n - c);
-      const extra = room - len;
-      if (extra > 0) len += 1 + Math.floor(Math.random() * extra);
-    }
-    if (len < minRun || len > maxRun) return null;
-    for (let k = 0; k < len; k += 1) {
-      if (open[c + k] >= maxRun) return null;
-      row[c + k] = true;
-    }
-    c += len + 1;
-  }
-  for (let col = 1; col < n; col += 1) {
-    if (open[col] > 0 && open[col] < minRun && !row[col]) return null;
-    if (last && row[col] && open[col] + 1 < minRun) return null;
-  }
-  let run = 0;
-  for (let col = 1; col <= n; col += 1) {
-    if (col < n && row[col]) run += 1;
-    else if (run) {
-      if (run < minRun || run > maxRun) return null;
-      run = 0;
-    }
-  }
-  return row;
+function whiteCount(white) {
+  return white.reduce((sum, row) => sum + row.filter(Boolean).length, 0);
 }
 
-function paintShape(n, minRun, maxRun) {
-  for (let attempt = 0; attempt < 500; attempt += 1) {
-    const white = Array.from({ length: n }, () => Array(n).fill(false));
-    const open = Array(n).fill(0);
-    let ok = true;
-    for (let r = 1; r < n; r += 1) {
-      const row = paintRow(n, minRun, maxRun, open, r === n - 1);
-      if (!row || row.every((cell, col) => col === 0 || !cell)) {
-        ok = false;
-        break;
-      }
-      for (let c = 1; c < n; c += 1) {
-        white[r][c] = row[c];
-        open[c] = row[c] ? open[c] + 1 : 0;
-      }
-    }
-    if (ok && !shapeProblems(white, minRun, maxRun)) return white;
+function canDrop(white, r, c) {
+  if (!white[r][c]) return false;
+  const rowLeft = white[r].filter(Boolean).length;
+  const colLeft = white.reduce((sum, row) => sum + (row[c] ? 1 : 0), 0);
+  return rowLeft > 1 && colLeft > 1;
+}
+
+function splitOk(length, index, minRun, maxRun) {
+  const left = index;
+  const right = length - index - 1;
+  const side = (size) => size === 0 || (size >= minRun && size <= maxRun);
+  return side(left) && side(right);
+}
+
+function carveShape(n, minRun, maxRun, minWhites, maxWhites) {
+  const white = Array.from({ length: n }, () => Array(n).fill(false));
+  for (let r = 1; r < n; r += 1) for (let c = 1; c < n; c += 1) white[r][c] = true;
+  for (let guard = 0; guard < 80; guard += 1) {
+    const count = whiteCount(white);
+    const { runs } = runsOf(white);
+    const tooLong = runs.some((run) => run.cells.length > maxRun);
+    const tooShort = runs.some((run) => run.cells.length < minRun);
+    const valid = !tooLong && !tooShort && count >= minWhites && count <= maxWhites && !shapeProblems(white, minRun, maxRun);
+    const wantsShorter = runs.some((run) => run.cells.length >= 5) && count - 1 >= minWhites;
+    if (valid && !wantsShorter) return white;
+    const spots = [];
+    runs.forEach((run) => {
+      const crowded = run.cells.length > maxRun
+        || (count > minWhites && run.cells.length >= 5)
+        || (count > maxWhites && run.cells.length > minRun);
+      if (!crowded) return;
+      run.cells.forEach(([r, c], index) => {
+        if (!canDrop(white, r, c) || !splitOk(run.cells.length, index, minRun, maxRun)) return;
+        const other = runs.find((item) => item.dir !== run.dir && item.cells.some(([rr, cc]) => rr === r && cc === c));
+        if (!other) return;
+        const otherIndex = other.cells.findIndex(([rr, cc]) => rr === r && cc === c);
+        if (!splitOk(other.cells.length, otherIndex, minRun, maxRun)) return;
+        spots.push([r, c]);
+      });
+    });
+    if (!spots.length) return valid ? white : null;
+    const [r, c] = spots[Math.floor(Math.random() * spots.length)];
+    white[r][c] = false;
+  }
+  return null;
+}
+
+function paintShape(n, minRun, maxRun, minWhites, maxWhites) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const white = carveShape(n, minRun, maxRun, minWhites, maxWhites);
+    if (white) return white;
   }
   return null;
 }
@@ -203,6 +195,7 @@ function fillDigits(white, bias) {
   }));
   const used = runs.map(() => 0);
   const value = Array(cells.length).fill(0);
+  let steps = 0;
 
   function candidates(index) {
     const cell = cells[index];
@@ -214,6 +207,8 @@ function fillDigits(white, bias) {
   }
 
   function search() {
+    steps += 1;
+    if (steps > 6000) return false;
     let best = -1;
     let bestCount = 99;
     for (let i = 0; i < cells.length; i += 1) {
@@ -368,16 +363,16 @@ export function generate(difficulty = "easy") {
   const cfg = CONFIG[difficulty] || CONFIG.easy;
   const started = Date.now();
   while (Date.now() - started < cfg.budget) {
-    const white = paintShape(cfg.size, cfg.min, cfg.size >= 8 ? Math.min(cfg.max, 4) : cfg.max);
+    const white = paintShape(cfg.size, cfg.min, cfg.max, cfg.whites[0], cfg.whites[1]);
     if (!white) continue;
-    for (let fillTry = 0; fillTry < 20; fillTry += 1) {
+    for (let fillTry = 0; fillTry < 6; fillTry += 1) {
       if (Date.now() - started > cfg.budget) break;
       const digits = fillDigits(white, fillTry === 0 ? "low" : fillTry === 1 ? "high" : "rand");
       if (!digits) continue;
       const built = buildGrid(white, digits);
-      const count = countSolutions(built.grid, 2, 30000);
+      const count = countSolutions(built.grid, 2, 4000);
       if (count === 1) return built;
-      if (count > 1 && lastBoards[1]) {
+      if (fillTry < 2 && count > 1 && lastBoards[1]) {
         const other = lastBoards[1];
         const spots = [];
         digits.forEach((row, r) => row.forEach((value, c) => {

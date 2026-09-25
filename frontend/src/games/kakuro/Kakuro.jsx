@@ -147,13 +147,13 @@ export default function Kakuro() {
               return (
                 <div key={`${r}-${c}`} className="relative border border-[#6d8a6d]" style={{ width: cell, height: cell, background: "#cfe3cf" }}>
                   <svg viewBox="0 0 10 10" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
-                    <line x1="0" y1="0" x2="10" y2="10" stroke="#243024" strokeWidth="0.18" />
+                    <line x1="0" y1="0" x2="10" y2="10" stroke="#243024" strokeWidth="0.15" />
                   </svg>
                   {item.right != null && (
-                    <span className="absolute top-0.5 right-0.5 text-[11px] font-bold leading-none text-slate-900">{item.right}</span>
+                    <span className="absolute top-0 right-0 z-10 bg-[#cfe3cf] px-0.5 text-[13px] font-bold leading-none text-slate-900 sm:text-[14px]">{item.right}</span>
                   )}
                   {item.down != null && (
-                    <span className="absolute bottom-0.5 left-0.5 text-[11px] font-bold leading-none text-slate-900">{item.down}</span>
+                    <span className="absolute bottom-0 left-0 z-10 bg-[#cfe3cf] px-0.5 text-[13px] font-bold leading-none text-slate-900 sm:text-[14px]">{item.down}</span>
                   )}
                 </div>
               );

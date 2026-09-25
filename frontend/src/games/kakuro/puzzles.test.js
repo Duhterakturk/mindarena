@@ -17,7 +17,18 @@ describe("kakuro", () => {
         expect(Date.now() - started).toBeLessThan(limit);
         expect(puzzle.size).toBe(sizes[difficulty]);
         expect(countSolutions(puzzle.grid, 2)).toBe(1);
-        expect(shapeProblems(whites(puzzle.grid), bounds[difficulty][0], bounds[difficulty][1])).toBe("");
+        const mask = whites(puzzle.grid);
+        expect(shapeProblems(mask, bounds[difficulty][0], bounds[difficulty][1])).toBe("");
+        const filled = mask.flat().filter(Boolean).length;
+        if (difficulty === "medium") expect(filled).toBeGreaterThanOrEqual(20);
+        if (difficulty === "hard") {
+          expect(filled).toBeGreaterThanOrEqual(32);
+          expect(filled).toBeLessThanOrEqual(40);
+        }
+        for (let i = 1; i < puzzle.size; i += 1) {
+          expect(mask[i].some(Boolean)).toBe(true);
+          expect(mask.some((row) => row[i])).toBe(true);
+        }
         const givens = puzzle.grid.flat().filter((cell) => cell.given).length;
         if (difficulty === "easy") expect(givens).toBeLessThanOrEqual(1);
         else expect(givens).toBe(0);
