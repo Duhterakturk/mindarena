@@ -206,7 +206,7 @@
     "colours": "Colored Shapes"
   },
   "gameRules": {
-    "kakuro": "Digits in each white run are different and add up to the clue above or to the left.",
+    "kakuro": "The number at the top-right of a green cell is the sum of the white cells to its right. The number at the bottom-left is the sum of the white cells below. White cells take 1-9, and a run does not repeat a digit.",
     "sudoku": "Each row, column, and bold box contains the digits 1–9 once.",
     "bolgesel-sudoku": "Each row, column, and colored region contains the digits 1–4 once.",
     "apartman": "Each row and column contains heights 1–4 once. An edge number is how many buildings you can see from that side.",

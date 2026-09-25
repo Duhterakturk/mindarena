@@ -16,10 +16,10 @@ function emptyBoard(grid) {
   return grid.map((row) => row.map((cell) => (cell.type === "white" && cell.given ? cell.given : 0)));
 }
 
-function cellSizeClass(size) {
-  if (size >= 8) return "w-9 h-9 text-sm";
-  if (size >= 6) return "w-11 h-11";
-  return "w-14 h-14 text-lg";
+function cellPixels(size) {
+  if (size >= 8) return 40;
+  if (size >= 7) return 44;
+  return 48;
 }
 
 export default function Kakuro() {
@@ -60,9 +60,9 @@ export default function Kakuro() {
   }, [attemptId]);
 
   useApplyCellHint(attemptId, (hint) => {
-    writeFill(setBoard, hint, 1, 1);
+    writeFill(setBoard, hint);
     if (hint?.kind === "fill") {
-      setNotes((prev) => (prev ? clearCellNotes(prev, hint.row + 1, hint.col + 1) : prev));
+      setNotes((prev) => (prev ? clearCellNotes(prev, hint.row, hint.col) : prev));
     }
   });
 
@@ -100,7 +100,7 @@ export default function Kakuro() {
   }
 
   function answerGrid() {
-    return displayBoard.slice(1).map((row) => row.slice(1));
+    return grid.map((row, r) => row.map((cell, c) => (cell.type === "white" ? displayBoard[r][c] || 0 : null)));
   }
 
   async function checkSolution() {
@@ -126,7 +126,7 @@ export default function Kakuro() {
 
   if (phase !== "ready" || !displayBoard || !displayNotes || !grid) return <PuzzlePending phase={phase} />;
 
-  const cellSize = cellSizeClass(size);
+  const cell = cellPixels(size);
 
   return (
     <div className="flex flex-col items-center">
@@ -137,43 +137,44 @@ export default function Kakuro() {
       <p className="text-slate-500 text-sm mb-4">{play.clock(seconds)}</p>
 
       <div
-        className="inline-grid border-2 border-slate-700 max-w-full overflow-x-auto"
-        style={{ gridTemplateColumns: `repeat(${size + 1}, minmax(0, 1fr))` }}
+        className="inline-grid max-w-full border-2 border-[#243024]"
+        data-testid="kakuro-board"
+        style={{ gridTemplateColumns: `repeat(${size}, ${cell}px)` }}
       >
         {grid.map((row, r) =>
-          row.map((cell, c) => {
-            if (cell.type === "corner") {
-              return <div key={`${r}-${c}`} className={`${cellSize} bg-slate-800`} />;
-            }
-            if (cell.type === "block") {
+          row.map((item, c) => {
+            if (item.type === "clue") {
               return (
-                <div
-                  key={`${r}-${c}`}
-                  className={`${cellSize} bg-slate-800 relative text-[9px] font-semibold text-white border border-slate-600`}
-                >
-                  {cell.clueDown != null && (
-                    <span className="absolute bottom-0.5 left-1">{cell.clueDown}</span>
+                <div key={`${r}-${c}`} className="relative border border-[#6d8a6d]" style={{ width: cell, height: cell, background: "#cfe3cf" }}>
+                  <svg viewBox="0 0 10 10" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+                    <line x1="0" y1="0" x2="10" y2="10" stroke="#243024" strokeWidth="0.18" />
+                  </svg>
+                  {item.right != null && (
+                    <span className="absolute top-0.5 right-0.5 text-[11px] font-bold leading-none text-slate-900">{item.right}</span>
                   )}
-                  {cell.clueRight != null && (
-                    <span className="absolute top-0.5 right-1">{cell.clueRight}</span>
+                  {item.down != null && (
+                    <span className="absolute bottom-0.5 left-0.5 text-[11px] font-bold leading-none text-slate-900">{item.down}</span>
                   )}
                 </div>
               );
             }
+            if (item.type !== "white") {
+              return <div key={`${r}-${c}`} style={{ width: cell, height: cell, background: "#4a4a4a" }} />;
+            }
             return (
-              <div key={`${r}-${c}`} className="relative">
+              <div key={`${r}-${c}`} className="relative" style={{ width: cell, height: cell, background: item.given ? "#f1f5f9" : "#fff" }}>
                 <input
+                  aria-label={`${r + 1}-${c + 1}`}
                   value={displayBoard[r][c] || ""}
                   onChange={(e) => handleCellChange(r, c, e.target.value)}
-                  readOnly={status === "correct" || Boolean(cell.given)}
+                  readOnly={status === "correct" || Boolean(item.given)}
+                  inputMode="numeric"
                   className={[
-                    cellSize,
-                    "relative z-10 text-center border border-slate-300 focus:outline-none focus:bg-brand-100 bg-transparent",
-                    cell.given ? "font-bold text-slate-700" : "",
+                    "relative z-10 h-full w-full border border-slate-300 bg-transparent text-center text-base font-semibold text-slate-900 focus:outline-none focus:bg-brand-100",
+                    item.given ? "font-bold" : "",
                   ].join(" ")}
-                  style={{ backgroundColor: cell.given ? "#f1f5f9" : "#fff" }}
                 />
-                {!displayBoard[r][c] && !cell.given && (
+                {!displayBoard[r][c] && !item.given && (
                   <NotesOverlay digits={displayNotes[r][c]} maxDigit={9} />
                 )}
               </div>

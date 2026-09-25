@@ -206,7 +206,7 @@
     "colours": "Renkli Şekiller"
   },
   "gameRules": {
-    "kakuro": "Her beyaz koşudaki rakamlar birbirinden farklıdır ve üstteki veya soldaki toplama eşittir.",
+    "kakuro": "Yeşil karedeki sağ üst sayı sağındaki beyaz karelerin, sol alt sayı altındaki beyaz karelerin toplamıdır. Beyaz karelere 1-9 yazılır, bir sırada aynı rakam tekrar etmez.",
     "sudoku": "Her satır, her sütun ve her kalın kutu 1-9 rakamlarını birer kez içerir.",
     "bolgesel-sudoku": "Her satır, sütun ve renkli bölge 1-4 rakamlarını birer kez içerir.",
     "apartman": "Her satır ve sütun 1-4 yüksekliklerini birer kez içerir. Kenar sayısı, o yönden görünen bina adedidir.",

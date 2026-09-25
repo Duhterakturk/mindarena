@@ -122,8 +122,6 @@ def test_pyramid_rejects_a_repeated_digit():
 
 def _client_answer(slug, proof):
     solution = proof["solution"]
-    if slug == "kakuro" and isinstance(solution, list) and len(solution) == len(proof["rowSums"]) + 1:
-        return [row[1:] for row in solution[1:]]
     return solution
 
 
@@ -160,6 +158,28 @@ def _spoil(answer):
             data["grid"][0][0] = None if data["grid"][0][0] is not None else 0
             return data
     raise AssertionError("çözüm bozulamadı")
+
+
+def test_kakuro_accepts_a_run_and_rejects_a_bad_cell():
+    puzzle = {
+        "grid": [
+            [{"type": "block"}, {"type": "clue", "down": 3}, {"type": "clue", "down": 7}],
+            [{"type": "clue", "right": 4}, {"type": "white"}, {"type": "white"}],
+            [{"type": "clue", "right": 6}, {"type": "white"}, {"type": "white"}],
+        ],
+        "size": 3,
+    }
+    answer = [[None, None, None], [None, 1, 3], [None, 2, 4]]
+    grade("kakuro", "easy", puzzle, answer, 10)
+    wrong_sum = [[None, None, None], [None, 1, 2], [None, 2, 4]]
+    repeated = [[None, None, None], [None, 1, 3], [None, 1, 6]]
+    on_black = [[5, None, None], [None, 1, 3], [None, 2, 4]]
+    for bad in (wrong_sum, repeated, on_black):
+        try:
+            grade("kakuro", "easy", puzzle, bad, 10)
+        except GradeError:
+            continue
+        raise AssertionError("bozuk çapraz toplam kabul edildi")
 
 
 def test_generated_solutions_grade_by_rules():

@@ -31,9 +31,8 @@ function open(slug, difficulty) {
     }
     case "kakuro": {
       const puzzle = kakuro(difficulty);
-      const proof = { rowSums: puzzle.rowSums, colSums: puzzle.colSums, givens: puzzle.givens };
-      const pub = { grid: puzzle.grid, size: puzzle.size, rowSums: puzzle.rowSums, colSums: puzzle.colSums, givens: puzzle.givens };
-      return sealed(pub, proof, puzzle.fullSolution);
+      const pub = { grid: puzzle.grid, size: puzzle.size };
+      return sealed(pub, pub, puzzle.solution);
     }
     case "bolgesel-sudoku": {
       const puzzle = bolgesel(difficulty);

@@ -1,36 +1,31 @@
-import { describe, it, expect } from "vitest";
-import { generateKakuroSolution, generate } from "./puzzles";
+import { describe, expect, it } from "vitest";
+import { countSolutions, generate, shapeProblems } from "./puzzles";
 
-describe("generateKakuroSolution", () => {
-  it("produces a grid with distinct values per row and per column, for n=4/6/8", () => {
-    for (const n of [4, 6, 8]) {
-      for (let i = 0; i < 100; i++) {
-        const grid = generateKakuroSolution(n);
-        for (const row of grid) {
-          expect(new Set(row).size).toBe(n);
-        }
-        for (let c = 0; c < n; c++) {
-          const col = grid.map((row) => row[c]);
-          expect(new Set(col).size).toBe(n);
-        }
+function whites(grid) {
+  return grid.map((row) => row.map((cell) => cell.type === "white"));
+}
+
+describe("kakuro", () => {
+  for (const difficulty of ["easy", "medium", "hard"]) {
+    it(`builds 20 unique ${difficulty} boards in time`, () => {
+      const limit = difficulty === "easy" ? 1000 : difficulty === "medium" ? 2000 : 3000;
+      const sizes = { easy: 6, medium: 7, hard: 8 };
+      const bounds = { easy: [2, 4], medium: [2, 5], hard: [2, 6] };
+      for (let i = 0; i < 20; i += 1) {
+        const started = Date.now();
+        const puzzle = generate(difficulty);
+        expect(Date.now() - started).toBeLessThan(limit);
+        expect(puzzle.size).toBe(sizes[difficulty]);
+        expect(countSolutions(puzzle.grid, 2)).toBe(1);
+        expect(shapeProblems(whites(puzzle.grid), bounds[difficulty][0], bounds[difficulty][1])).toBe("");
+        const givens = puzzle.grid.flat().filter((cell) => cell.given).length;
+        if (difficulty === "easy") expect(givens).toBeLessThanOrEqual(1);
+        else expect(givens).toBe(0);
+        puzzle.solution.forEach((row, r) => row.forEach((value, c) => {
+          if (puzzle.grid[r][c].type === "white") expect(value).toBeGreaterThanOrEqual(1);
+          else expect(value).toBeNull();
+        }));
       }
-    }
-  });
-
-  it("does not always sum rows/cols to the same value (unlike a 1-n Latin square)", () => {
-    const sums = new Set();
-    for (let i = 0; i < 20; i++) {
-      const grid = generateKakuroSolution(4);
-      grid.forEach((row) => sums.add(row.reduce((a, b) => a + b, 0)));
-    }
-    expect(sums.size).toBeGreaterThan(1);
-  });
-});
-
-describe("generate", () => {
-  it("scales grid size with difficulty", () => {
-    expect(generate("easy").size).toBe(4);
-    expect(generate("medium").size).toBe(6);
-    expect(generate("hard").size).toBe(8);
-  });
+    }, 60000);
+  }
 });

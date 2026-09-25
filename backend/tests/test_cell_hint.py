@@ -149,15 +149,20 @@ def test_colour_hint_places_one_piece(client, student, app):
     assert piece["color"] == hint["color"]
 
 
-def test_kakuro_hint_points_at_an_inner_cell():
+def test_kakuro_hint_opens_a_white_cell():
     from app.services.cell_hint import pick_hint
 
-    public = {"givens": [[0, 1], [2, 0]]}
-    solution = [[None, None, None], [None, 4, 1], [None, 2, 3]]
+    public = {
+        "grid": [
+            [{"type": "block"}, {"type": "clue", "down": 3}],
+            [{"type": "clue", "right": 3}, {"type": "white"}],
+            [{"type": "clue", "right": 4}, {"type": "white", "given": 2}],
+        ]
+    }
+    solution = [[None, None], [None, 1], [None, 2]]
     hint = pick_hint("kakuro", public, {"solution": solution})
-    assert public["givens"][hint["row"]][hint["col"]] == 0
-    inner = [row[1:] for row in solution[1:]]
-    assert inner[hint["row"]][hint["col"]] == hint["value"]
+    assert hint["kind"] == "fill"
+    assert (hint["row"], hint["col"], hint["value"]) == (1, 1, 1)
 
 
 def test_metaforms_hint_places_one_piece():

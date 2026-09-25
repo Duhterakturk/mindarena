@@ -211,7 +211,6 @@ REGIONS = [
 ]
 REGION_GIVENS = {"easy": 8, "medium": 6, "hard": 4}
 APARTMAN_GIVENS = {"easy": 8, "medium": 5, "hard": 3}
-KAKURO_SIZE = {"easy": 4, "medium": 6, "hard": 8}
 CIT_SIZE = {"easy": 5, "medium": 5, "hard": 6}
 FLEETS = {
     "easy": (5, 5, (3, 2, 1, 1)),
@@ -283,71 +282,62 @@ def _latin_boxes(grid):
     return True
 
 
-def _grade_kakuro(difficulty, puzzle, answer):
-    if not isinstance(puzzle, dict):
+def _grade_kakuro(_difficulty, puzzle, answer):
+    if not isinstance(puzzle, dict) or not isinstance(puzzle.get("grid"), list) or not puzzle["grid"]:
         raise GradeError("Bulmaca eksik")
-    n = KAKURO_SIZE[difficulty]
-    row_sums = puzzle.get("rowSums")
-    col_sums = puzzle.get("colSums")
-    if not isinstance(row_sums, list) or not isinstance(col_sums, list) or len(row_sums) != n or len(col_sums) != n:
+    board = puzzle["grid"]
+    n = len(board)
+    if not isinstance(answer, list) or len(answer) != n:
         raise GradeError("Izgara boyutu uyuşmuyor")
-    givens = _int_grid(puzzle.get("givens"), n, 0, 9, "ipucu")
-    solved = _int_grid(answer, n, 1, 9)
-    blanks = n * n - _filled(givens)
-    if blanks < 4:
-        raise GradeError("Bulmaca çok açık")
+    solved = []
+    for r, row in enumerate(board):
+        if not isinstance(row, list) or len(row) != n or not isinstance(answer[r], list) or len(answer[r]) != n:
+            raise GradeError("Izgara boyutu uyuşmuyor")
+        parsed = []
+        for c, cell in enumerate(row):
+            if not isinstance(cell, dict):
+                raise GradeError("Bulmaca eksik")
+            value = answer[r][c]
+            if cell.get("type") == "white":
+                if isinstance(value, bool) or not isinstance(value, int) or value < 1 or value > 9:
+                    raise GradeError("Çözüm kurallara uymuyor")
+                given = cell.get("given")
+                if isinstance(given, int) and given != value:
+                    raise GradeError("Verilen rakam değiştirilmiş")
+                parsed.append(value)
+            else:
+                if value not in (None, 0, ""):
+                    raise GradeError("Çözüm kurallara uymuyor")
+                parsed.append(None)
+        solved.append(parsed)
+
+    def check(cells, total):
+        values = [solved[r][c] for r, c in cells]
+        if len(values) != len(set(values)) or sum(values) != total:
+            raise GradeError("Çözüm kurallara uymuyor")
+
     for r in range(n):
-        if sum(solved[r]) != int(row_sums[r]) or len(set(solved[r])) != n:
-            raise GradeError("Çözüm kurallara uymuyor")
-        if any(givens[r][c] and givens[r][c] != solved[r][c] for c in range(n)):
-            raise GradeError("Verilen rakam değiştirilmiş")
+        c = 0
+        while c < n:
+            if solved[r][c] is None:
+                c += 1
+                continue
+            start = c
+            while c < n and solved[r][c] is not None:
+                c += 1
+            clue = board[r][start - 1]
+            check([(r, col) for col in range(start, c)], int(clue.get("right")))
     for c in range(n):
-        column = [solved[r][c] for r in range(n)]
-        if sum(column) != int(col_sums[c]) or len(set(column)) != n:
-            raise GradeError("Çözüm kurallara uymuyor")
-
-
-def _count_kakuro(row_sums, col_sums, givens, limit=2):
-    n = len(row_sums)
-    grid = [row[:] for row in givens]
-    budget = _Budget()
-    count = 0
-
-    def search(r, c):
-        nonlocal count
-        budget.tick()
-        if count >= limit:
-            return
-        if r == n:
-            count += 1
-            return
-        nr, nc = (r + 1, 0) if c + 1 == n else (r, c + 1)
-        if grid[r][c]:
-            if c + 1 == n and (sum(grid[r]) != row_sums[r] or len(set(grid[r])) != n):
-                return
-            column = [grid[i][c] for i in range(r + 1)]
-            if len(set(column)) != len(column):
-                return
-            if nr == n and sum(column) != col_sums[c]:
-                return
-            search(nr, nc)
-            return
-        used_row = {cell for cell in grid[r] if cell}
-        used_col = {grid[i][c] for i in range(r)}
-        for value in range(1, 10):
-            if value in used_row or value in used_col:
+        r = 0
+        while r < n:
+            if solved[r][c] is None:
+                r += 1
                 continue
-            grid[r][c] = value
-            if c + 1 == n and (sum(grid[r]) != row_sums[r] or len(set(grid[r])) != n):
-                grid[r][c] = 0
-                continue
-            search(nr, nc)
-            grid[r][c] = 0
-            if count >= limit:
-                return
-
-    search(0, 0)
-    return count
+            start = r
+            while r < n and solved[r][c] is not None:
+                r += 1
+            clue = board[start - 1][c]
+            check([(row, c) for row in range(start, r)], int(clue.get("down")))
 
 
 def _grade_region(difficulty, puzzle, answer):

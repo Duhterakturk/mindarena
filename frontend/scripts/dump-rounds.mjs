@@ -22,7 +22,7 @@ import { generate as colours } from "../src/games/colours/puzzles.js";
 const rounds = {
   kakuro: (() => {
     const puzzle = kakuro("easy");
-    return { puzzle: { rowSums: puzzle.rowSums, colSums: puzzle.colSums, givens: puzzle.givens }, answer: puzzle.fullSolution.slice(1).map((row) => row.slice(1)) };
+    return { puzzle: { grid: puzzle.grid, size: puzzle.size }, answer: puzzle.solution };
   })(),
   sudoku: (() => {
     const puzzle = sudoku("easy");

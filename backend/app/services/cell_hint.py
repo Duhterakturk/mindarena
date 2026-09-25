@@ -7,7 +7,6 @@ class HintError(Exception):
 
 _FILL = {
     "sudoku",
-    "kakuro",
     "bolgesel-sudoku",
     "apartman",
     "islem-karesi",
@@ -27,6 +26,8 @@ def pick_hint(slug, public, proof, focus=None):
     public = public or {}
     proof = proof or {}
     solution = proof.get("solution")
+    if slug == "kakuro":
+        return _kakuro(public, solution)
     if slug in _FILL:
         return _fill(public, solution)
     if slug == "cit":
@@ -84,18 +85,32 @@ def _jagged(rows):
     return isinstance(rows, list) and rows and isinstance(rows[0], list)
 
 
-def _aligned(public, solution):
-    """Çapraz Toplam çözümü kenar satırıyla durur. İpucu iç kareyi söyler."""
-    givens = public.get("givens")
-    if (
-        isinstance(givens, list)
-        and givens
-        and isinstance(solution, list)
-        and len(solution) == len(givens) + 1
-        and solution[0]
-        and len(solution[0]) == len(givens[0]) + 1
-    ):
-        return [row[1:] for row in solution[1:]]
+def _kakuro(public, solution):
+    grid = (public or {}).get("grid") or []
+    if not isinstance(solution, list):
+        raise HintError("Bu bulmaca ipucuna hazır değil. Yeni bir tane aç.")
+    blanks = []
+    for row_index, row in enumerate(solution):
+        if not isinstance(row, list):
+            continue
+        for col_index, value in enumerate(row):
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1 or value > 9:
+                continue
+            cell = {}
+            try:
+                cell = grid[row_index][col_index]
+            except (IndexError, TypeError):
+                cell = {}
+            if isinstance(cell, dict) and cell.get("given"):
+                continue
+            blanks.append((row_index, col_index, value))
+    if not blanks:
+        raise HintError("İpucu verilecek boş kare kalmadı")
+    row_index, col_index, value = random.choice(blanks)
+    return {"kind": "fill", "row": row_index, "col": col_index, "value": value}
+
+
+def _aligned(_public, solution):
     return solution
 
 

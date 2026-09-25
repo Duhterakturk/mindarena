@@ -1,8 +1,8 @@
 // Canlı bulmacanın cevabını vermez. Yalnızca nasıl düşünüleceğini söyler.
 export const HINTS = {
   kakuro: {
-    tr: { hint: "İki karelik küçük toplamlar önce gelir. 3 yalnız 1 ve 2 olabilir.", example: "Üstte 4 ve iki kare varsa oraya 1 ile 3 düşer. Aynı rakam tekrar etmez." },
-    en: { hint: "Short runs come first. A sum of 3 in two cells can only be 1 and 2.", example: "A 4 over two cells is 1 and 3, in either order." },
+    tr: { hint: "Yeşil karenin sağ üst sayısı sağa, sol alt sayısı aşağı gider. İki karelik 3 yalnız 1 ve 2 olabilir.", example: "Sağ üstte 4 ve iki beyaz kare varsa oraya 1 ile 3 düşer. Aynı rakam o sırada tekrar etmez." },
+    en: { hint: "The top-right number runs to the right. The bottom-left number runs down. A 3 in two cells can only be 1 and 2.", example: "A 4 above two white cells is 1 and 3. That run does not repeat a digit." },
   },
   sudoku: {
     tr: { hint: "Bir satırda tek rakam eksikse o rakam bellidir. Sonra kutu okunur.", example: "Satırda 1’den 8’e kadar doluysa boş kare 9’dur." },
