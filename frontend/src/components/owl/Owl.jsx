@@ -4,7 +4,7 @@ function colorOf(equipped, slot, fallback) {
   return equipped.find((item) => item.slot === slot)?.preview?.color || fallback;
 }
 
-export default function Owl({ stage = "egg", equipped = [], className = "w-40 h-40" }) {
+export default function Owl({ stage = "egg", equipped = [], className = "w-40 h-40", ...rest }) {
   const hat = colorOf(equipped, "hat", null);
   const glasses = colorOf(equipped, "glasses", null);
   const scarf = colorOf(equipped, "scarf", null);
@@ -12,7 +12,7 @@ export default function Owl({ stage = "egg", equipped = [], className = "w-40 h-
   const crown = colorOf(equipped, "crown", null);
   const grown = stage !== "egg";
   return (
-    <svg viewBox="0 0 120 120" className={className} data-testid="owl" data-stage={stage} aria-hidden="true">
+    <svg viewBox="0 0 120 120" className={className} data-testid="owl" data-stage={stage} aria-hidden="true" {...rest}>
       {cape && <path d="M18 70 Q10 110 36 108 L60 78 L84 108 Q110 110 102 70 Z" fill={cape} />}
       {stage === "egg" && <ellipse cx="60" cy="72" rx="28" ry="34" fill="#f6e7c1" stroke="#c4a36a" strokeWidth="3" />}
       {stage === "egg" && <path d="M48 70 Q60 78 72 70" fill="none" stroke="#c4a36a" strokeWidth="2" />}

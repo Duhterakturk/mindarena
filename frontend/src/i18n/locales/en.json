@@ -30,6 +30,17 @@
     "buy": "Buy",
     "equip": "Wear",
     "equipped": "Worn",
+    "try": "Try",
+    "use": "Use",
+    "inUse": "In use",
+    "owned": "You have this ✓",
+    "short": "{{count}} more stars needed",
+    "close": "Close",
+    "tab": {
+      "theme": "Themes",
+      "accessory": "Owl accessories",
+      "background": "Backgrounds"
+    },
     "loading": "Loading...",
     "loadError": "The shop did not open",
     "fail": "That did not go through"

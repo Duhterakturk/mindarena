@@ -30,6 +30,17 @@
     "buy": "Al",
     "equip": "Tak",
     "equipped": "Takılı",
+    "try": "Dene",
+    "use": "Kullan",
+    "inUse": "Kullanılıyor",
+    "owned": "Sende var ✓",
+    "short": "{{count}} yıldız daha lazım",
+    "close": "Kapat",
+    "tab": {
+      "theme": "Temalar",
+      "accessory": "Baykuş aksesuarları",
+      "background": "Arka planlar"
+    },
     "loading": "Yükleniyor...",
     "loadError": "Dükkân açılmadı",
     "fail": "İşlem olmadı"
