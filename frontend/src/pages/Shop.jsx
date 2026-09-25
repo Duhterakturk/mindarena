@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import Owl from "../components/owl/Owl";
 import ThemePreview from "../components/shop/ThemePreview";
 import { buyItem, equipItem, fetchProfile, fetchShop } from "../api/shop";
+import { startTrial } from "../components/shop/themeTrial";
 
 const TABS = ["theme", "accessory", "background"];
 
@@ -43,7 +44,12 @@ export default function Shop() {
   const lang = i18n.language?.startsWith("en") ? "en" : "tr";
 
   useEffect(() => {
-    fetchShop().then(setState).catch(() => setError(t("shop.loadError")));
+    fetchShop()
+      .then((data) => {
+        setState(data);
+        window.dispatchEvent(new CustomEvent("mindarena:stars", { detail: { star_balance: data.star_balance } }));
+      })
+      .catch(() => setError(t("shop.loadError")));
     fetchProfile().then(setProfile).catch(() => {});
   }, [t]);
 
@@ -70,14 +76,12 @@ export default function Shop() {
   }
 
   function tryOn(item) {
-    setTrial(item);
-    if (item.type === "accessory") return;
-    const root = document.documentElement;
-    const preview = item.preview || {};
-    if (item.type === "theme") root.dataset.boardTheme = item.id;
-    for (const key of ["cell", "ink", "line", "room"]) {
-      if (preview[key]) root.style.setProperty(`--${key}`, preview[key]);
+    if (item.type === "accessory") {
+      setTrial(item);
+      return;
     }
+    startTrial(item);
+    setOpen(null);
   }
 
   if (!state) return <p className="px-4 py-10 text-slate-400">{t("shop.loading")}</p>;

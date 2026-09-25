@@ -80,10 +80,37 @@ textarea,
   background: var(--room, transparent);
 }
 
+html[data-board-theme] .play-room {
+  background: transparent;
+}
+
 html[data-board-theme] .play-room .bg-white {
   background-color: var(--cell) !important;
   color: var(--ink);
   border-color: var(--line);
+}
+
+html[data-board-theme] .play-room .bg-brand-500,
+html[data-board-theme] .play-room .press-btn {
+  background-color: var(--accent) !important;
+}
+
+.scene-twinkle { animation: scene-twinkle 1.8s ease-in-out infinite; }
+.scene-drift { animation: scene-drift 8s ease-in-out infinite; }
+.scene-float { animation: scene-float 7s ease-in-out infinite; }
+.scene-rise { animation: scene-rise 6s linear infinite; }
+.scene-fall { animation: scene-fall 5s linear infinite; }
+.scene-shoot { animation: scene-shoot 3.5s ease-in infinite; }
+
+@keyframes scene-twinkle { 50% { opacity: 0.25; } }
+@keyframes scene-drift { 50% { transform: translateX(12px); } }
+@keyframes scene-float { 50% { transform: translate(10px, -8px); } }
+@keyframes scene-rise { to { transform: translateY(-90px); opacity: 0.2; } }
+@keyframes scene-fall { to { transform: translateY(80px) rotate(20deg); opacity: 0.3; } }
+@keyframes scene-shoot { 70% { opacity: 0; } to { transform: translate(30px, 16px); opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .scene-twinkle, .scene-drift, .scene-float, .scene-rise, .scene-fall, .scene-shoot { animation: none; }
 }
 
 .play-scale {

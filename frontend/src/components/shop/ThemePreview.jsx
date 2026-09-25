@@ -1,3 +1,5 @@
+import ThemeScene from "./ThemeScene";
+
 const DIGITS = ["5", "", "3", "", "", "1", "", "4", "2", "", "", "8", "", "6", "", "7"];
 
 function motif(id) {
@@ -52,12 +54,12 @@ export default function ThemePreview({ item, className = "w-full h-28" }) {
   const size = 22;
   const origin = 8;
   return (
+    <div className={`relative overflow-hidden rounded-xl ${className}`} data-testid="preview" style={{ background: room }}>
+    <ThemeScene id={item.id} mini />
     <svg
       viewBox="0 0 120 110"
-      className={className}
-      data-testid="preview"
+      className="relative h-full w-full"
       aria-hidden="true"
-      style={{ background: room, borderRadius: 12 }}
     >
       {motif(item.id)}
       {DIGITS.map((digit, index) => {
@@ -78,5 +80,6 @@ export default function ThemePreview({ item, className = "w-full h-28" }) {
         );
       })}
     </svg>
+    </div>
   );
 }

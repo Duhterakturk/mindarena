@@ -18,7 +18,7 @@ def _ratio(cell, ink):
 
 def test_theme_ink_stays_readable_on_the_cell():
     for item in CATALOG:
-        if item["type"] != "theme":
+        if "cell" not in item["preview"]:
             continue
         assert _ratio(item["preview"]["cell"], item["preview"]["ink"]) >= 4.5
 

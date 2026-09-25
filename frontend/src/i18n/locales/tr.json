@@ -31,6 +31,8 @@
     "equip": "Tak",
     "equipped": "Takılı",
     "try": "Dene",
+    "trying": "{{name}} temasını deniyorsun 👀",
+    "cancel": "Vazgeç",
     "use": "Kullan",
     "inUse": "Kullanılıyor",
     "owned": "Sende var ✓",

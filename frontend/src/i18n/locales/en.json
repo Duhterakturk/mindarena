@@ -31,6 +31,8 @@
     "equip": "Wear",
     "equipped": "Worn",
     "try": "Try",
+    "trying": "Trying the {{name}} theme 👀",
+    "cancel": "Cancel",
     "use": "Use",
     "inUse": "In use",
     "owned": "You have this ✓",

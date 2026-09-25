@@ -1,20 +1,12 @@
 import { useEffect } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { fetchShop } from "../../api/shop";
+import { rememberEquipped } from "../shop/themeTrial";
 
 const EQUIP_EVENT = "mindarena:equipped";
 
 function apply(items) {
-  const root = document.documentElement;
-  const theme = items.find((item) => item.equipped && item.type === "theme");
-  const background = items.find((item) => item.equipped && item.type === "background");
-  const preview = { ...(background?.preview || {}), ...(theme?.preview || {}) };
-  if (theme) root.dataset.boardTheme = theme.id;
-  else delete root.dataset.boardTheme;
-  for (const key of ["cell", "ink", "line", "room"]) {
-    if (preview[key]) root.style.setProperty(`--${key}`, preview[key]);
-    else root.style.removeProperty(`--${key}`);
-  }
+  rememberEquipped(items);
 }
 
 export default function BoardTheme() {
