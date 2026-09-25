@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { buyItem } from "../../api/shop";
-import ThemeScene from "./ThemeScene";
 import { clearTrial, currentTrial, rememberEquipped, subscribeTrial, trialKeeps } from "./themeTrial";
 
 export default function TrialBar() {
@@ -37,9 +36,7 @@ export default function TrialBar() {
   }
 
   return (
-    <>
-      <ThemeScene id={trial.id} />
-      <div className="w-full bg-[#1c1c1c] flex flex-wrap items-center justify-center gap-2 px-3 py-2 text-sm text-white" data-testid="theme-trial">
+    <div className="relative z-[1] w-full bg-[#1c1c1c] flex flex-wrap items-center justify-center gap-2 px-3 py-2 text-sm text-white" data-testid="theme-trial">
         <span>{t("shop.trying", { name })}</span>
         {short > 0 ? (
           <span>{t("shop.short", { count: trial.price })}</span>
@@ -51,7 +48,6 @@ export default function TrialBar() {
         <button type="button" className="rounded-lg border border-white/40 px-2 py-1" onClick={() => clearTrial()}>
           {t("shop.cancel")}
         </button>
-      </div>
-    </>
+    </div>
   );
 }

@@ -6,6 +6,7 @@ import BadgeToastHost from "./components/badges/BadgeToastHost";
 import StarCelebration from "./components/stars/StarCelebration";
 import BoardTheme from "./components/owl/BoardTheme";
 import TrialBar from "./components/shop/TrialBar";
+import { PhotoBackdrop } from "./components/shop/ThemeScene";
 import Shop from "./pages/Shop";
 import Profile from "./pages/Profile";
 
@@ -27,6 +28,7 @@ function Shell() {
   return (
     <>
       <BoardTheme />
+      {!onBoard && <PhotoBackdrop />}
       {!onBoard && <Navbar />}
       {!onBoard && <TrialBar />}
       <main key={location.pathname} className={onBoard ? undefined : "page-enter relative z-[1]"}>

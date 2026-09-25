@@ -13,7 +13,7 @@ function wearing(equipped, item) {
 }
 
 function Preview({ item, stage, equipped, large = false }) {
-  if (item.type === "theme") {
+  if (item.type === "theme" || item.type === "background") {
     return <ThemePreview item={item} className={large ? "w-full h-64" : "w-full h-28"} />;
   }
   if (item.type === "accessory") {

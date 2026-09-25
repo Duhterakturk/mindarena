@@ -2,16 +2,17 @@ const ACCENT = {
   "theme-space": "#c084fc",
   "theme-forest": "#15803d",
   "theme-sea": "#0284c7",
-  "theme-candy": "#ec4899",
+  "theme-candy": "#34d399",
   "theme-night": "#fbbf24",
   "bg-dawn": "#ea580c",
   "bg-meadow": "#65a30d",
   "bg-ink": "#c4b5fd",
 };
 
-const DARK = new Set(["theme-space", "theme-night", "bg-ink"]);
+const DARK = new Set(["theme-space", "theme-candy", "theme-night", "bg-ink"]);
 
 let savedItems = [];
+let equippedId = null;
 let trial = null;
 let timer = null;
 const listeners = new Set();
@@ -27,6 +28,11 @@ export function subscribeTrial(fn) {
 
 export function currentTrial() {
   return trial;
+}
+
+export function activePhotoId() {
+  if (trial && trial.type !== "accessory") return trial.id;
+  return equippedId;
 }
 
 function paint(preview, id) {
@@ -55,7 +61,9 @@ function paintSaved() {
   const background = savedItems.find((item) => item.equipped && item.type === "background");
   const chosen = theme || background;
   const preview = { ...(background?.preview || {}), ...(theme?.preview || {}) };
+  equippedId = chosen?.id || null;
   paint(chosen ? preview : null, chosen?.id || null);
+  emit();
 }
 
 export function rememberEquipped(items) {
@@ -80,5 +88,5 @@ export function clearTrial() {
 }
 
 export function trialKeeps(pathname) {
-  return pathname === "/dukkan" || /^\/games\/[^/]+$/.test(pathname);
+  return pathname === "/dukkan" || pathname === "/games" || /^\/games\/[^/]+$/.test(pathname);
 }

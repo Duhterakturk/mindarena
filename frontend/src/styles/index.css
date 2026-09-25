@@ -95,22 +95,40 @@ html[data-board-theme] .play-room .press-btn {
   background-color: var(--accent) !important;
 }
 
-.scene-twinkle { animation: scene-twinkle 1.8s ease-in-out infinite; }
-.scene-drift { animation: scene-drift 8s ease-in-out infinite; }
-.scene-float { animation: scene-float 7s ease-in-out infinite; }
-.scene-rise { animation: scene-rise 6s linear infinite; }
-.scene-fall { animation: scene-fall 5s linear infinite; }
-.scene-shoot { animation: scene-shoot 3.5s ease-in infinite; }
+.theme-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1);
+  animation: kenburns 36s ease-in-out infinite alternate;
+}
 
-@keyframes scene-twinkle { 50% { opacity: 0.25; } }
-@keyframes scene-drift { 50% { transform: translateX(12px); } }
-@keyframes scene-float { 50% { transform: translate(10px, -8px); } }
-@keyframes scene-rise { to { transform: translateY(-90px); opacity: 0.2; } }
-@keyframes scene-fall { to { transform: translateY(80px) rotate(20deg); opacity: 0.3; } }
-@keyframes scene-shoot { 70% { opacity: 0; } to { transform: translate(30px, 16px); opacity: 0; } }
+.theme-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.45));
+}
+
+html[data-board-theme] .play-scale {
+  background: color-mix(in srgb, var(--cell) 94%, transparent);
+  color: var(--ink);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+  padding: 12px;
+}
+
+html[data-board-theme] .play-scale .text-slate-500,
+html[data-board-theme] .play-scale .text-slate-600 {
+  color: color-mix(in srgb, var(--ink) 82%, transparent);
+}
+
+@keyframes kenburns {
+  to { transform: scale(1.08) translate3d(-1.5%, -1%, 0); }
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .scene-twinkle, .scene-drift, .scene-float, .scene-rise, .scene-fall, .scene-shoot { animation: none; }
+  .theme-photo { animation: none; }
 }
 
 .play-scale {

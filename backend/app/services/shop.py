@@ -16,7 +16,7 @@ CATALOG = [
     {"id": "theme-space", "type": "theme", "slot": "theme", "name_tr": "Uzay", "name_en": "Space", "price": 30, "preview": {"cell": "#1b2436", "ink": "#f4efe6", "line": "#8ea0c0", "room": "#121826"}},
     {"id": "theme-forest", "type": "theme", "slot": "theme", "name_tr": "Orman", "name_en": "Forest", "price": 30, "preview": {"cell": "#e7f3e4", "ink": "#14241a", "line": "#3d6b4f", "room": "#d5ead0"}},
     {"id": "theme-sea", "type": "theme", "slot": "theme", "name_tr": "Deniz", "name_en": "Sea", "price": 30, "preview": {"cell": "#e4f2f8", "ink": "#0c2433", "line": "#2f6f8f", "room": "#d3e8f2"}},
-    {"id": "theme-candy", "type": "theme", "slot": "theme", "name_tr": "Şeker", "name_en": "Candy", "price": 40, "preview": {"cell": "#fff1f5", "ink": "#3b1220", "line": "#c45b7a", "room": "#ffe4ec"}},
+    {"id": "theme-candy", "type": "theme", "slot": "theme", "name_tr": "Kutup Işıkları", "name_en": "Northern Lights", "price": 40, "preview": {"cell": "#10241f", "ink": "#e7fff4", "line": "#7dcea0", "room": "#0c1c18"}},
     {"id": "theme-night", "type": "theme", "slot": "theme", "name_tr": "Gece", "name_en": "Night", "price": 40, "preview": {"cell": "#16141c", "ink": "#f6f1e8", "line": "#a89880", "room": "#0e0c12"}},
     {"id": "bg-dawn", "type": "background", "slot": "background", "name_tr": "Şafak", "name_en": "Dawn", "price": 20, "preview": {"cell": "#fff7ed", "ink": "#3b1d0a", "line": "#c2410c", "room": "#fde7d2"}},
     {"id": "bg-meadow", "type": "background", "slot": "background", "name_tr": "Çayır", "name_en": "Meadow", "price": 20, "preview": {"cell": "#f7fee7", "ink": "#14240c", "line": "#3f6212", "room": "#e5f6d8"}},
