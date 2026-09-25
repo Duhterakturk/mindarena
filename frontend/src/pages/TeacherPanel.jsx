@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchMyClassrooms, createClassroom, setStudentPassword } from "../api/classrooms";
 import { ClassHomework } from "../components/classroom/ClassHomework";
 import { fetchStudentsOverview } from "../api/progress";
+import Owl from "../components/owl/Owl";
+import { stageFor } from "../components/owl/stages";
 
 function StudentPassword({ classroomId, student }) {
   const [open, setOpen] = useState(false);
@@ -99,6 +102,7 @@ function StudentPassword({ classroomId, student }) {
 }
 
 export default function TeacherPanel() {
+  const { t } = useTranslation();
   const [classrooms, setClassrooms] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [students, setStudents] = useState([]);
@@ -296,7 +300,17 @@ Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil 
                   <tbody>
                     {students.map((row) => (
                       <tr key={row.student.id} className="border-t border-slate-100">
-                        <td className="px-4 py-2 font-medium text-slate-700 whitespace-nowrap">{row.student.full_name}</td>
+                        <td className="px-4 py-2 font-medium text-slate-700 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-2">
+                            <Owl stage={stageFor(row.total_completed)} className="w-8 h-8" />
+                            <span>
+                              {row.student.full_name}
+                              {row.student.active_title && (
+                                <span className="block text-xs text-slate-500">{t(`titles.${row.student.active_title.split(":")[1]}`)}</span>
+                              )}
+                            </span>
+                          </span>
+                        </td>
                         <td className="px-4 py-2 text-slate-500 whitespace-nowrap">{row.student.grade_level ?? "-"}</td>
                         <td className="px-4 py-2 text-right whitespace-nowrap">{row.total_completed}</td>
                         <td className="px-4 py-2 text-right whitespace-nowrap">{row.distinct_games_completed}</td>

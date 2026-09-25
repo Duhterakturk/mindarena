@@ -8,6 +8,7 @@ from app.models.assignment import Assignment
 from app.models.password_reset import PasswordReset
 from app.models.exam import Exam
 from app.models.star import PersonalBest, StarLedger
+from app.models.shop import UserItem
 
 __all__ = [
     "User",
@@ -25,4 +26,5 @@ __all__ = [
     "Exam",
     "StarLedger",
     "PersonalBest",
+    "UserItem",
 ]

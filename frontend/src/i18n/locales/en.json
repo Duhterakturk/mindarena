@@ -6,7 +6,44 @@
     "dashboard": "Dashboard",
     "login": "Log In",
     "register": "Sign Up",
-    "logout": "Log Out"
+    "logout": "Log Out",
+    "profile": "Profile",
+    "shop": "Shop"
+  },
+  "owl": { "grew": "Your owl grew!" },
+  "stages": {
+    "egg": "Egg",
+    "chick": "Chick",
+    "young": "Young",
+    "wise": "Wise",
+    "legend": "Legend"
+  },
+  "titles": {
+    "apprentice": "Apprentice",
+    "journeyman": "Journeyman",
+    "master": "Master",
+    "grandmaster": "Grandmaster",
+    "earned": "New title: {{rank}}"
+  },
+  "shop": {
+    "title": "Shop",
+    "buy": "Buy",
+    "equip": "Wear",
+    "equipped": "Worn",
+    "loading": "Loading...",
+    "loadError": "The shop did not open",
+    "fail": "That did not go through"
+  },
+  "profile": {
+    "noTitle": "No title selected",
+    "titles": "Titles",
+    "noTitlesYet": "No titles yet",
+    "records": "Records",
+    "noRecords": "No records yet",
+    "use": "Use",
+    "active": "Active",
+    "remaining": "{{count}} puzzles to become {{stage}}",
+    "maxStage": "You are a legend"
   },
   "stars": {
     "title": "Your stars",

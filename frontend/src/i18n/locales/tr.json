@@ -6,7 +6,44 @@
     "dashboard": "Panelim",
     "login": "Giriş Yap",
     "register": "Kayıt Ol",
-    "logout": "Çıkış Yap"
+    "logout": "Çıkış Yap",
+    "profile": "Profil",
+    "shop": "Dükkân"
+  },
+  "owl": { "grew": "Baykuşun büyüdü!" },
+  "stages": {
+    "egg": "Yumurta",
+    "chick": "Yavru",
+    "young": "Genç",
+    "wise": "Bilge",
+    "legend": "Efsane"
+  },
+  "titles": {
+    "apprentice": "Çırak",
+    "journeyman": "Kalfa",
+    "master": "Usta",
+    "grandmaster": "Büyükusta",
+    "earned": "Yeni unvan: {{rank}}"
+  },
+  "shop": {
+    "title": "Dükkân",
+    "buy": "Al",
+    "equip": "Tak",
+    "equipped": "Takılı",
+    "loading": "Yükleniyor...",
+    "loadError": "Dükkân açılmadı",
+    "fail": "İşlem olmadı"
+  },
+  "profile": {
+    "noTitle": "Unvan seçilmedi",
+    "titles": "Unvanlar",
+    "noTitlesYet": "Henüz unvan yok",
+    "records": "Rekorlar",
+    "noRecords": "Henüz rekor yok",
+    "use": "Seç",
+    "active": "Aktif",
+    "remaining": "{{stage}} olmaya {{count}} bulmaca kaldı",
+    "maxStage": "Efsane aşamasındasın"
   },
   "stars": {
     "title": "Yıldızların",

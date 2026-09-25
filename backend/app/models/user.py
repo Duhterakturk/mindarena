@@ -33,6 +33,7 @@ class User(db.Model):
     hint_balance = db.Column(db.Integer, nullable=False, default=3, server_default="3")
     star_balance = db.Column(db.Integer, nullable=False, default=0, server_default="0")
     stars_earned_total = db.Column(db.Integer, nullable=False, default=0, server_default="0")
+    active_title = db.Column(db.String(80), nullable=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
@@ -70,5 +71,6 @@ class User(db.Model):
             "hint_balance": self.hint_balance,
             "star_balance": self.star_balance,
             "stars_earned_total": self.stars_earned_total,
+            "active_title": self.active_title,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

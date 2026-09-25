@@ -62,6 +62,10 @@ export default function StarCelebration() {
             {t("stars.record", { seconds: stars.improved_by })}
           </p>
         )}
+        {stars.stage_up && <p className="mt-3 font-semibold text-amber-700">{t("owl.grew")}</p>}
+        {stars.new_title && (
+          <p className="mt-2 text-sm font-semibold">{t("titles.earned", { rank: t(`titles.${stars.new_title.rank}`) })}</p>
+        )}
         {!user && <p className="mt-3 text-sm text-slate-500">{t("stars.login")}</p>}
         <button type="button" className="mt-4 text-sm font-semibold text-brand-700" onClick={() => setStars(null)}>
           {t("stars.close")}

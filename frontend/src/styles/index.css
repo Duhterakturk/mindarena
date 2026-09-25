@@ -76,6 +76,16 @@ textarea,
   display: none;
 }
 
+.play-room {
+  background: var(--room, transparent);
+}
+
+html[data-board-theme] .play-room .bg-white {
+  background-color: var(--cell) !important;
+  color: var(--ink);
+  border-color: var(--line);
+}
+
 .play-scale {
   width: max-content;
   max-width: 100%;

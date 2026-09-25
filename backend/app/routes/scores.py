@@ -58,6 +58,10 @@ def submit_score():
     db.session.add(score)
     hint_balance = earn_once(attempt) if score.completed else balance_of(user_id)
     stars = award(attempt, duration) if score.completed else None
+    if score.completed and stars is not None:
+        from app.services.motivation import notice_for
+
+        stars.update(notice_for(user_id, game.slug))
     db.session.commit()
 
     new_badges = check_and_award_badges(user_id) if score.completed else []

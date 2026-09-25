@@ -44,6 +44,12 @@ export default function Navbar() {
 
       {user ? (
         <>
+          <Link to="/profil" className={linkClass} onClick={() => setMenuOpen(false)}>
+            {t("nav.profile")}
+          </Link>
+          <Link to="/dukkan" className={linkClass} onClick={() => setMenuOpen(false)}>
+            {t("nav.shop")}
+          </Link>
           <Link to="/dashboard" className={linkClass} onClick={() => setMenuOpen(false)}>
             {t("nav.dashboard")}
           </Link>

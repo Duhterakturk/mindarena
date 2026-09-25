@@ -4,6 +4,9 @@ import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import BadgeToastHost from "./components/badges/BadgeToastHost";
 import StarCelebration from "./components/stars/StarCelebration";
+import BoardTheme from "./components/owl/BoardTheme";
+import Shop from "./pages/Shop";
+import Profile from "./pages/Profile";
 
 import Home from "./pages/Home";
 import Games from "./pages/Games";
@@ -22,12 +25,15 @@ function Shell() {
   const onBoard = location.pathname.startsWith("/board");
   return (
     <>
+      <BoardTheme />
       {!onBoard && <Navbar />}
       <main key={location.pathname} className={onBoard ? undefined : "page-enter"}>
         <Routes location={location}>
           <Route path="/" element={<Home />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/:slug" element={<GamePage />} />
+          <Route path="/dukkan" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
+          <Route path="/profil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot" element={<Forgot />} />
