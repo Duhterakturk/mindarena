@@ -13,11 +13,11 @@
   },
   "owl": { "grew": "Baykuşun büyüdü!" },
   "stages": {
-    "egg": "Yumurta",
-    "chick": "Yavru",
-    "young": "Genç",
-    "wise": "Bilge",
-    "legend": "Efsane"
+    "egg": "Yavru Baykuş",
+    "chick": "Kukumav",
+    "young": "Peçeli Baykuş",
+    "wise": "Kar Baykuşu",
+    "legend": "Puhu"
   },
   "titles": {
     "apprentice": "Çırak",
@@ -41,8 +41,13 @@
     "close": "Kapat",
     "tab": {
       "theme": "Temalar",
-      "accessory": "Baykuş aksesuarları",
+      "collection": "Baykuş Koleksiyonu",
       "background": "Arka planlar"
+    },
+    "rarity": {
+      "common": "Yaygın",
+      "rare": "Nadir",
+      "legendary": "Efsanevi"
     },
     "loading": "Yükleniyor...",
     "loadError": "Dükkân açılmadı",
@@ -57,7 +62,8 @@
       "puzzles": "{{need}} bulmacaya {{count}} kaldı",
       "master": "Usta olmaya {{count}} bulmaca kaldı",
       "all-games": "Tüm oyunlara {{count}} kaldı",
-      "days-7": "7 güne {{count}} kaldı"
+      "days-7": "7 güne {{count}} kaldı",
+      "owl-expert": "Koleksiyona {{count}} kart kaldı"
     },
     "puzzles-10": "10 bulmaca",
     "puzzles-50": "50 bulmaca",
@@ -66,7 +72,8 @@
     "puzzles-500": "500 bulmaca",
     "master": "Usta unvanı",
     "all-games": "Tüm oyunlar",
-    "days-7": "7 farklı gün"
+    "days-7": "7 farklı gün",
+    "owl-expert": "Baykuş Uzmanı"
   },
   "profile": {
     "noTitle": "Unvan seçilmedi",
@@ -77,6 +84,7 @@
     "use": "Seç",
     "active": "Aktif",
     "remaining": "{{stage}} olmaya {{count}} bulmaca kaldı",
+    "collection": "Koleksiyonum {{owned}}/{{total}}",
     "maxStage": "Efsane aşamasındasın"
   },
   "stars": {

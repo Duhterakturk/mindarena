@@ -5,30 +5,24 @@ import ThemePreview from "../components/shop/ThemePreview";
 import { buyItem, equipItem, fetchProfile, fetchShop } from "../api/shop";
 import { startTrial } from "../components/shop/themeTrial";
 
-const TABS = ["theme", "accessory", "background"];
+const TABS = ["theme", "collection", "background"];
 
-function wearing(equipped, item) {
-  const rest = equipped.filter((piece) => piece.slot !== item.slot);
-  return [...rest, { slot: item.slot, preview: item.preview, id: item.id }];
+function Preview({ item, large = false }) {
+  return <ThemePreview item={item} className={large ? "w-full h-64" : "w-full h-28"} />;
 }
 
-function Preview({ item, stage, equipped, large = false }) {
-  if (item.type === "theme" || item.type === "background") {
-    return <ThemePreview item={item} className={large ? "w-full h-64" : "w-full h-28"} />;
-  }
-  if (item.type === "accessory") {
-    return (
-      <div data-testid="preview">
-        <Owl stage={stage} equipped={wearing(equipped, item)} className={large ? "w-56 h-56 mx-auto" : "w-28 h-28 mx-auto"} />
-      </div>
-    );
-  }
+function OwlPhoto({ item, owned, large = false }) {
+  const legendary = item.rarity === "legendary";
   return (
-    <div className={`rounded-xl p-3 ${large ? "py-8" : ""}`} style={{ background: item.preview.room }} data-testid="preview">
-      <Owl stage={stage} equipped={equipped} className={large ? "w-40 h-40 mx-auto" : "w-16 h-16 mx-auto"} />
-      <p className="text-center text-xs mt-1" style={{ color: item.preview.room === "#1a1c28" ? "#f4efe6" : "#1e1a16" }}>
-        ★
-      </p>
+    <div className={`relative overflow-hidden rounded-xl ${large ? "" : ""}`} data-testid="preview">
+      <img
+        src={`/owls/${item.photo}`}
+        alt=""
+        loading="lazy"
+        data-owned={owned ? "1" : "0"}
+        className={`w-full object-cover ${large ? "h-64" : "h-40"} ${owned ? "" : "grayscale blur-sm"} ${legendary ? "owl-photo" : ""}`}
+      />
+      {legendary && <span className="owl-shimmer" aria-hidden="true" />}
     </div>
   );
 }
@@ -40,7 +34,6 @@ export default function Shop() {
   const [error, setError] = useState(null);
   const [tab, setTab] = useState("theme");
   const [open, setOpen] = useState(null);
-  const [trial, setTrial] = useState(null);
   const lang = i18n.language?.startsWith("en") ? "en" : "tr";
 
   useEffect(() => {
@@ -58,7 +51,9 @@ export default function Shop() {
     try {
       const next = await buyItem(id);
       setState(next);
+      window.dispatchEvent(new CustomEvent("mindarena:stars", { detail: { star_balance: next.star_balance } }));
       setOpen((current) => next.items.find((item) => item.id === current?.id) || null);
+      fetchProfile().then(setProfile).catch(() => {});
     } catch (err) {
       setError(err.response?.data?.error || t("shop.fail"));
     }
@@ -76,10 +71,6 @@ export default function Shop() {
   }
 
   function tryOn(item) {
-    if (item.type === "accessory") {
-      setTrial(item);
-      return;
-    }
     startTrial(item);
     setOpen(null);
   }
@@ -87,8 +78,7 @@ export default function Shop() {
   if (!state) return <p className="px-4 py-10 text-slate-400">{t("shop.loading")}</p>;
 
   const stage = profile?.stage || "egg";
-  const equipped = trial?.type === "accessory" ? wearing(profile?.equipped || [], trial) : profile?.equipped || [];
-  const items = state.items.filter((item) => item.type === tab);
+  const items = state.items.filter((item) => (tab === "collection" ? item.type === "owl" : item.type === tab));
   const short = open && !open.owned ? Math.max(0, open.price - state.star_balance) : 0;
 
   return (
@@ -96,7 +86,7 @@ export default function Shop() {
       <h1 className="text-2xl font-bold mb-1">{t("shop.title")}</h1>
       <p className="mb-4" data-testid="shop-balance">⭐ {state.star_balance}</p>
       <div className="mb-4 flex justify-center">
-        <Owl stage={stage} equipped={equipped} className="w-24 h-24" data-shop-owl="1" />
+        <Owl stage={stage} className="w-28" data-shop-owl="1" />
       </div>
       {error && <p className="mb-4 text-red-400">{error}</p>}
       <div className="flex gap-2 mb-4 overflow-x-auto">
@@ -115,29 +105,42 @@ export default function Shop() {
       <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map((item) => {
           const need = Math.max(0, item.price - state.star_balance);
+          const legendary = item.rarity === "legendary";
           return (
             <li key={item.id}>
               <article
-                className="bg-white text-slate-900 rounded-2xl p-4 cursor-pointer"
+                className={`bg-white text-slate-900 rounded-2xl p-4 cursor-pointer ${legendary ? "owl-legendary" : ""}`}
                 data-testid={`card-${item.id}`}
+                data-rarity={item.rarity || ""}
                 onClick={() => setOpen(item)}
               >
-                <Preview item={item} stage={stage} equipped={profile?.equipped || []} />
-                <p className="font-semibold mt-2">{lang === "en" ? item.name_en : item.name_tr}</p>
+                {item.type === "owl" ? <OwlPhoto item={item} owned={item.owned} /> : <Preview item={item} />}
+                {item.type === "owl" ? (
+                  <>
+                    <p className="font-semibold mt-2">{item.name_tr}</p>
+                    <p className="text-sm text-slate-500">{item.name_en}</p>
+                    <p className="text-sm mt-1">{lang === "en" ? item.fact_en : item.fact_tr}</p>
+                    <p className="text-sm font-semibold mt-1">{t(`shop.rarity.${item.rarity}`)}</p>
+                  </>
+                ) : (
+                  <p className="font-semibold mt-2">{lang === "en" ? item.name_en : item.name_tr}</p>
+                )}
                 <p className="text-sm text-slate-500">⭐ {item.price}</p>
                 {item.owned ? (
                   <p className="text-sm mt-2">
                     {t("shop.owned")}{" "}
-                    <button
-                      type="button"
-                      className="font-semibold text-brand-700"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        wear(item.id);
-                      }}
-                    >
-                      {item.equipped ? t("shop.inUse") : t("shop.use")}
-                    </button>
+                    {item.type !== "owl" && (
+                      <button
+                        type="button"
+                        className="font-semibold text-brand-700"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          wear(item.id);
+                        }}
+                      >
+                        {item.equipped ? t("shop.inUse") : t("shop.use")}
+                      </button>
+                    )}
                   </p>
                 ) : (
                   <div className="mt-2">
@@ -165,21 +168,30 @@ export default function Shop() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-4" data-testid="preview-dialog">
           <div className="bg-white text-slate-900 rounded-2xl p-5 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <Preview
-              item={open}
-              stage={stage}
-              equipped={trial?.id === open.id ? wearing(profile?.equipped || [], open) : profile?.equipped || []}
-              large
-            />
-            <p className="font-bold text-lg mt-3 text-center">{lang === "en" ? open.name_en : open.name_tr}</p>
+            {open.type === "owl" ? <OwlPhoto item={open} owned={open.owned} large /> : <Preview item={open} large />}
+            {open.type === "owl" ? (
+              <>
+                <p className="font-bold text-lg mt-3 text-center">{open.name_tr}</p>
+                <p className="text-center text-slate-500">{open.name_en}</p>
+                <p className="text-sm mt-2 text-center">{lang === "en" ? open.fact_en : open.fact_tr}</p>
+                <p className="text-center text-sm font-semibold mt-1">{t(`shop.rarity.${open.rarity}`)}</p>
+              </>
+            ) : (
+              <p className="font-bold text-lg mt-3 text-center">{lang === "en" ? open.name_en : open.name_tr}</p>
+            )}
+            <p className="text-center text-sm text-slate-500 mt-1">⭐ {open.price}</p>
             <div className="mt-4 flex justify-center gap-3">
-              <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold" onClick={() => tryOn(open)}>
-                {t("shop.try")}
-              </button>
-              {open.owned ? (
-                <button type="button" className="rounded-lg bg-brand-500 text-white px-4 py-2 font-semibold" onClick={() => wear(open.id)}>
-                  {open.equipped ? t("shop.inUse") : t("shop.use")}
+              {open.type !== "owl" && (
+                <button type="button" className="rounded-lg border border-slate-300 px-4 py-2 font-semibold" onClick={() => tryOn(open)}>
+                  {t("shop.try")}
                 </button>
+              )}
+              {open.owned ? (
+                open.type !== "owl" && (
+                  <button type="button" className="rounded-lg bg-brand-500 text-white px-4 py-2 font-semibold" onClick={() => wear(open.id)}>
+                    {open.equipped ? t("shop.inUse") : t("shop.use")}
+                  </button>
+                )
               ) : (
                 <button
                   type="button"

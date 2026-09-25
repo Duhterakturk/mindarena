@@ -304,7 +304,7 @@ Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil 
                       <tr key={row.student.id} className="border-t border-slate-100">
                         <td className="px-4 py-2 font-medium text-slate-700 whitespace-nowrap">
                           <span className="inline-flex items-center gap-2">
-                            <Owl stage={stageFor(row.total_completed)} className="w-8 h-8" />
+                            <Owl stage={stageFor(row.total_completed)} caption={false} className="w-8 h-8 shrink-0" />
                             <span>
                               {row.student.full_name}
                               {row.student.active_title && (

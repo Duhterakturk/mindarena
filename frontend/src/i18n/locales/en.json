@@ -13,11 +13,11 @@
   },
   "owl": { "grew": "Your owl grew!" },
   "stages": {
-    "egg": "Egg",
-    "chick": "Chick",
-    "young": "Young",
-    "wise": "Wise",
-    "legend": "Legend"
+    "egg": "Owlet",
+    "chick": "Little Owl",
+    "young": "Barn Owl",
+    "wise": "Snowy Owl",
+    "legend": "Eurasian Eagle-Owl"
   },
   "titles": {
     "apprentice": "Apprentice",
@@ -41,8 +41,13 @@
     "close": "Close",
     "tab": {
       "theme": "Themes",
-      "accessory": "Owl accessories",
+      "collection": "Owl collection",
       "background": "Backgrounds"
+    },
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "legendary": "Legendary"
     },
     "loading": "Loading...",
     "loadError": "The shop did not open",
@@ -57,7 +62,8 @@
       "puzzles": "{{count}} puzzles to {{need}}",
       "master": "{{count}} puzzles to Master",
       "all-games": "{{count}} games to go",
-      "days-7": "{{count}} days to go"
+      "days-7": "{{count}} days to go",
+      "owl-expert": "{{count}} cards to go"
     },
     "puzzles-10": "10 puzzles",
     "puzzles-50": "50 puzzles",
@@ -66,7 +72,8 @@
     "puzzles-500": "500 puzzles",
     "master": "Master title",
     "all-games": "Every game",
-    "days-7": "7 different days"
+    "days-7": "7 different days",
+    "owl-expert": "Owl Expert"
   },
   "profile": {
     "noTitle": "No title selected",
@@ -77,6 +84,7 @@
     "use": "Use",
     "active": "Active",
     "remaining": "{{count}} puzzles to become {{stage}}",
+    "collection": "My collection {{owned}}/{{total}}",
     "maxStage": "You are a legend"
   },
   "stars": {

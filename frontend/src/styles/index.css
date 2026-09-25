@@ -155,8 +155,27 @@ html[data-board-theme] .play-scale .text-slate-600 {
   to { transform: scale(1.08) translate3d(-1.5%, -1%, 0); }
 }
 
+.owl-legendary {
+  border: 2px solid #d4a017;
+  box-shadow: 0 0 14px rgba(212, 160, 23, 0.45);
+}
+
+.owl-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 35%, rgba(255, 236, 170, 0.45) 50%, transparent 65%);
+  animation: owl-shimmer 2.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes owl-shimmer {
+  from { transform: translateX(-120%); }
+  to { transform: translateX(120%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .theme-photo { animation: none; }
+  .owl-shimmer { animation: none; }
 }
 
 .play-scale {

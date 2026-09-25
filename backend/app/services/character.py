@@ -8,6 +8,14 @@ STAGES = (
     ("legend", 400),
 )
 
+STAGE_PHOTO = {
+    "egg": "owlet.webp",
+    "chick": "little.webp",
+    "young": "barn.webp",
+    "wise": "snowy.webp",
+    "legend": "eagle.webp",
+}
+
 RANKS = (
     ("apprentice", 5),
     ("journeyman", 20),

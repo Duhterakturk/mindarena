@@ -76,3 +76,84 @@ def db_user(user_id):
     from app.extensions import db
 
     return db.session.get(User, user_id)
+
+
+def test_an_owl_card_is_bought_once_for_its_price(app, student):
+    from app.extensions import db
+    from app.models.shop import UserItem
+    from app.models.star import StarLedger
+
+    user_id = student["user"]["id"]
+    with app.app_context():
+        user = db_user(user_id)
+        user.star_balance = 15
+        db.session.commit()
+        purchase(user, "owl-little")
+        db.session.commit()
+        assert db_user(user_id).star_balance == 0
+        assert UserItem.query.filter_by(user_id=user_id, item_id="owl-little").one().equipped is False
+        ledger = StarLedger.query.filter_by(user_id=user_id, reason="purchase").one()
+        assert ledger.amount == -15
+        try:
+            purchase(db_user(user_id), "owl-little")
+            raised = False
+        except ShopError as exc:
+            raised = exc.status == 409
+        assert raised
+
+        user = db_user(user_id)
+        user.star_balance = 10
+        db.session.commit()
+        try:
+            purchase(user, "owl-pygmy")
+            short = False
+        except ShopError as exc:
+            short = exc.status == 402
+        assert short
+        assert db_user(user_id).star_balance == 10
+        assert UserItem.query.filter_by(user_id=user_id, item_id="owl-pygmy").first() is None
+
+
+def test_accessory_refund_returns_the_price_paid(app, student):
+    from app.extensions import db
+    from app.models.shop import UserItem
+    from app.models.star import StarLedger
+    from app.services.shop import refund_accessories
+
+    user_id = student["user"]["id"]
+    with app.app_context():
+        user = db_user(user_id)
+        user.star_balance = 4
+        db.session.add(UserItem(user_id=user_id, item_id="hat-red", equipped=True))
+        db.session.add(UserItem(user_id=user_id, item_id="crown-gold", equipped=False))
+        db.session.add(UserItem(user_id=user_id, item_id="theme-forest", equipped=True))
+        db.session.commit()
+        refund_accessories(db.session.connection())
+        db.session.commit()
+        db.session.expire_all()
+        assert db_user(user_id).star_balance == 4 + 15 + 50
+        refunds = StarLedger.query.filter_by(user_id=user_id, reason="refund").all()
+        assert sorted(row.amount for row in refunds) == [15, 50]
+        left = {row.item_id for row in UserItem.query.filter_by(user_id=user_id).all()}
+        assert left == {"theme-forest"}
+
+
+def test_the_owl_expert_certificate_arrives_with_the_twelfth_card(app, student):
+    from app.extensions import db
+    from app.models import Certificate
+
+    user_id = student["user"]["id"]
+    owls = [item for item in CATALOG if item["type"] == "owl"]
+    assert len(owls) == 12
+    with app.app_context():
+        user = db_user(user_id)
+        user.star_balance = sum(item["price"] for item in owls)
+        db.session.commit()
+        for item in owls[:-1]:
+            purchase(user, item["id"])
+        db.session.commit()
+        assert Certificate.query.filter_by(user_id=user_id, kind="owl-expert").first() is None
+        purchase(user, owls[-1]["id"])
+        db.session.commit()
+        row = Certificate.query.filter_by(user_id=user_id, kind="owl-expert").one()
+        assert row.kind == "owl-expert"

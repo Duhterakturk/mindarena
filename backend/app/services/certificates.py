@@ -12,7 +12,7 @@ from reportlab.pdfgen import canvas
 
 from app.extensions import db
 from app.models import GAME_CATALOG, Certificate, Classroom, Game, Score, User, UserRole
-from app.services.character import stage_for
+from app.services.character import STAGE_PHOTO, stage_for
 
 PUZZLE_GOALS = (10, 50, 100, 250, 500)
 MASTER_NEED = 50
@@ -27,6 +27,7 @@ def kinds():
     rows.append("master")
     rows.append("all-games")
     rows.append("days-7")
+    rows.append("owl-expert")
     return rows
 
 
@@ -48,7 +49,22 @@ def _metrics(user_id):
         "games_done": sum(1 for count in by_slug.values() if count >= 1),
         "game_total": len(GAME_CATALOG),
         "days": len(days),
+        "owl_owned": _owl_owned(user_id),
+        "owl_total": _owl_total(),
     }
+
+
+def _owl_owned(user_id):
+    from app.services.shop import owl_progress
+
+    owned, _total = owl_progress(user_id)
+    return owned
+
+
+def _owl_total():
+    from app.services.shop import owl_ids
+
+    return len(owl_ids())
 
 
 def _met(kind, metrics):
@@ -60,6 +76,8 @@ def _met(kind, metrics):
         return metrics["games_done"] >= metrics["game_total"] and metrics["game_total"] > 0
     if kind == "days-7":
         return metrics["days"] >= DAY_GOAL
+    if kind == "owl-expert":
+        return metrics["owl_total"] > 0 and metrics["owl_owned"] >= metrics["owl_total"]
     return False
 
 
@@ -73,6 +91,9 @@ def progress_of(kind, metrics):
     elif kind == "all-games":
         need = metrics["game_total"]
         current = metrics["games_done"]
+    elif kind == "owl-expert":
+        need = metrics["owl_total"]
+        current = metrics["owl_owned"]
     else:
         need = DAY_GOAL
         current = metrics["days"]
@@ -150,18 +171,36 @@ def _ensure_font():
     _FONT_READY = True
 
 
+_STAGE_TR = {
+    "egg": "Yavru Baykuş",
+    "chick": "Kukumav",
+    "young": "Peçeli Baykuş",
+    "wise": "Kar Baykuşu",
+    "legend": "Puhu",
+}
+
+
+def _owl_path(filename):
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", "frontend", "public", "owls", filename))
+
+
 def _draw_owl(pen, stage, x, y):
-    if stage == "egg":
-        pen.setFillColorRGB(0.96, 0.91, 0.76)
-        pen.ellipse(x, y, x + 70, y + 86, stroke=1, fill=1)
-        return
-    pen.setFillColorRGB(0.79, 0.52, 0.23)
-    pen.circle(x + 22, y + 62, 16, stroke=0, fill=1)
-    pen.circle(x + 52, y + 62, 16, stroke=0, fill=1)
-    pen.ellipse(x + 4, y, x + 70, y + 58, stroke=0, fill=1)
-    pen.setFillColorRGB(0.12, 0.1, 0.09)
-    pen.circle(x + 22, y + 62, 5, stroke=0, fill=1)
-    pen.circle(x + 52, y + 62, 5, stroke=0, fill=1)
+    from PIL import Image, ImageDraw
+    from reportlab.lib.utils import ImageReader
+
+    path = _owl_path(STAGE_PHOTO.get(stage, "owlet.webp"))
+    image = Image.open(path).convert("RGB")
+    side = min(image.size)
+    left = (image.width - side) // 2
+    top = (image.height - side) // 2
+    image = image.crop((left, top, left + side, top + side)).resize((180, 180))
+    mask = Image.new("L", (180, 180), 0)
+    ImageDraw.Draw(mask).ellipse((2, 2, 178, 178), fill=255)
+    image.putalpha(mask)
+    pen.drawImage(ImageReader(image), x, y + 18, 72, 72, mask="auto")
+    pen.setFillColorRGB(0.12, 0.1, 0.08)
+    pen.setFont(_FONT, 9)
+    pen.drawCentredString(x + 36, y, _STAGE_TR.get(stage, ""))
 
 
 def render_pdf(user, certificate):
@@ -203,4 +242,6 @@ def _line(kind, metrics):
         return "Bir oyunda Usta oldu"
     if kind == "all-games":
         return f"{metrics['game_total']} oyunun hepsinden bulmaca çözdü"
+    if kind == "owl-expert":
+        return "Baykuş Uzmanı"
     return "7 farklı günde oynadı"

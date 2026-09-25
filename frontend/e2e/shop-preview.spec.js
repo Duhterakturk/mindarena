@@ -1,73 +1,124 @@
 import { expect, test } from "@playwright/test";
 
 const user = { id: "u1", full_name: "Ada", role: "student", star_balance: 40, active_title: null };
-const items = [
-  {
-    id: "theme-space",
-    type: "theme",
-    slot: "theme",
-    name_tr: "Uzay",
-    name_en: "Space",
-    price: 30,
-    preview: { cell: "#1b2436", ink: "#f4efe6", line: "#8ea0c0", room: "#121826" },
-    owned: false,
-    equipped: false,
-  },
-  {
-    id: "hat-red",
-    type: "accessory",
-    slot: "hat",
-    name_tr: "Kırmızı şapka",
-    name_en: "Red hat",
-    price: 15,
-    preview: { color: "#dc2626" },
-    owned: false,
-    equipped: false,
-  },
-  {
-    id: "bg-ink",
-    type: "background",
-    slot: "background",
-    name_tr: "Mürekkep",
-    name_en: "Ink",
-    price: 20,
-    preview: { room: "#1a1c28" },
-    owned: false,
-    equipped: false,
-  },
-];
 
-test("every shop card previews, and try changes the owl", async ({ page }) => {
+function catalog(ownedLittle) {
+  return [
+    {
+      id: "theme-space",
+      type: "theme",
+      slot: "theme",
+      name_tr: "Uzay",
+      name_en: "Space",
+      price: 30,
+      preview: { cell: "#1b2436", ink: "#f4efe6", line: "#8ea0c0", room: "#121826" },
+      owned: false,
+      equipped: false,
+    },
+    {
+      id: "owl-little",
+      type: "owl",
+      slot: "collection",
+      name_tr: "Kukumav",
+      name_en: "Little Owl",
+      price: 15,
+      rarity: "common",
+      photo: "little.webp",
+      fact_tr: "Gündüz de uyanık kalır ve ağaç kovuklarına ya da taş duvarlara yuva yapar.",
+      fact_en: "It often stays awake by day and nests in holes in trees or stone walls.",
+      preview: {},
+      owned: ownedLittle,
+      equipped: false,
+    },
+    {
+      id: "owl-snowy",
+      type: "owl",
+      slot: "collection",
+      name_tr: "Kar Baykuşu",
+      name_en: "Snowy Owl",
+      price: 80,
+      rarity: "legendary",
+      photo: "snowy.webp",
+      fact_tr: "Kuzey kutup tundrasında yaşar ve tüyleri neredeyse bembeyazdır.",
+      fact_en: "It lives on the Arctic tundra, and its feathers are nearly all white.",
+      preview: {},
+      owned: false,
+      equipped: false,
+    },
+    {
+      id: "bg-ink",
+      type: "background",
+      slot: "background",
+      name_tr: "Mürekkep",
+      name_en: "Ink",
+      price: 20,
+      preview: { cell: "#14161f", ink: "#f4efe6", line: "#a78bfa", room: "#1a1c28" },
+      owned: false,
+      equipped: false,
+    },
+  ];
+}
+
+test("unowned owl cards are gray, and buying one brings the color back", async ({ page }) => {
+  let ownedLittle = false;
   await page.addInitScript(() => localStorage.setItem("mindarena_access_token", "test-token"));
   await page.route(/\/api\/(?!.*\.js)/, (route) => {
     const url = route.request().url();
     if (url.includes("/src/")) return route.continue();
     if (url.includes("/auth/me")) return route.fulfill({ json: user });
     if (url.includes("/health")) return route.fulfill({ json: { status: "ok" } });
+    if (url.includes("/certificates")) return route.fulfill({ json: [] });
     if (url.includes("/profile")) {
-      return route.fulfill({ json: { stage: "chick", equipped: [], full_name: "Ada", star_balance: 40 } });
+      return route.fulfill({
+        json: {
+          stage: "chick",
+          equipped: [],
+          full_name: "Ada",
+          star_balance: ownedLittle ? 25 : 40,
+          collection: { owned: ownedLittle ? 1 : 0, total: 12 },
+          titles: [],
+          records: [],
+          solved: 10,
+          next: { stage: "young", remaining: 40 },
+          active_title: null,
+        },
+      });
     }
-    if (url.includes("/shop")) return route.fulfill({ json: { star_balance: 40, items } });
+    if (url.includes("/shop")) {
+      if (route.request().method() === "POST") ownedLittle = true;
+      return route.fulfill({ json: { star_balance: ownedLittle ? 25 : 40, items: catalog(ownedLittle) } });
+    }
     return route.fulfill({ json: {} });
   });
 
-  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/dukkan");
-
-  for (const key of ["theme", "accessory", "background"]) {
+  const viewport = page.viewportSize();
+  for (const key of ["theme", "collection", "background"]) {
     await page.getByTestId(`tab-${key}`).click();
-    const card = page.locator("[data-testid=preview]");
-    await expect(card).toBeVisible();
-    await expect(page.locator("svg[data-testid=preview], [data-testid=preview] svg").first()).toBeVisible();
-    const box = await page.getByTestId(/^card-/).boundingBox();
-    expect(box.width).toBeLessThan(390);
+    const box = await page.getByTestId(/^card-/).first().boundingBox();
+    expect(box.x).toBeGreaterThanOrEqual(0);
+    expect(box.x + box.width).toBeLessThanOrEqual(viewport.width + 1);
   }
 
-  const mine = page.locator("[data-shop-owl] path[fill='#dc2626']");
-  await expect(mine).toHaveCount(0);
-  await page.getByTestId("tab-accessory").click();
-  await page.getByTestId("card-hat-red").click();
-  const dialog = page.getByTestId("preview-dialog");
-  await dialog.getByRole("button", { name: "Dene" }).click();
-  await expect(mine).toBeVisible();
+  await page.getByTestId("tab-collection").click();
+  const locked = page.getByTestId("card-owl-little").locator("img");
+  await expect(locked).toHaveAttribute("data-owned", "0");
+  await expect(locked).toHaveClass(/grayscale/);
+  await expect(page.getByTestId("card-owl-little")).toContainText("Kukumav");
+  await expect(page.getByTestId("card-owl-little")).toContainText("Little Owl");
+  await expect(page.getByTestId("card-owl-little")).toContainText("Yaygın");
+  await expect(page.getByTestId("card-owl-little")).toContainText("15");
+  await expect(page.getByTestId("card-owl-snowy")).toHaveClass(/owl-legendary/);
+  const radius = await page.locator("[data-shop-owl] img").evaluate((node) => getComputedStyle(node).borderRadius);
+  expect(radius).not.toBe("0px");
+
+  await page.getByTestId("buy-owl-little").click();
+  await expect(locked).toHaveAttribute("data-owned", "1");
+  await expect(locked).not.toHaveClass(/grayscale/);
+
+  await page.goto("/profil");
+  await expect(page.getByTestId("collection-progress")).toHaveText("Koleksiyonum 1/12");
+  await expect(page.getByTestId("owl")).toContainText("Kukumav");
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  expect(overflow).toBeLessThanOrEqual(1);
 });

@@ -38,7 +38,13 @@ export default function Profile() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="bg-white text-slate-900 rounded-2xl p-6 text-center">
-        <Owl stage={profile.stage} equipped={profile.equipped} className="w-48 h-48 mx-auto" />
+        <Owl stage={profile.stage} className="w-48 mx-auto" />
+        <p className="mt-2 font-semibold" data-testid="collection-progress">
+          {t("profile.collection", {
+            owned: profile.collection?.owned ?? 0,
+            total: profile.collection?.total ?? 12,
+          })}
+        </p>
         <p className="text-xl font-bold mt-2">{profile.full_name}</p>
         <p className="text-slate-600" data-testid="active-title">
           {title ? t(`titles.${title.split(":")[1]}`) : t("profile.noTitle")}

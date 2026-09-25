@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { STARS_EVENT } from "../../api/games";
 import { useAuth } from "../../context/AuthContext";
+import Owl from "../owl/Owl";
 
 const ORDER = ["solve", "no_hint", "fast"];
 const LEVEL_EVENT = "mindarena:level-opened";
@@ -82,7 +83,12 @@ export default function StarCelebration() {
           {t("stars.record", { seconds: stars.improved_by })}
         </p>
       )}
-      {stars.stage_up && <p className="mt-3 font-semibold text-amber-700">{t("owl.grew")}</p>}
+      {stars.stage_up && (
+        <div className="mt-3">
+          <Owl stage={stars.stage_up} className="w-24 mx-auto" />
+          <p className="font-semibold text-amber-700">{t("owl.grew")}</p>
+        </div>
+      )}
       {stars.new_title && (
         <p className="mt-2 text-sm font-semibold">{t("titles.earned", { rank: t(`titles.${stars.new_title.rank}`) })}</p>
       )}

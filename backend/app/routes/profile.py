@@ -4,7 +4,7 @@ from flask_jwt_extended import get_jwt_identity, jwt_required
 from app.extensions import db
 from app.models import Game, PersonalBest, Score, User
 from app.services.character import RANKS, next_stage, rank_for, stage_for
-from app.services.shop import item_by_id, owned_rows
+from app.services.shop import item_by_id, owl_progress, owned_rows
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/api/profile")
 
@@ -37,6 +37,7 @@ def snapshot(user):
         }
         for row in PersonalBest.query.filter_by(user_id=user.id).order_by(PersonalBest.game_slug).all()
     ]
+    owned_count, total_count = owl_progress(user.id)
     equipped = []
     for row in owned_rows(user.id):
         if not row.equipped:
@@ -55,6 +56,7 @@ def snapshot(user):
         "records": records,
         "equipped": equipped,
         "ranks": [{"rank": rank, "need": need} for rank, need in RANKS],
+        "collection": {"owned": owned_count, "total": total_count},
     }
 
 
