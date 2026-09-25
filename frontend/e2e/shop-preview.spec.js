@@ -118,7 +118,7 @@ test("unowned owl cards are gray, and buying one brings the color back", async (
 
   await page.goto("/profil");
   await expect(page.getByTestId("collection-progress")).toHaveText("Koleksiyonum 1/12");
-  await expect(page.getByTestId("owl")).toContainText("Kukumav");
+  await expect(page.getByTestId("owl")).toContainText("Yavru");
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow).toBeLessThanOrEqual(1);
 });

@@ -1,8 +1,8 @@
 import { useTranslation } from "react-i18next";
 
 const PHOTO = {
-  egg: "owlet.webp",
-  chick: "little.webp",
+  egg: "egg.webp",
+  chick: "owlet.webp",
   young: "barn.webp",
   wise: "snowy.webp",
   legend: "eagle.webp",

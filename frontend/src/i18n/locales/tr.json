@@ -13,8 +13,8 @@
   },
   "owl": { "grew": "Baykuşun büyüdü!" },
   "stages": {
-    "egg": "Yavru Baykuş",
-    "chick": "Kukumav",
+    "egg": "Yumurta",
+    "chick": "Yavru",
     "young": "Peçeli Baykuş",
     "wise": "Kar Baykuşu",
     "legend": "Puhu"
@@ -85,7 +85,7 @@
     "active": "Aktif",
     "remaining": "{{stage}} olmaya {{count}} bulmaca kaldı",
     "collection": "Koleksiyonum {{owned}}/{{total}}",
-    "maxStage": "Efsane aşamasındasın"
+    "maxStage": "Puhu aşamasındasın"
   },
   "stars": {
     "title": "Yıldızların",

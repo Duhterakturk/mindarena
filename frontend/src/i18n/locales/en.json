@@ -13,8 +13,8 @@
   },
   "owl": { "grew": "Your owl grew!" },
   "stages": {
-    "egg": "Owlet",
-    "chick": "Little Owl",
+    "egg": "Egg",
+    "chick": "Owlet",
     "young": "Barn Owl",
     "wise": "Snowy Owl",
     "legend": "Eurasian Eagle-Owl"
@@ -85,7 +85,7 @@
     "active": "Active",
     "remaining": "{{count}} puzzles to become {{stage}}",
     "collection": "My collection {{owned}}/{{total}}",
-    "maxStage": "You are a legend"
+    "maxStage": "You are a Eurasian Eagle-Owl"
   },
   "stars": {
     "title": "Your stars",

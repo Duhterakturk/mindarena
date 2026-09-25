@@ -172,8 +172,8 @@ def _ensure_font():
 
 
 _STAGE_TR = {
-    "egg": "Yavru Baykuş",
-    "chick": "Kukumav",
+    "egg": "Yumurta",
+    "chick": "Yavru",
     "young": "Peçeli Baykuş",
     "wise": "Kar Baykuşu",
     "legend": "Puhu",
