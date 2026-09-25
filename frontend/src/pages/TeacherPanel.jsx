@@ -5,6 +5,7 @@ import { ClassHomework } from "../components/classroom/ClassHomework";
 import { fetchStudentsOverview } from "../api/progress";
 import Owl from "../components/owl/Owl";
 import { stageFor } from "../components/owl/stages";
+import { downloadCertificate, fetchStudentCertificates } from "../api/certificates";
 
 function StudentPassword({ classroomId, student }) {
   const [open, setOpen] = useState(false);
@@ -111,6 +112,7 @@ export default function TeacherPanel() {
   const [name, setName] = useState("");
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [certs, setCerts] = useState({});
 
   const registerUrl = `${window.location.origin}/register`;
   const inviteText = `Sayın Velilerim,
@@ -316,6 +318,18 @@ Uygulamayı kullanmak isteyen öğrencilerimiz bu şekilde sınıfımıza dahil 
                         <td className="px-4 py-2 text-right whitespace-nowrap">{row.distinct_games_completed}</td>
                         <td className="px-4 py-2 text-right font-semibold text-brand-700 whitespace-nowrap">{row.total_points}</td>
                         <td className="px-4 py-2 text-right whitespace-nowrap">
+                          <button
+                            type="button"
+                            className="text-brand-600 font-semibold"
+                            onClick={() => fetchStudentCertificates(row.student.id).then((list) => setCerts((prev) => ({ ...prev, [row.student.id]: list })))}
+                          >
+                            Sertifikalar
+                          </button>
+                          {(certs[row.student.id] || []).filter((item) => item.earned).map((item) => (
+                            <button key={item.id} type="button" className="block ml-auto text-xs text-slate-600" onClick={() => downloadCertificate(item.id)}>
+                              {item.kind}
+                            </button>
+                          ))}
                           <StudentPassword classroomId={selectedId} student={row.student} />
                         </td>
                       </tr>

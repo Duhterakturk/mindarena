@@ -34,6 +34,26 @@
     "loadError": "Dükkân açılmadı",
     "fail": "İşlem olmadı"
   },
+  "certs": {
+    "title": "Sertifikalarım",
+    "earned": "Sertifika kazandın!",
+    "download": "İndir",
+    "locked": "{{count}} kaldı",
+    "left": {
+      "puzzles": "{{need}} bulmacaya {{count}} kaldı",
+      "master": "Usta olmaya {{count}} bulmaca kaldı",
+      "all-games": "Tüm oyunlara {{count}} kaldı",
+      "days-7": "7 güne {{count}} kaldı"
+    },
+    "puzzles-10": "10 bulmaca",
+    "puzzles-50": "50 bulmaca",
+    "puzzles-100": "100 bulmaca",
+    "puzzles-250": "250 bulmaca",
+    "puzzles-500": "500 bulmaca",
+    "master": "Usta unvanı",
+    "all-games": "Tüm oyunlar",
+    "days-7": "7 farklı gün"
+  },
   "profile": {
     "noTitle": "Unvan seçilmedi",
     "titles": "Unvanlar",

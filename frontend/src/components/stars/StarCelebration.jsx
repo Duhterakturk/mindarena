@@ -66,6 +66,7 @@ export default function StarCelebration() {
         {stars.new_title && (
           <p className="mt-2 text-sm font-semibold">{t("titles.earned", { rank: t(`titles.${stars.new_title.rank}`) })}</p>
         )}
+        {stars.new_certificate && <p className="mt-2 font-semibold text-amber-700">{t("certs.earned")}</p>}
         {!user && <p className="mt-3 text-sm text-slate-500">{t("stars.login")}</p>}
         <button type="button" className="mt-4 text-sm font-semibold text-brand-700" onClick={() => setStars(null)}>
           {t("stars.close")}

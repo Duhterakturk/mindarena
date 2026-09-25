@@ -17,9 +17,13 @@ def notice_for(user_id, game_slug):
     game_count = _completed_count(user_id, game.id) if game else 0
     stage_key = crossed(total - 1, total, STAGES)
     rank_key = crossed(game_count - 1, game_count, RANKS)
+    from app.services.certificates import award_new
+
+    fresh = award_new(user_id)
     return {
         "solved": total,
         "stage": stage_for(total),
         "stage_up": stage_key,
         "new_title": {"game_slug": game_slug, "rank": rank_key} if rank_key else None,
+        "new_certificate": bool(fresh),
     }

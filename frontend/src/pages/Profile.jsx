@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Owl from "../components/owl/Owl";
 import { chooseTitle, fetchProfile } from "../api/shop";
+import { downloadCertificate, fetchMyCertificates } from "../api/certificates";
 
 export default function Profile() {
   const { t } = useTranslation();
   const [profile, setProfile] = useState(null);
+  const [certs, setCerts] = useState([]);
 
   useEffect(() => {
     fetchProfile().then(setProfile).catch(() => {});
+    fetchMyCertificates().then(setCerts).catch(() => {});
   }, []);
 
   if (!profile) return <p className="px-4 py-10 text-slate-400">{t("shop.loading")}</p>;
@@ -58,6 +61,24 @@ export default function Profile() {
             })}
           </ul>
         )}
+      </section>
+
+      <section className="bg-white text-slate-900 rounded-2xl p-6 mt-4">
+        <h2 className="font-semibold mb-3">{t("certs.title")}</h2>
+        <ul className="space-y-2">
+          {certs.map((row) => (
+            <li key={row.kind} className="flex items-center justify-between gap-2 text-sm">
+              <span>{t(`certs.${row.kind}`, { need: row.progress.need, count: row.progress.remaining })}</span>
+              {row.earned ? (
+                <button type="button" className="font-semibold text-brand-700" onClick={() => downloadCertificate(row.id)}>
+                  {t("certs.download")}
+                </button>
+              ) : (
+                <span className="text-slate-500">{t(`certs.left.${row.kind.startsWith("puzzles-") ? "puzzles" : row.kind}`, { need: row.progress.need, count: row.progress.remaining })}</span>
+              )}
+            </li>
+          ))}
+        </ul>
       </section>
 
       <section className="bg-white text-slate-900 rounded-2xl p-6 mt-4 overflow-x-auto">

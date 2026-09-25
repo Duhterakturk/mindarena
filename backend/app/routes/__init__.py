@@ -10,6 +10,7 @@ from app.routes.assignments import assignments_bp
 from app.routes.exams import exams_bp
 from app.routes.shop import shop_bp
 from app.routes.profile import profile_bp
+from app.routes.certificates import certificates_bp
 
 
 def register_routes(app):
@@ -25,3 +26,4 @@ def register_routes(app):
     app.register_blueprint(exams_bp)
     app.register_blueprint(shop_bp)
     app.register_blueprint(profile_bp)
+    app.register_blueprint(certificates_bp)
