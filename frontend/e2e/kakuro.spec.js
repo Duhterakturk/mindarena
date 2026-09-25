@@ -7,6 +7,7 @@ const answer = rounds.kakuro.answer;
 
 test("an easy cross-sum solves and saves", async ({ page }, info) => {
   let saved = null;
+  await page.addInitScript(() => localStorage.setItem("mindarena_access_token", "access"));
   await page.route(/\/api\/(?!.*\.js)/, (route) => {
     const url = route.request().url();
     if (url.includes("/puzzles") && route.request().method() === "POST" && !url.includes("/check")) {
@@ -41,7 +42,7 @@ test("an easy cross-sum solves and saves", async ({ page }, info) => {
   }
   await page.getByRole("button", { name: "Kontrol Et" }).click();
   await expect(page.getByText("Yerinde. Bulmaca tamam.")).toBeVisible();
-  await page.getByRole("button", { name: "Skoru Kaydet" }).click();
+  await expect(page.getByRole("button", { name: "Skoru Kaydet" })).toHaveCount(0);
   await expect(page.getByText("Skor kaydedildi.")).toBeVisible();
   expect(saved.answer).toEqual(answer);
 

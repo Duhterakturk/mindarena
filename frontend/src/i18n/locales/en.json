@@ -136,7 +136,8 @@
     "easy": "Easy",
     "medium": "Medium",
     "hard": "Hard",
-    "lock": "{{level}} opens after {{threshold}} finishes ({{done}}/{{threshold}})"
+    "lock": "{{level}} opens after {{threshold}} finishes ({{done}}/{{threshold}})",
+    "opened": "{{level}} level unlocked!"
   },
   "play": {
     "time": "Time: {{clock}}",
@@ -149,6 +150,7 @@
     "edgeCrossHint": "The first touch is a fence, the second leaves ×, the third clears. × edges are ignored when checking.",
     "notesHint": "With Notes on, a digit stays small. The final number is written with Notes off.",
     "save": "Save Score",
+    "saving": "Saving...",
     "correct": "In place. The puzzle is complete.",
     "incorrect": "Not quite yet.",
     "incorrectCells": "Some cells are not in place yet.",

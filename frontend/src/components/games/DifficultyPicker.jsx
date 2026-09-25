@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { fetchUnlockedDifficulties } from "../../api/difficulty";
 
@@ -17,19 +17,50 @@ const DEFAULT_STATE = {
 export default function DifficultyPicker({ gameSlug, value, onChange }) {
   const { t } = useTranslation();
   const [state, setState] = useState(DEFAULT_STATE);
+  const [opened, setOpened] = useState("");
+  const known = useRef(null);
 
   useEffect(() => {
+    known.current = null;
+    setOpened("");
     if (!localStorage.getItem("mindarena_access_token")) return undefined;
-    fetchUnlockedDifficulties(gameSlug)
-      .then(setState)
-      .catch(() => setState(DEFAULT_STATE));
-    return undefined;
-  }, [gameSlug]);
+
+    let alive = true;
+    async function load() {
+      try {
+        const next = await fetchUnlockedDifficulties(gameSlug);
+        if (!alive) return;
+        const previous = known.current;
+        if (previous) {
+          const fresh = ["medium", "hard"].find((level) => !previous.unlocked[level] && next.unlocked[level]);
+          if (fresh) setOpened(t("difficulty.opened", { level: t(`difficulty.${fresh}`) }));
+        }
+        known.current = next;
+        setState(next);
+      } catch {
+        if (alive) setState(DEFAULT_STATE);
+      }
+    }
+
+    load();
+    window.addEventListener("mindarena:score-saved", load);
+    return () => {
+      alive = false;
+      window.removeEventListener("mindarena:score-saved", load);
+    };
+  }, [gameSlug, t]);
+
+  useEffect(() => {
+    if (!opened) return undefined;
+    const timer = window.setTimeout(() => setOpened(""), 4000);
+    return () => window.clearTimeout(timer);
+  }, [opened]);
 
   const order = ["easy", "medium", "hard"];
 
   return (
     <div className="difficulty-picker flex gap-2 mb-2 flex-wrap items-center">
+      {opened && <p className="w-full text-sm font-semibold text-emerald-600" data-testid="level-opened">{opened}</p>}
       {order.map((level) => {
         const isUnlocked = state.unlocked[level];
         const isActive = value === level;

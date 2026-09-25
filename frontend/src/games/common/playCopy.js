@@ -19,6 +19,7 @@ export function usePlayCopy() {
     edgeCrossHint: t("play.edgeCrossHint"),
     notesHint: t("play.notesHint"),
     save: t("play.save"),
+    saving: t("play.saving"),
     correct: t("play.correct"),
     incorrect: t("play.incorrect"),
     incorrectCells: t("play.incorrectCells"),

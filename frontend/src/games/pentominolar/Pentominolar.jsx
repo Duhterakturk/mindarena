@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { scoreStatus } from "../../api/client";
-import { submitScore } from "../../api/games";
+import { ScoreNotice, useAutoScore } from "../common/useAutoScore";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
@@ -57,6 +56,7 @@ export default function Pentominolar() {
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
+  const { phase: savePhase, save } = useAutoScore(attemptId);
 
   const regionSet = new Set(region);
 
@@ -137,25 +137,19 @@ export default function Pentominolar() {
     const covered = new Set(placements.flatMap((piece) => piece.cells.map(([r, c]) => `${r}-${c}`)));
     const solved = placements.length === pieces.length && region.every((key) => covered.has(key)) && covered.size === region.length;
     setStatus(solved ? "correct" : "incorrect");
-    if (solved) clearInterval(timerRef.current);
+    if (solved) {
+      clearInterval(timerRef.current);
+      save(placementAnswer());
+    }
   }
 
-  async function handleSubmitScore() {
-    if (!attemptId) return;
-    try {
-      await submitScore({
-        attempt_id: attemptId,
-        answer: {
-          placements: placements.map((piece) => ({
-            name: piece.name,
-            cells: piece.cells.map(([r, c]) => `${r}-${c}`),
-          })),
-        },
-      });
-      setStatus("submitted");
-    } catch (error) {
-      setStatus(scoreStatus(error));
-    }
+  function placementAnswer() {
+    return {
+      placements: placements.map((piece) => ({
+        name: piece.name,
+        cells: piece.cells.map(([r, c]) => `${r}-${c}`),
+      })),
+    };
   }
 
   if (phase !== "ready" || !puzzle) return <PuzzlePending phase={phase} />;
@@ -255,26 +249,13 @@ export default function Pentominolar() {
         >
           {play.newPuzzle}
         </button>
-        {status === "correct" && (
-          <button
-            onClick={handleSubmitScore}
-            className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
-          >
-            {play.save}
-          </button>
-        )}
       </div>
 
       {status === "correct" && <p className="play-correct text-emerald-600 mt-3">{play.correct}</p>}
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
-      {status === "offline" && (
-        <div className="mt-3 text-center">
-          <p className="text-[#f4efe6]">{play.offline}</p>
-          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
-        </div>
-      )}
+      {status === "offline" && <p className="text-[#f4efe6] mt-3">{play.offline}</p>}
+      <ScoreNotice phase={savePhase} onRetry={() => save(placementAnswer())} />
     </div>
   );
 }

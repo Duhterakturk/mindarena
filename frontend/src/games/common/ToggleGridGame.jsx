@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import { scoreStatus } from "../../api/client";
-import { checkPuzzle, submitScore } from "../../api/games";
+import { checkPuzzle } from "../../api/games";
+import { ScoreNotice, useAutoScore } from "./useAutoScore";
 import ClearBoardButton from "./ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useApplyCellHint } from "./cellHint";
@@ -102,6 +103,11 @@ export default function ToggleGridGame({
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
   const doneSig = useRef("");
+  const { phase: savePhase, save } = useAutoScore(attemptId);
+
+  function currentAnswer() {
+    return answerFrom ? answerFrom(marked) : { cells: [...marked] };
+  }
 
   useEffect(() => {
     setMarked(new Set());
@@ -158,30 +164,24 @@ export default function ToggleGridGame({
   }
 
   async function checkSolution() {
+    const answer = currentAnswer();
     if (validate) {
       const isCorrect = validate(marked, fixedCells);
       setStatus(isCorrect ? "correct" : "incorrect");
-      if (isCorrect) clearInterval(timerRef.current);
+      if (isCorrect) {
+        clearInterval(timerRef.current);
+        save(answer);
+      }
       return;
     }
     if (!attemptId) return;
     try {
-      const correct = await checkPuzzle(attemptId, answerFrom ? answerFrom(marked) : { cells: [...marked] });
+      const correct = await checkPuzzle(attemptId, answer);
       setStatus(correct ? "correct" : "incorrect");
-      if (correct) clearInterval(timerRef.current);
-    } catch (error) {
-      setStatus(scoreStatus(error));
-    }
-  }
-
-  async function handleSubmitScore() {
-    if (!attemptId) return;
-    try {
-      await submitScore({
-        attempt_id: attemptId,
-        answer: answerFrom ? answerFrom(marked) : { cells: [...marked] },
-      });
-      setStatus("submitted");
+      if (correct) {
+        clearInterval(timerRef.current);
+        save(answer);
+      }
     } catch (error) {
       setStatus(scoreStatus(error));
     }
@@ -225,13 +225,7 @@ export default function ToggleGridGame({
         }
         clearInterval(timerRef.current);
         setStatus("correct");
-        if (!localStorage.getItem("mindarena_access_token")) return;
-        try {
-          await submitScore({ attempt_id: token, answer });
-          setStatus("submitted");
-        } catch (error) {
-          setStatus(scoreStatus(error));
-        }
+        save(answer);
       } catch (error) {
         setStatus(scoreStatus(error));
       }
@@ -375,26 +369,13 @@ export default function ToggleGridGame({
             {play.newPuzzle}
           </button>
         )}
-        {status === "correct" && (
-          <button
-            onClick={handleSubmitScore}
-            className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
-          >
-            {play.save}
-          </button>
-        )}
       </div>
 
       {status === "correct" && <p className="play-correct text-emerald-600 mt-3">{play.correct}</p>}
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
-      {status === "offline" && (
-        <div className="mt-3 text-center">
-          <p className="text-[#f4efe6]">{play.offline}</p>
-          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
-        </div>
-      )}
+      {status === "offline" && <p className="text-[#f4efe6] mt-3">{play.offline}</p>}
+      <ScoreNotice phase={savePhase} onRetry={() => save(currentAnswer())} />
     </div>
   );
 }

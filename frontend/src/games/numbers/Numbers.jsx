@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { scoreStatus } from "../../api/client";
-import { checkPuzzle, submitScore } from "../../api/games";
+import { checkPuzzle } from "../../api/games";
+import { ScoreNotice, useAutoScore } from "../common/useAutoScore";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useApplyCellHint, writeFill } from "../common/cellHint";
@@ -60,6 +61,7 @@ export default function Numbers() {
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
+  const { phase: savePhase, save } = useAutoScore(attemptId);
 
   useEffect(() => {
     if (!clues) return undefined;
@@ -95,17 +97,10 @@ export default function Numbers() {
     try {
       const correct = await checkPuzzle(attemptId, board);
       setStatus(correct ? "correct" : "incorrect");
-      if (correct) clearInterval(timerRef.current);
-    } catch (error) {
-      setStatus(scoreStatus(error));
-    }
-  }
-
-  async function handleSubmitScore() {
-    if (!attemptId) return;
-    try {
-      await submitScore({ attempt_id: attemptId, answer: board });
-      setStatus("submitted");
+      if (correct) {
+        clearInterval(timerRef.current);
+        save(board);
+      }
     } catch (error) {
       setStatus(scoreStatus(error));
     }
@@ -157,20 +152,12 @@ export default function Numbers() {
         <button type="button" onClick={checkSolution} className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold">{play.check}</button>
         <ClearBoardButton onClick={() => { setBoard([[0, 0, 0], [0, 0, 0], [0, 0, 0]]); setStatus("playing"); }} />
         <button type="button" onClick={() => newGame()} className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold">{play.newPuzzle}</button>
-        {status === "correct" && (
-          <button type="button" onClick={handleSubmitScore} className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold">{play.save}</button>
-        )}
       </div>
       {status === "correct" && <p className="text-emerald-600 mt-3">{play.correct}</p>}
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrect}</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
-      {status === "offline" && (
-        <div className="mt-3 text-center">
-          <p className="text-[#f4efe6]">{play.offline}</p>
-          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
-        </div>
-      )}
+      {status === "offline" && <p className="text-[#f4efe6] mt-3">{play.offline}</p>}
+      <ScoreNotice phase={savePhase} onRetry={() => save(board)} />
     </div>
   );
 }

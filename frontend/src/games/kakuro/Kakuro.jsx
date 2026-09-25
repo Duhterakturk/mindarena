@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { scoreStatus } from "../../api/client";
-import { checkPuzzle, submitScore } from "../../api/games";
+import { checkPuzzle } from "../../api/games";
+import { ScoreNotice, useAutoScore } from "../common/useAutoScore";
 import ClearBoardButton from "../common/ClearBoardButton";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import { useGameText } from "../common/gameText";
@@ -37,6 +38,7 @@ export default function Kakuro() {
   const [status, setStatus] = useState("playing");
   const [seconds, setSeconds] = useState(0);
   const timerRef = useRef(null);
+  const { phase: savePhase, save } = useAutoScore(attemptId);
 
   const [renderedPuzzle, setRenderedPuzzle] = useState(null);
   let displayBoard = board;
@@ -108,17 +110,10 @@ export default function Kakuro() {
     try {
       const correct = await checkPuzzle(attemptId, answerGrid());
       setStatus(correct ? "correct" : "incorrect");
-      if (correct) clearInterval(timerRef.current);
-    } catch (error) {
-      setStatus(scoreStatus(error));
-    }
-  }
-
-  async function handleSubmitScore() {
-    if (!attemptId) return;
-    try {
-      await submitScore({ attempt_id: attemptId, answer: answerGrid() });
-      setStatus("submitted");
+      if (correct) {
+        clearInterval(timerRef.current);
+        save(answerGrid());
+      }
     } catch (error) {
       setStatus(scoreStatus(error));
     }
@@ -203,26 +198,13 @@ export default function Kakuro() {
         >
           {play.newPuzzle}
         </button>
-        {status === "correct" && (
-          <button
-            onClick={handleSubmitScore}
-            className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold hover:bg-emerald-600"
-          >
-            {play.save}
-          </button>
-        )}
       </div>
 
       {status === "correct" && <p className="play-correct text-emerald-600 mt-3">{play.correct}</p>}
       {status === "incorrect" && <p className="text-red-500 mt-3">{play.incorrectCells}</p>}
-      {status === "submitted" && <p className="text-emerald-600 mt-3">{play.saved}</p>}
       {status === "rejected" && <p className="text-red-500 mt-3">{play.rejected}</p>}
-      {status === "offline" && (
-        <div className="mt-3 text-center">
-          <p className="text-[#f4efe6]">{play.offline}</p>
-          <button type="button" className="mt-2 text-sm font-semibold underline" onClick={handleSubmitScore}>{play.retry}</button>
-        </div>
-      )}
+      {status === "offline" && <p className="text-[#f4efe6] mt-3">{play.offline}</p>}
+      <ScoreNotice phase={savePhase} onRetry={() => save(answerGrid())} />
     </div>
   );
 }

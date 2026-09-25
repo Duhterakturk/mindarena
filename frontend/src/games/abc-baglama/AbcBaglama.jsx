@@ -1,7 +1,8 @@
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { scoreStatus } from "../../api/client";
-import { checkPuzzle, submitScore } from "../../api/games";
+import { checkPuzzle } from "../../api/games";
+import { ScoreNotice, useAutoScore } from "../common/useAutoScore";
 import DifficultyPicker from "../../components/games/DifficultyPicker";
 import ClearBoardButton from "../common/ClearBoardButton";
 import { useApplyCellHint } from "../common/cellHint";
@@ -160,6 +161,7 @@ export default function AbcBaglama() {
   const [cell, setCell] = useState(44);
   const [ink, setInk] = useState(null);
   const timerRef = useRef(null);
+  const { phase: savePhase, save } = useAutoScore(attemptId);
   const drag = useRef(null);
   const pointer = useRef(null);
   const pathsRef = useRef(paths);
@@ -486,21 +488,11 @@ export default function AbcBaglama() {
     try {
       const correct = await checkPuzzle(attemptId, { paths });
       setStatus(correct ? "correct" : "incorrect");
-      setNote(correct ? "" : play.incorrect);
-      if (correct) clearInterval(timerRef.current);
-    } catch (error) {
-      const next = scoreStatus(error);
-      setStatus(next);
-      setNote(next === "rejected" ? play.rejected : play.offline);
-    }
-  }
-
-  async function handleSubmitScore() {
-    if (!attemptId) return;
-    try {
-      await submitScore({ attempt_id: attemptId, answer: { paths } });
-      setStatus("submitted");
-      setNote(play.saved);
+      setNote(correct ? play.correct : play.incorrect);
+      if (correct) {
+        clearInterval(timerRef.current);
+        save({ paths });
+      }
     } catch (error) {
       const next = scoreStatus(error);
       setStatus(next);
@@ -529,15 +521,7 @@ export default function AbcBaglama() {
         clearInterval(timerRef.current);
         setStatus("correct");
         setNote(play.correct);
-        if (!localStorage.getItem("mindarena_access_token")) return;
-        try {
-          await submitScore({ attempt_id: token, answer: { paths: answer } });
-          setNote(`${play.correct} ${play.saved}`);
-        } catch (error) {
-          const next = scoreStatus(error);
-          setStatus(next);
-          setNote(next === "rejected" ? play.rejected : play.offline);
-        }
+        save({ paths: answer });
       } catch (error) {
         const next = scoreStatus(error);
         setStatus(next);
@@ -618,15 +602,10 @@ export default function AbcBaglama() {
         <button type="button" onClick={checkSolution} className="bg-brand-500 text-white px-4 py-2 rounded-lg font-semibold">{play.check}</button>
         <ClearBoardButton onClick={() => { pathsRef.current = {}; setPaths({}); checkedSig.current = ""; setSelected(null); setStatus("playing"); setNote(""); }} />
         <button type="button" onClick={reload} className="bg-slate-200 text-slate-700 px-4 py-2 rounded-lg font-semibold">{play.newPuzzle}</button>
-        {status === "correct" && (
-          <button type="button" onClick={handleSubmitScore} className="bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold">{play.save}</button>
-        )}
       </div>
-      {note && <p className={`mt-3 ${status === "correct" || status === "submitted" ? "text-emerald-600" : "text-red-500"}`}>{note}</p>}
-      {status === "offline" && (
-        <button type="button" className="mt-2 text-sm font-semibold underline text-[#f4efe6]" onClick={handleSubmitScore}>{play.retry}</button>
-      )}
-      {status === "correct" && !note && <p className="text-emerald-600 mt-3">{play.correct}</p>}
+      {note && <p className={`mt-3 ${status === "correct" ? "text-emerald-600" : "text-red-500"}`}>{note}</p>}
+      {status === "offline" && <p className="text-[#f4efe6] mt-3">{play.offline}</p>}
+      <ScoreNotice phase={savePhase} onRetry={() => save({ paths })} />
     </div>
   );
 }

@@ -136,7 +136,8 @@
     "easy": "Kolay",
     "medium": "Orta",
     "hard": "Zor",
-    "lock": "{{level}} kademesi, {{threshold}} tamamlama sonrası açılır ({{done}}/{{threshold}})"
+    "lock": "{{level}} kademesi, {{threshold}} tamamlama sonrası açılır ({{done}}/{{threshold}})",
+    "opened": "{{level}} seviye açıldı!"
   },
   "play": {
     "time": "Süre: {{clock}}",
@@ -149,6 +150,7 @@
     "edgeCrossHint": "İlk dokunuş çit olur, ikincisi × bırakır, üçüncüsü siler. × olan kenar çözüme girmez.",
     "notesHint": "Not açıkken rakam küçük kalır. Kesin rakam, Not kapalıyken yazılır.",
     "save": "Skoru Kaydet",
+    "saving": "Kaydediliyor...",
     "correct": "Yerinde. Bulmaca tamam.",
     "incorrect": "Henüz tam değil.",
     "incorrectCells": "Bazı kareler henüz yerinde değil.",
