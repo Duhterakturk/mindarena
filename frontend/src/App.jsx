@@ -3,6 +3,7 @@ import { AuthProvider } from "./context/AuthContext";
 import Navbar from "./components/layout/Navbar";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 import BadgeToastHost from "./components/badges/BadgeToastHost";
+import StarCelebration from "./components/stars/StarCelebration";
 
 import Home from "./pages/Home";
 import Games from "./pages/Games";
@@ -66,6 +67,7 @@ function Shell() {
         </Routes>
       </main>
       {!onBoard && <BadgeToastHost />}
+      {!onBoard && <StarCelebration />}
     </>
   );
 }

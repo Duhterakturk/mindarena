@@ -78,6 +78,9 @@ def check_puzzle(attempt_id):
     body = {"correct": correct}
     if correct:
         body["hint_balance"] = earn_once(attempt)
+        from app.services.stars import breakdown
+        from app.routes.scores import _elapsed
+        body["stars"] = breakdown(attempt, _elapsed(attempt.started_at))
         db.session.commit()
     return jsonify(body)
 

@@ -8,6 +8,15 @@
     "register": "Kayıt Ol",
     "logout": "Çıkış Yap"
   },
+  "stars": {
+    "title": "Yıldızların",
+    "solve": "Çözdün +1",
+    "no_hint": "İpucusuz +1",
+    "fast": "Hızlı +1",
+    "record": "Yeni rekor! {{seconds}} saniye daha hızlı",
+    "login": "Yıldızlarını saklamak için giriş yap",
+    "close": "Tamam"
+  },
   "home": {
     "title": "Bugün bir bulmaca seni bekliyor. Hazır mısın?"
   },

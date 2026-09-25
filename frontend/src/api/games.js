@@ -13,6 +13,7 @@ export async function fetchGame(slug) {
 }
 
 export const BADGES_EARNED_EVENT = "mindarena:badges-earned";
+export const STARS_EVENT = "mindarena:stars";
 
 export async function openPuzzle(slug, difficulty = "easy") {
   return withWake(async () => {
@@ -30,6 +31,7 @@ function publishHintBalance(data) {
 export async function checkPuzzle(attemptId, answer) {
   const { data } = await apiClient.post(`/puzzles/${attemptId}/check`, { answer });
   publishHintBalance(data);
+  if (data?.stars) window.dispatchEvent(new CustomEvent(STARS_EVENT, { detail: data.stars }));
   return data.correct;
 }
 
@@ -45,6 +47,7 @@ export async function submitScore(payload) {
     window.dispatchEvent(new CustomEvent(BADGES_EARNED_EVENT, { detail: data.new_badges }));
   }
   window.dispatchEvent(new CustomEvent("mindarena:score-saved"));
+  if (data?.stars) window.dispatchEvent(new CustomEvent(STARS_EVENT, { detail: data.stars }));
   publishHintBalance(data);
   return data;
 }

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../context/AuthContext";
@@ -8,6 +8,19 @@ export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [starBalance, setStarBalance] = useState(user?.star_balance ?? 0);
+
+  useEffect(() => {
+    setStarBalance(user?.star_balance ?? 0);
+  }, [user]);
+
+  useEffect(() => {
+    function onStars(event) {
+      if (typeof event.detail?.star_balance === "number") setStarBalance(event.detail.star_balance);
+    }
+    window.addEventListener("mindarena:stars", onStars);
+    return () => window.removeEventListener("mindarena:stars", onStars);
+  }, []);
 
   function toggleLanguage() {
     const next = i18n.language === "tr" ? "en" : "tr";
@@ -75,7 +88,10 @@ export default function Navbar() {
         </Link>
 
         {/* sm ve üzeri: yatay bağlantı satırı */}
-        <div className="hidden sm:flex items-center gap-4 text-sm font-medium">{links}</div>
+        <div className="hidden sm:flex items-center gap-4 text-sm font-medium">
+          {user && <span data-testid="star-balance">⭐ {starBalance}</span>}
+          {links}
+        </div>
 
         {/* sm altı: hamburger düğmesi */}
         <button

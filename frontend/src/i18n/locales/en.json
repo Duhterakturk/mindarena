@@ -8,6 +8,15 @@
     "register": "Sign Up",
     "logout": "Log Out"
   },
+  "stars": {
+    "title": "Your stars",
+    "solve": "Solved +1",
+    "no_hint": "No hints +1",
+    "fast": "Quick +1",
+    "record": "New record! {{seconds}} seconds faster",
+    "login": "Log in to keep your stars",
+    "close": "OK"
+  },
   "home": {
     "title": "A puzzle is waiting for you today. Ready?"
   },
