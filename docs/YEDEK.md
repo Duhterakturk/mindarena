@@ -31,12 +31,12 @@ Aynı klasörde `mindarena.dump` oluşur. Bu dosya artık açık yedektir. İşi
 
 Bunu yalnız eski skorları geri getirmek istediğinde yap. Yedekten sonra girilen skorlar silinir.
 
-1. Bilgisayarda PostgreSQL 16 komut satırı araçları kurulu olsun. [postgresql.org/download/windows](https://www.postgresql.org/download/windows/) adresinden PostgreSQL 16'yı kur. Kurulumda "Command Line Tools" seçili kalsın.
+1. Bilgisayarda PostgreSQL 17 komut satırı araçları kurulu olsun. [postgresql.org/download/windows](https://www.postgresql.org/download/windows/) adresinden PostgreSQL 17'yi kur. Kurulumda "Command Line Tools" seçili kalsın.
 2. Neon'da projeni aç. **Connect** düğmesine bas. **Connection pooling** kapalı olsun (adresin içinde `-pooler` yazmasın). **Direct** bağlantıyı kopyala. Adres `sslmode=require` içersin.
 3. `mindarena.dump` dosyasının klasöründe PowerShell aç. Tırnak içine, kopyaladığın adresi yapıştır:
 
 ```
-& "C:\Program Files\PostgreSQL\16\bin\pg_restore.exe" --clean --if-exists --no-owner --no-acl --dbname "BURAYA-NEON-ADRESI" mindarena.dump
+& "C:\Program Files\PostgreSQL\17\bin\pg_restore.exe" --clean --if-exists --no-owner --no-acl --dbname "BURAYA-NEON-ADRESI" mindarena.dump
 ```
 
 4. Komut bitince siteden bir hesabın skoruna bak. Yedekteki hali duruyorsa yükleme tamamdır.
