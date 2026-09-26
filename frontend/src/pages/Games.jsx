@@ -2,11 +2,16 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { fetchGames } from "../api/games";
+import { fetchAllUnlocked } from "../api/difficulty";
+import { useAuth } from "../context/AuthContext";
 import GameCard from "../components/games/GameCard";
 
 export default function Games() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const userId = user?.id;
   const [games, setGames] = useState([]);
+  const [progress, setProgress] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [slow, setSlow] = useState(false);
@@ -26,7 +31,25 @@ export default function Games() {
         setError(t("games.loadError"));
         setLoading(false);
       });
-  }, []);
+  }, [t]);
+
+  useEffect(() => {
+    if (!userId) {
+      setProgress(null);
+      return undefined;
+    }
+    let alive = true;
+    fetchAllUnlocked()
+      .then((data) => {
+        if (alive && data?.games) setProgress(data);
+      })
+      .catch(() => {
+        if (alive) setProgress(null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [userId]);
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -46,12 +69,12 @@ export default function Games() {
               {t("games.waking")}
             </p>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4" aria-hidden="true">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4" aria-hidden="true">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="bg-[#fffdf8] rounded-2xl p-5 border border-line animate-pulse">
-                <div className="h-24 rounded-xl bg-slate-100 mb-3" />
-                <div className="h-4 w-2/3 rounded bg-slate-100 mb-2" />
-                <div className="h-3 w-1/3 rounded bg-slate-100" />
+              <div key={i} className="game-card p-2.5 animate-pulse">
+                <div className="h-[110px] rounded-[10px] bg-white/10" />
+                <div className="mt-2 h-4 w-2/3 rounded bg-white/10" />
+                <div className="mt-2 h-3 w-1/3 rounded-full bg-white/10" />
               </div>
             ))}
           </div>
@@ -59,9 +82,9 @@ export default function Games() {
       )}
 
       {!loading && (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-5">
           {games.map((game, index) => (
-            <GameCard key={game.slug} game={game} index={index} />
+            <GameCard key={game.slug} game={game} index={index} progress={progress} />
           ))}
         </div>
       )}

@@ -9,9 +9,15 @@ from openpyxl import Workbook
 
 from app.extensions import db
 from app.models import Score, Game, User, UserRole, Classroom
-from app.services.difficulty import compute_unlocked_difficulties
+from app.services.difficulty import compute_all_unlocked, compute_unlocked_difficulties
 
 progress_bp = Blueprint("progress", __name__, url_prefix="/api/progress")
+
+
+@progress_bp.get("/unlocked-all")
+@jwt_required()
+def unlocked_all():
+    return jsonify(compute_all_unlocked(get_jwt_identity()))
 
 
 @progress_bp.get("/unlocked/<string:game_slug>")
